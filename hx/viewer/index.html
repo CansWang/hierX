@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>hx viewer</title>
+<link rel="stylesheet" href="/static/style.css">
+<script>window.HX_CONFIG = {mode: "serve"};</script>
+<!--HX:DATA-->
+</head>
+<body>
+<header id="topbar">
+  <span class="brand" title="hx: function-scoped structure viewer">hx</span>
+  <span id="entry-label" class="entry" title="entry point"></span>
+  <input id="search" type="search" placeholder="search functions · types · globals   ( / )" autocomplete="off" spellcheck="false">
+  <label class="ctl" title="how many call levels to show">depth <input id="depth" type="range" min="0" max="3" value="3"><span id="depth-val" class="mono">3</span></label>
+  <label class="ctl"><input id="opt-files" type="checkbox" checked> group by file</label>
+  <label class="ctl" title="show unresolved targets (no definition, beyond depth, function pointers)"><input id="opt-ghosts" type="checkbox" checked> ghosts</label>
+  <label class="ctl" title="show address-taken function references"><input id="opt-refs" type="checkbox" checked> refs</label>
+  <select id="layout" title="layout direction"><option value="LR">left → right</option><option value="TB">top → bottom</option></select>
+  <button id="btn-fit" title="fit graph (f)">fit</button>
+  <button id="btn-relayout" title="forget pinned positions and lay out again">re-layout</button>
+  <button id="btn-extract" title="re-run hx extract with the same arguments">re-extract</button>
+  <button id="btn-download" hidden title="annotations are kept in this page until downloaded">download annotations</button>
+  <button id="btn-theme" title="theme: auto / light / dark">◐</button>
+  <span id="status" class="status" aria-live="polite"></span>
+</header>
+<main id="main">
+  <aside id="left" class="pane"><div id="tree"></div></aside>
+  <div class="splitter" id="splitter-l" data-pane="left"></div>
+  <section id="center">
+    <div id="cy" role="img" aria-label="call graph"></div>
+    <div id="legend" class="legend">
+      <span class="lg"><i class="sw sw-call"></i>call</span>
+      <span class="lg"><i class="sw sw-macro"></i>via macro</span>
+      <span class="lg"><i class="sw sw-fnptr"></i>function pointer</span>
+      <span class="lg"><i class="sw sw-ref"></i>address taken</span>
+      <span class="lg"><i class="sw sw-ghost"></i>unresolved</span>
+      <span class="lg"><i class="sw sw-caller"></i>caller side</span>
+    </div>
+    <div id="edge-tip" class="tip" hidden></div>
+  </section>
+  <div class="splitter" id="splitter-r" data-pane="right"></div>
+  <aside id="right" class="pane"><div id="detail"><p class="muted">Select a function in the tree or graph.</p></div></aside>
+</main>
+<script src="/static/vendor/cytoscape.min.js"></script>
+<script src="/static/vendor/dagre.min.js"></script>
+<script src="/static/vendor/cytoscape-dagre.js"></script>
+<script src="/static/app.js"></script>
+</body>
+</html>

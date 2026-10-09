@@ -38,6 +38,11 @@ def extract(entry: str, *, root: str = ".", compile_commands: Optional[str] = No
     graph = extract_graph(fe, file, symbol, opts, root)
     graph.meta["entry_arg"] = entry
     graph.meta["compile_commands"] = cc_dir
+    graph.meta["extract_args"] = {
+        "entry": entry, "root": root, "compile_commands": cc_dir, "depth": depth, "type_depth": type_depth,
+        "include_callers": include_callers, "include_system": include_system, "exclude": list(exclude),
+        "max_nodes": max_nodes, "extra_args": list(extra_args), "resource_dir": resource_dir, "lang": lang,
+    }
     graph.meta["index"] = fe.stats
     if fe.errors:
         graph.meta["tu_errors"] = fe.errors

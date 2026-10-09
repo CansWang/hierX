@@ -1,0 +1,141 @@
+# hx — Single Source of Truth (development strategy)
+
+This file is the bookkeeping record for how `hx` is planned, why, and where it
+stands. Update the **Status log** at the bottom whenever a phase, decision or
+scope changes. The code is the truth for *what exists*; this file is the truth
+for *what is intended*.
+
+## TLDR
+- **Problem**: AI agents flood the developer with text. The developer wants a compact, always-current, *structural* view of the code the agents touch, for software and hardware codebases alike.
+- **Tool shape**: `hx extract <file>:<symbol>` → `graph.json` (functions, params with in/out, types, structs, call edges, per depth) → `hx serve` (browser UI, interactive, annotatable, live-reload) → `hx diff` (what changed between two extractions, in ~20 lines).
+- **Two files, not one**: machine-generated `graph.json` is regenerated freely; human-owned `annotations.json` (notes, tags, in/out overrides, "verified" marks) survives regeneration via stable symbol IDs.
+- **One IR, four frontends**: language-neutral intermediate representation; frontends for C/C++ (libclang), SystemVerilog (verilator XML), Rust + Python (generic LSP client). C/C++ first.
+- **Decisions made**: metadata format = JSON (schema-versioned; SQLite only if repo-scale indexing is later needed). Tool = Python package. Viewer = browser app bundled into one HTML with vendored libraries (Cytoscape.js + dagre), served by FastAPI. Static structure only; runtime capture reserved for a later phase.
+
+## Glossary
+- **IR** — intermediate representation, the language-neutral data model in `hx/model.py`.
+- **Call graph** — who-calls-whom.
+- **libclang** — Clang's C API for parsing C/C++ with full type info. Used through the pip `libclang` wheel plus the system clang resource dir.
+- **compile_commands.json** — per-file compiler flags, emitted by CMake (`CMAKE_EXPORT_COMPILE_COMMANDS=ON`) or Bear.
+- **USR** — Unified Symbol Resolution, libclang's cross-file identity string for a symbol. Internal only; mapped to stable IDs.
+- **TU** — translation unit, one `.c`/`.cpp` file plus its includes.
+- **LSP** — Language Server Protocol, the editor-agnostic "go to definition / call hierarchy" API.
+- **MCP** — Model Context Protocol, how agents call external tools.
+- **SSE** — Server-Sent Events, one-way push from server to browser.
+- **BFS** — breadth-first search.
+
+## Context
+- Repo `~/hx` started empty on 2026-10-09; tool working name `hx` matches the repo.
+- Dev machine: Python 3.12, Node 20, clang 18 (resource dir `/usr/lib/llvm-18/lib/clang/18`), verilator 5.02 (`--xml-only` dumps elaborated module hierarchy with ports/types), graphviz, sqlite3, Google Chrome (headless screenshots for viewer checks). Not installed: clangd, tree-sitter, rust-analyzer, cargo, pyright.
+- User choices: languages C/C++, SystemVerilog/Verilog, Python, Rust; build-aware exact extraction; local server + static export; static only for now.
+- Motive to keep central: after an agent session the human should read a **short structural diff + an updated graph**, not agent output. Agents should be able to **query** the graph instead of re-reading files.
+
+## Principles
+1. **Never drop silently.** Anything reached but not expanded goes into `unresolved[]` with a reason (beyond depth, no definition, system header, excluded, function pointer, truncated).
+2. **IDs are a contract.** `<lang>:<relpath>::<qualname>` forms are stable across regeneration; overload hashes are added only on collision. Annotations key on them.
+3. **Exactness is labelled.** Every node carries `precision` (`exact` | `lsp` | `syntax`); every param carries `dir_source` (`explicit` | `heuristic` | `user`). The viewer never pretends.
+4. **Regeneration is cheap.** Per-TU cache keyed by source+header mtimes; a re-run after an agent edit re-parses only what changed.
+5. **Frontends emit IR, nothing else.** `hx/traverse.py` never looks inside a frontend key.
+6. **Human-owned data lives apart from generated data.** `graph.json` vs `annotations.json`.
+
+## Phases (high level)
+1. **Core + C/C++** — IR, stable IDs, BFS traversal, CLI, libclang frontend, JSON output, fixture tests. **Done 2026-10-09.**
+2. **Viewer + Serve** — single-file browser UI (tree / graph / detail panes), FastAPI server persisting annotations, SSE live-reload, static HTML export. **Done 2026-10-09.**
+3. **More frontends** — SystemVerilog via verilator XML; generic LSP frontend driving rust-analyzer and pyright/jedi; shared conformance fixtures.
+4. **Diff + agent integration** — `hx diff` (Markdown + JSON), post-edit hook that re-extracts configured entries, MCP server so agents query the graph.
+5. **Runtime (reserved, not now)** — IR already carries an empty `runtime` slot; instrumentation strategies noted only.
+
+---
+
+## Phase 1 — Core + C/C++ frontend (done)
+
+### Layout
+```
+hx/
+  pyproject.toml              # package "hx", console script "hx"; deps: libclang (+ fastapi/uvicorn from Phase 2)
+  hx/
+    cli.py                    # hx extract | serve | export | diff | mcp
+    api.py                    # extract(...) -> Graph, used by CLI, server and tests
+    model.py                  # IR dataclasses + schema version "hx/1"; JSON round-trip
+    ids.py                    # stable ID construction + whitespace-insensitive body hashing
+    traverse.py               # BFS over a Frontend, depth limit, cycle-safe, exclusion filters, callers
+    cache.py                  # per-TU on-disk cache under .hx/cache/ keyed by (path, args) + dep mtimes
+    frontends/
+      base.py                 # Frontend protocol: locate_entry, function, declaration, type, global_var, callers, stable_id
+      clang_fe.py             # libclang implementation (parallel workers, merged USR index)
+  tests/
+    fixtures/c/               # firmware-style C project; conftest generates compile_commands.json in a temp copy
+    test_ids.py  test_traverse.py (fake frontend)  test_clang_fe.py (real libclang)  test_cli.py
+```
+
+### IR — `graph.json`, schema `hx/1`
+- Top level: `schema`, `generated`, `root`, `lang`, `entry`, `meta`, `nodes{}`, `types{}`, `globals{}`, `edges[]`, `unresolved[]`.
+- **Node**: `id`, `kind`, `name`, `qualname`, `lang`, `loc{file,line,end_line,col}`, `signature`, `storage`, `depth` (negative = caller side), `body_hash`, `precision`, `returns{type,type_ref}`, `params[]{name,type,type_ref,dir,dir_source}`, `globals{reads[],writes[]}`, `calls[]`, `runtime: null`.
+- **Type**: `id`, `kind` (`struct|union|class|enum|typedef|…`), `name`, `loc`, `size`, `align`, `fields[]{name,type,type_ref,offset,size,bit_offset,bit_width}`, `enumerators[]`, `underlying`, `underlying_ref`, `anonymous`, `system`, `used_by[]`.
+- **GlobalVar**: `id`, `name`, `type`, `type_ref`, `loc`, `storage`, `scope` (`file|function-static|member`).
+- **Edge**: `from`, `to` (null for function-pointer calls), `kind` (`call|macro|fnptr|ref|instance`), `loc`, `args[]` (as written), `name`, `macro`, `ptr_type`.
+- **Unresolved**: `name`, `from`, `reason`, `loc`, `id`.
+
+### Stable IDs
+- Functions `c:src/dma.c::dma_start`; C++ overloads `cpp:src/bus.cpp::Bus::write#a1b2c3d4` (hash only on collision).
+- Types `c:include/dma.h::struct dma_chan`, typedefs `c:include/dma.h::dma_chan_t`, anonymous `c:include/dma.h::anon@L23`.
+- Globals `c:src/dma.c::g_dma_active`; function-local statics `c:src/main.c::app_run.ch`.
+- Files outside the root keep their absolute path (system headers).
+
+### Traversal rules
+- BFS from entry; `--depth N` (default 3) or `--all`; cycles safe; min depth wins; already-expanded callees get an edge without a depth check (recursion is not "beyond depth").
+- `--include-callers` walks the reverse graph with negative depth; callers' other callees are not expanded.
+- System headers excluded by default (`--include-system`); `--exclude GLOB` repeatable; `--max-nodes` cap; `--type-depth` (default 2) limits nested struct expansion while typedef aliases are free.
+
+### libclang frontend facts
+- Args from compile_commands are sanitized (compiler, `-o`, dep flags, gcc-only flags dropped; include paths absolutized). Cross compilers (`arm-none-eabi-gcc`) get `--target` + their own system include dirs. `-resource-dir` is injected from `clang -print-resource-dir` because the pip wheel ships no headers.
+- Param direction heuristic: by-value → `in`; pointer/ref/array to const → `in` (array qualifier is on the array type in libclang); otherwise `inout`. `dir_source: heuristic`.
+- Calls inside macro expansions are detected via `MACRO_INSTANTIATION` spans and get `kind: macro` with the macro's spelled args. Function pointers → `kind: fnptr`, `to: null`. Address-taken functions → `kind: ref` and are expanded like callees.
+- Global reads/writes: writes = assignment LHS, `++/--`, compound assignment, address taken. Operator kinds come from libclang's C API (`clang_getCursorBinaryOperatorKind`, LLVM ≥ 17) via ctypes so macro-expanded operators are exact; source-slice fallback otherwise.
+- Types from system headers are recorded as stubs (no fields) unless `--include-system`.
+
+### Phase 1 verification
+- 30 pytest cases (fixture layout checked against a gcc-compiled `offsetof` probe).
+- Smoke: cJSON (1 TU, 0.14 s); libuv (35 TUs, 0.8 s cold with parallel workers, 0.15 s cached).
+
+---
+
+## Phase 2 — Viewer + Serve
+- **TLDR**: one `viewer.html` (vanilla ES modules + vendored Cytoscape.js/dagre, no build step) served by FastAPI; edits persist to `annotations.json`; SSE live-reload when the graph file changes or a re-extract finishes; `hx export` emits a standalone HTML with data inlined.
+- **Layout**: left = hierarchy tree (entry → callees by depth, collapsible, search, callers group); center = graph (optional compound nodes grouped by file, dagre layout LR/TB, depth slider, double-click collapses a subtree, hover edge shows call-site args); right = detail (signature, params table with editable `dir` chip, click type → nested struct/field tree with offsets, source snippet, notes/tags, "verified" checkbox that pins the body hash and flags later changes).
+- URL hash holds selection/layout so views are linkable. Unresolved calls render as dashed ghost nodes.
+- **API**: `GET /api/graph`, `GET|PUT|PATCH /api/annotations` (PATCH = JSON merge patch, `null` deletes), `POST /api/extract` (re-run with the args stored in `graph.meta`), `GET /api/source?file&line&span` (root-confined), `GET /events` (SSE: `graph`, `annotations`, `extract-start`, `extract-error`, `ping`).
+- **annotations.json** schema `hx-ann/1`: `nodes{id:{note, tags[], verified_body_hash, collapsed, params{name:{dir,note}}}}`, `types{id:{note, fields{name:{note}}}}`, `view{hidden[], pinned_positions{}}`. One file per project (`.hx/annotations.json`), shared across entry points.
+- **Export** mode has no server: edits stay in memory and a "download annotations" button yields the file.
+
+## Phase 3 — More frontends
+- **TLDR**: two new frontend plugins against the same IR, plus a conformance fixture per language asserting identical invariants.
+- **SystemVerilog/Verilog** (`verilator_fe.py`): `verilator --xml-only --xml-output <out> -Wno-fatal <files> [-f list.f] [--top-module X]`; `<module>` → node kind `module`, `<instance>` → `instance` node + `instance` edge, `<var dir=…>` → params with `dir_source: explicit`, `<typetable>` struct/packed-array dtypes → types with bit ranges, functions/tasks → function nodes. Entry forms: `rtl/top.sv:top` (module) or `top.u_core.alu` (instance path).
+- **Generic LSP** (`lsp_fe.py`): minimal JSON-RPC-over-stdio client; `prepareCallHierarchy` + `callHierarchy/outgoingCalls|incomingCalls`, `hover` (signature text), `typeDefinition` + `documentSymbol` (struct fields). Nodes marked `precision: lsp` (no sizes/offsets). Rust: rust-analyzer (prereq: rustup). Python: pyright-langserver or jedi-language-server; decide at phase start. Rust `dir`: `&T` → in, `&mut T` → inout, owned → in. Python: all `in` + return.
+
+## Phase 4 — Diff + agent integration
+- **TLDR**: the thing the human actually reads after an agent session is `hx diff` output, ~20 lines.
+- `hx diff old.json new.json --format md|json`: added/removed nodes; signature changes (param added/removed/type/dir); struct field changes incl. offset shifts; new/removed edges; body changed (body_hash + LOC delta). JSON form drives viewer "diff mode".
+- `.hx/config.toml`: list of entry points to track. `hx watch` re-extracts them on file change (debounced), writes `.hx/last-diff.md`, pushes SSE reload. Wire as a Claude Code `Stop` / `PostToolUse(Edit|Write)` hook.
+- `hx mcp`: MCP server exposing `get_function`, `callees(id, depth)`, `callers`, `get_type`, `search`, `diff_since(ts)`.
+
+## Phase 5 — Runtime (reserved)
+- Not in scope. IR keeps `runtime: null`. Candidate strategies: C `-finstrument-functions` / gdb Python / uprobes; SV port probes via `verilator --trace`; Python `sys.setprofile`; Rust `tracing`.
+
+## Risks / mitigations
+- **Cross-compiler flags break libclang** → `--target` + sysroot auto-detect, `--extra-arg` escape hatch, per-TU error list in `meta.tu_errors`.
+- **Macro-heavy register code** → macro spans + spelled args; `kind: macro` edges.
+- **Large repos** → per-TU cache + multiprocessing + depth/max-nodes limits.
+- **LSP frontends less exact** → `precision` surfaced in the viewer.
+- **Dynamic dispatch / fn-pointers unresolved** → always listed in `unresolved[]`, shown as ghost nodes.
+
+## Conventions
+- Python 3.10+, dataclasses over pydantic for the IR, no network at runtime, vendored browser libs.
+- Tests: `python -m pytest -q` from the repo root (venv at `.venv`). Fixture projects are copied to a temp dir per test.
+- Do not commit on the user's behalf; the user decides when to commit.
+- Keep this file's Status log current.
+
+## Status log
+- **2026-10-09** — Plan approved. Phase 1 implemented and verified (30 tests; cJSON, libuv smoke). Additions vs. original plan: top-level `globals{}` table, edge kind `ref`, operator kinds via libclang C API. Viewer tech adjusted from "TypeScript via esbuild" to vanilla ES modules + vendored libraries so there is no build step.
+- **2026-10-09** — Phase 2 done. `hx serve` (FastAPI + uvicorn, lifespan watcher polling graph/annotations mtimes, SSE), `hx export`, `hx/annotations.py` (merge patch, recursive prune), viewer in `hx/viewer/` (vanilla JS, Cytoscape 3.34.3 + dagre 0.8.5 vendored). 42 tests (SSE tests run a real uvicorn thread because Starlette's TestClient buffers whole responses). Verified with headless Chrome screenshots in light and dark mode, console clean. Viewer extras beyond plan: `?theme=`, `?live=0`, caller side in tree, per-reason unresolved groups, global read/write panel, edge detail page.
+- **Open items carried forward**: viewer has no automated browser tests (only syntax check + headless render in dev loop); `annotations.view.hidden` is reserved but not yet used by the UI; export mode keeps edits in memory until downloaded.

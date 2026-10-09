@@ -9,16 +9,21 @@ description = "Function-scoped structure extractor: call graph + types + structs
 requires-python = ">=3.10"
 dependencies = [
     "libclang>=16",
+    "fastapi>=0.110",
+    "uvicorn>=0.27",
 ]
 
 [project.optional-dependencies]
-dev = ["pytest>=7"]
+dev = ["pytest>=7", "httpx>=0.25"]
 
 [project.scripts]
 hx = "hx.cli:main"
 
 [tool.setuptools.packages.find]
 include = ["hx", "hx.*"]
+
+[tool.setuptools.package-data]
+hx = ["viewer/*.html", "viewer/*.js", "viewer/*.css", "viewer/vendor/*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

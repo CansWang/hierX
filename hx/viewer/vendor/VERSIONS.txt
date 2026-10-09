@@ -1,0 +1,3 @@
+cytoscape 3.34.3 MIT
+dagre 0.8.5 MIT
+cytoscape-dagre 2.5.0 MIT

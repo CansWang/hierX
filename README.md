@@ -12,8 +12,9 @@ after every AI-agent editing session and then **diffed and viewed** instead of
 reading the agent's narration. IDs are stable across regeneration, so notes
 you attach later survive.
 
-Status: **Phase 1** (core model + C/C++ frontend via libclang). Viewer, more
-languages, diff and agent hooks follow; see the plan.
+Status: **Phase 2** done — C/C++ extraction (libclang) plus the browser viewer
+with editable annotations and live reload. More languages, diff and agent hooks
+follow; the plan lives in `dev/ssot/single-source-of-truth.md`.
 
 ## Install
 
@@ -48,6 +49,36 @@ output      .hx/graph.json
 Translation units are cached under `.hx/cache/` by source and header mtimes,
 so a re-run after an edit re-parses only what changed.
 
+## View
+
+```bash
+hx serve                    # http://127.0.0.1:8765/ on .hx/graph.json, annotations in .hx/annotations.json
+hx serve out/g.json --open  # any graph; --no-extract disables the re-extract button
+hx export -o view.html      # standalone HTML (graph + annotations + viewer inlined), no server needed
+```
+
+The viewer has three panes: the hierarchy tree (callers above, callees below,
+unresolved targets grouped by reason), the graph (nodes grouped by file, depth
+slider, double-click collapses a subtree, drag pins a node, hover an edge for
+the call-site arguments), and the detail pane (signature, parameters with a
+clickable in/out chip, struct layouts with offsets, globals, call sites, source
+snippet, notes and tags, a *verified* checkbox that pins the body hash and
+flags later changes).
+
+Edits go to `annotations.json` through `PATCH /api/annotations` (JSON merge
+patch) and survive re-extraction because they are keyed by stable ids. The
+server watches `graph.json` and `annotations.json`; when either changes on disk
+(for example an agent ran `hx extract`), every open tab reloads via
+Server-Sent Events. The **re-extract** button re-runs the last `hx extract`
+arguments recorded in `graph.meta.extract_args`.
+
+Keyboard: `/` search · `f` fit · `Esc` clear selection · `Backspace` back.
+URL hash carries selection, depth and layout, so links are shareable;
+`?theme=dark|light` forces a theme and `?live=0` disables the live connection.
+
+API: `GET /api/graph`, `GET|PUT|PATCH /api/annotations`, `POST /api/extract`,
+`GET /api/source?file&line&span`, `GET /api/status`, `GET /events` (SSE).
+
 ## What is in graph.json
 
 | key | content |
@@ -73,6 +104,9 @@ python -m pytest -q
 ```
 
 Layout: `hx/model.py` (IR), `hx/ids.py` (stable ids), `hx/traverse.py` (BFS),
-`hx/cache.py`, `hx/frontends/clang_fe.py` (libclang), `hx/cli.py`,
-`tests/fixtures/c/` (fixture project exercising macros, fn pointers,
-bitfields, anonymous unions, statics).
+`hx/cache.py`, `hx/frontends/clang_fe.py` (libclang), `hx/annotations.py`,
+`hx/serve/app.py` (FastAPI), `hx/export.py`, `hx/viewer/` (vanilla JS app +
+vendored Cytoscape/dagre, no build step), `hx/cli.py`, `tests/fixtures/c/`
+(fixture project exercising macros, fn pointers, bitfields, anonymous unions,
+statics). Headless check of the viewer:
+`google-chrome --headless=new --screenshot --virtual-time-budget=3000 "http://127.0.0.1:8765/?live=0"`.

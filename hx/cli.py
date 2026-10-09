@@ -33,7 +33,59 @@ def _build_parser() -> argparse.ArgumentParser:
     e.add_argument("--lang", default="auto", help="auto|c|cpp (Phase 1: C/C++ only)")
     e.add_argument("-o", "--output", help="output path (default <root>/.hx/graph.json)")
     e.add_argument("-v", "--verbose", action="store_true")
+    sv = sub.add_parser("serve", help="open the browser viewer on a graph.json, with editable annotations")
+    sv.add_argument("graph", nargs="?", help="graph.json (default .hx/graph.json)")
+    sv.add_argument("--root", help="project root for source snippets (default: graph's root)")
+    sv.add_argument("--annotations", help="annotations.json (default: next to the graph)")
+    sv.add_argument("--host", default="127.0.0.1")
+    sv.add_argument("--port", type=int, default=8765)
+    sv.add_argument("--open", action="store_true", help="open the browser")
+    sv.add_argument("--no-extract", action="store_true", help="disable the re-extract button/endpoint")
+
+    ex = sub.add_parser("export", help="write a standalone viewer HTML with graph + annotations inlined")
+    ex.add_argument("graph", nargs="?", help="graph.json (default .hx/graph.json)")
+    ex.add_argument("--annotations", help="annotations.json (default: next to the graph)")
+    ex.add_argument("-o", "--output", help="output HTML (default: <graph dir>/view.html)")
     return p
+
+
+def _default_graph(path: str | None) -> str:
+    return os.path.abspath(path or os.path.join(".hx", "graph.json"))
+
+
+def cmd_serve(a: argparse.Namespace) -> int:
+    graph = _default_graph(a.graph)
+    if not os.path.exists(graph):
+        print(f"hx: {graph} does not exist; run `hx extract` first or pass the graph path", file=sys.stderr)
+        return 2
+    try:
+        import uvicorn
+        from .serve.app import create_app
+    except ImportError as e:
+        print(f"hx: serve needs fastapi and uvicorn ({e}); pip install 'fastapi uvicorn'", file=sys.stderr)
+        return 2
+    app = create_app(graph, a.annotations, a.root, allow_extract=not a.no_extract)
+    url = f"http://{a.host}:{a.port}/"
+    print(f"hx viewer   {url}")
+    print(f"graph       {graph}")
+    print(f"annotations {app.state.hx.ann_path}")
+    if a.open:
+        import webbrowser
+        webbrowser.open(url)
+    uvicorn.run(app, host=a.host, port=a.port, log_level="warning")
+    return 0
+
+
+def cmd_export(a: argparse.Namespace) -> int:
+    from .export import export_file
+    graph = _default_graph(a.graph)
+    if not os.path.exists(graph):
+        print(f"hx: {graph} does not exist; run `hx extract` first or pass the graph path", file=sys.stderr)
+        return 2
+    out = a.output or os.path.join(os.path.dirname(graph), "view.html")
+    export_file(graph, out, a.annotations)
+    print(f"output      {out}  ({os.path.getsize(out) // 1024} KB)")
+    return 0
 
 
 def cmd_extract(a: argparse.Namespace) -> int:
@@ -85,6 +137,10 @@ def main(argv: list[str] | None = None) -> int:
     a = p.parse_args(argv)
     if a.cmd == "extract":
         return cmd_extract(a)
+    if a.cmd == "serve":
+        return cmd_serve(a)
+    if a.cmd == "export":
+        return cmd_export(a)
     p.error(f"unknown command {a.cmd}")
     return 2
 
