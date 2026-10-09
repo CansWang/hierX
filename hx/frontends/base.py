@@ -50,6 +50,7 @@ class DeclRecord:
     has_definition: bool
     system: bool
     relpath: Optional[str]         # for --exclude matching
+    reason: Optional[str] = None   # frontend-specific wording for why it cannot be expanded
 
 
 @dataclass

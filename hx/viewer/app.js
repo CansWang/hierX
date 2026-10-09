@@ -173,7 +173,7 @@ function back() { const prev = S.history.pop(); if (prev) select(prev.kind, prev
 // ------------------------------------------------------------------ tree
 function kindBadge(e) {
   if (!e || e.kind === "call") return null;
-  const label = {macro: "macro " + (e.macro || ""), fnptr: "fnptr", ref: "ref", instance: "inst"}[e.kind] || e.kind;
+  const label = {macro: "macro " + (e.macro || ""), fnptr: "fnptr", ref: "ref", instance: "instance"}[e.kind] || e.kind;
   return h("span", {class: "badge kind-" + e.kind}, label.trim());
 }
 function nodeBadges(n) {
@@ -320,6 +320,7 @@ function buildStyle() {
     {selector: "edge[kind='macro']", style: {"line-style": "dashed", "line-dash-pattern": [6, 3]}},
     {selector: "edge[kind='fnptr']", style: {"line-style": "dotted"}},
     {selector: "edge[kind='ref']", style: {"line-style": "dashed", "line-dash-pattern": [8, 3, 2, 3], "target-arrow-shape": "circle"}},
+    {selector: "edge[kind='instance']", style: {"width": 2, "target-arrow-shape": "diamond", "arrow-scale": 1}},
     {selector: "edge.ghostedge", style: {"opacity": 0.6}},
     {selector: "edge:selected", style: {"width": 3, "line-color": sel, "target-arrow-color": sel}},
     {selector: "edge.hl", style: {"width": 3}},
@@ -327,7 +328,9 @@ function buildStyle() {
   ];
 }
 const labelWidth = (text) => Math.max(28, Math.round(text.length * 6.7) + 6);  // 11px monospace ≈ 6.7px per glyph
-function edgeColor(kind) { return cssVar({macro: "--edge-macro", fnptr: "--edge-fnptr", ref: "--edge-ref"}[kind] || "--edge-call"); }
+function edgeColor(kind) { return cssVar({macro: "--edge-macro", fnptr: "--edge-fnptr", ref: "--edge-ref", instance: "--ink-2"}[kind] || "--edge-call"); }
+const BIT_LANGS = new Set(["sv", "vhdl"]);
+const sizeUnit = (t) => BIT_LANGS.has(t.lang) ? "b" : "";
 function buildElements() {
   const g = S.graph, vis = visibleSet(), els = [], parents = new Set();
   const parentFor = (file) => { if (!S.showFiles || !file) return undefined; const pid = "file:" + file; if (!parents.has(pid)) { parents.add(pid); els.push({data: {id: pid, label: file}, classes: "file", selectable: false}); } return pid; };
@@ -460,6 +463,7 @@ function renderNode(d, n) {
     h("span", {class: "link mono", title: "show source", onclick: () => showSource(n)}, n.loc.file + ":" + n.loc.line + (n.loc.end_line ? "–" + n.loc.end_line : "")),
     h("span", {class: "muted mono small", title: "body hash (whitespace-insensitive)"}, (n.body_hash || "").slice(5, 13))));
   d.append(h("pre", {class: "sig"}, n.signature));
+  if (n.attrs && Object.keys(n.attrs).length) d.append(attrsBlock(n.attrs));
   d.append(h("div", {class: "verify", style: "margin-top:8px"},
     h("label", null, h("input", {type: "checkbox", checked: vs !== "none", onchange: (ev) => { applyPatch({nodes: {[n.id]: {verified_body_hash: ev.target.checked ? n.body_hash : null}}}); rerenderSoft(); }}), " verified"),
     vs === "ok" ? h("span", {class: "badge ok"}, "✓ unchanged since verified") : null,
@@ -475,7 +479,7 @@ function renderNode(d, n) {
           h("td", null, h("input", {class: "tags", value: pnote, placeholder: "…", onchange: (ev) => applyPatch({nodes: {[n.id]: {params: {[p.name]: {note: ev.target.value.trim() || null}}}}})})));
       }))));
   }
-  d.append(h("h3", null, "returns"), h("div", null, typeLink(n.returns && n.returns.type_ref, n.returns ? n.returns.type : "void")));
+  if (n.returns || !["module", "instance", "task"].includes(n.kind)) d.append(h("h3", null, "returns"), h("div", null, typeLink(n.returns && n.returns.type_ref, n.returns ? n.returns.type : "void")));
   if (n.globals.reads.length || n.globals.writes.length) {
     d.append(h("h3", null, "globals"));
     d.append(h("dl", {class: "kv"},
@@ -509,6 +513,20 @@ function renderNode(d, n) {
   d.append(holder);
   if (SERVE) showSource(n); else holder.append(h("p", {class: "muted small"}, "source snippets are available in `hx serve` mode"));
 }
+function attrsBlock(attrs) {
+  const dl = h("dl", {class: "kv", style: "margin-top:8px"});
+  for (const [k, v] of Object.entries(attrs)) {
+    if (v == null || (Array.isArray(v) && !v.length) || (typeof v === "object" && !Array.isArray(v) && !Object.keys(v).length)) continue;
+    let val;
+    if (k === "signals" && Array.isArray(v)) val = h("details", null, h("summary", {class: "link small"}, v.length + " internal signals"),
+      h("ul", {class: "list"}, v.map((sg) => h("li", null, h("span", {class: "mono"}, sg.name), h("span", {class: "muted small"}, sg.type)))));
+    else if (typeof v === "object" && !Array.isArray(v)) val = Object.entries(v).map(([pk, pv]) => pk + "=" + pv).join(", ");
+    else if (Array.isArray(v)) val = v.map((x) => typeof x === "object" ? JSON.stringify(x) : String(x)).join(", ");
+    else val = String(v);
+    dl.append(h("dt", null, k), h("dd", null, val));
+  }
+  return dl;
+}
 function cycleDir(n, p) {
   const cur = paramDir(n, p);
   const order = ["in", "out", "inout"];
@@ -525,8 +543,11 @@ function fieldsTable(t, depth = 0, seen = new Set()) {
     const sub = f.type_ref && S.graph.types[f.type_ref];
     const key = f.name || "(anon)";
     const note = ((a.fields || {})[key] || {}).note || "";
+    const bits = BIT_LANGS.has(t.lang);
+    const offCell = bits ? (f.bit_offset != null && f.bit_width != null ? "[" + (f.bit_offset + f.bit_width - 1) + ":" + f.bit_offset + "]" : "") : (f.offset != null ? f.offset : "");
+    const sizeCell = bits ? (f.bit_width != null ? f.bit_width + "b" : "") : (f.size != null ? f.size : (f.bit_width != null ? f.bit_width + "b@" + f.bit_offset : ""));
     const tr = h("tr", null, h("td", {class: "mono"}, f.name || h("i", {class: "muted"}, "(anonymous)")), h("td", null, typeLink(f.type_ref, f.type)),
-      h("td", {class: "num"}, f.offset != null ? f.offset : ""), h("td", {class: "num"}, f.size != null ? f.size : (f.bit_width != null ? f.bit_width + "b@" + f.bit_offset : "")),
+      h("td", {class: "num"}, offCell), h("td", {class: "num"}, sizeCell),
       h("td", null, h("input", {class: "tags", value: note, placeholder: "…", onchange: (ev) => applyPatch({types: {[t.id]: {fields: {[key]: {note: ev.target.value.trim() || null}}}}})})));
     if (sub && sub.fields && sub.fields.length && depth < 3 && !seen.has(sub.id)) {
       const nested = h("tr", null, h("td", {colspan: 5}, h("div", {class: "fields-nested"}, fieldsTable(sub, depth + 1, new Set([...seen, t.id])))));
@@ -534,7 +555,8 @@ function fieldsTable(t, depth = 0, seen = new Set()) {
     }
     return tr;
   });
-  return h("table", {class: "t"}, h("thead", null, h("tr", null, h("th", null, "field"), h("th", null, "type"), h("th", null, "off"), h("th", null, "size"), h("th", null, "note"))), h("tbody", null, rows));
+  const bitsHdr = BIT_LANGS.has(t.lang);
+  return h("table", {class: "t"}, h("thead", null, h("tr", null, h("th", null, "field"), h("th", null, "type"), h("th", null, bitsHdr ? "bits" : "off"), h("th", null, bitsHdr ? "width" : "size"), h("th", null, "note"))), h("tbody", null, rows));
 }
 function renderType(d, t) {
   if (!t) return;
@@ -542,7 +564,7 @@ function renderType(d, t) {
   d.append(navBar(h("span", {class: "muted small"}, t.kind + (t.system ? " · system header" : "") + (t.anonymous ? " · anonymous" : ""))));
   d.append(h("h2", null, (t.kind === "typedef" ? "" : t.kind + " ") + t.name));
   d.append(h("div", {class: "meta"}, t.loc ? h("span", {class: "mono"}, t.loc.file + ":" + t.loc.line) : null,
-    t.size != null ? h("span", null, "size ", h("b", {class: "mono"}, t.size), " align ", h("b", {class: "mono"}, t.align)) : h("span", {class: "muted"}, "size unknown")));
+    t.size != null ? h("span", null, "size ", h("b", {class: "mono"}, t.size + sizeUnit(t)), t.align != null ? [" align ", h("b", {class: "mono"}, t.align)] : null) : h("span", {class: "muted"}, "size unknown")));
   if (t.kind === "typedef") {
     d.append(h("h3", null, "alias of"));
     d.append(h("div", null, typeLink(t.underlying_ref, t.underlying || "?")));

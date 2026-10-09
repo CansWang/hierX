@@ -78,6 +78,7 @@ a:hover, .link:hover { text-decoration: underline; }
 .sw-macro { border-top-style: dashed; border-color: var(--edge-macro); }
 .sw-fnptr { border-top-style: dotted; border-color: var(--edge-fnptr); }
 .sw-ref { border-top-style: dashed; border-color: var(--edge-ref); }
+.sw-inst { border-top-width: 3px; border-color: var(--ink-2); }
 .sw-ghost { width: 16px; height: 10px; border: 1.5px dashed var(--muted); border-radius: 3px; }
 .sw-caller { width: 16px; height: 10px; border: 2px solid var(--caller); border-radius: 3px; }
 

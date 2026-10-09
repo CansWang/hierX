@@ -99,6 +99,7 @@ class Node:
     params: list[Param] = field(default_factory=list)
     globals: GlobalRefs = field(default_factory=GlobalRefs)
     calls: list[str] = field(default_factory=list)   # ids of expanded targets (see edges for kind)
+    attrs: dict[str, Any] = field(default_factory=dict)  # frontend extras (e.g. SV: module, parameters, signals)
     runtime: Any = None                # reserved (Phase 5)
 
 

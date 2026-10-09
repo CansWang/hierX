@@ -12,9 +12,10 @@ after every AI-agent editing session and then **diffed and viewed** instead of
 reading the agent's narration. IDs are stable across regeneration, so notes
 you attach later survive.
 
-Status: **Phase 2** done — C/C++ extraction (libclang) plus the browser viewer
-with editable annotations and live reload. More languages, diff and agent hooks
-follow; the plan lives in `dev/ssot/single-source-of-truth.md`.
+Status: **Phase 3** done — C/C++ (libclang), SystemVerilog/Verilog (verilator),
+Rust (rust-analyzer) and Python (pyright) frontends, plus the browser viewer with
+editable annotations and live reload. Diff and agent hooks follow; the plan
+lives in `dev/ssot/single-source-of-truth.md`.
 
 ## Install
 
@@ -23,10 +24,16 @@ python3 -m venv .venv && . .venv/bin/activate
 pip install -e ".[dev]"
 ```
 
-Requirements: Python 3.10+, a project with `compile_commands.json`
-(`cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON` or `bear -- make`), and a clang
-resource dir for the bundled libclang (auto-detected from
-`clang -print-resource-dir`; override with `--resource-dir`).
+Requirements: Python 3.10+. Per language:
+
+| language | needs | precision |
+|---|---|---|
+| C / C++ | `compile_commands.json` (`cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON` or `bear -- make`) and a clang resource dir (auto-detected via `clang -print-resource-dir`, override with `--resource-dir`) | exact: sizes, offsets, macros, globals |
+| SystemVerilog / Verilog | `verilator` on PATH; sources via `-f list.f`, `--sv-file GLOB`, a lone `*.f` at the root, or every `*.sv`/`*.v` under it | exact: hierarchy, ports with explicit direction, parameters, packed-struct bit layouts |
+| Rust | `rust-analyzer` (rustup component) and a `Cargo.toml` at the root | lsp: signatures from hover, struct fields without sizes, no globals |
+| Python | `pip install pyright` (needs node) | lsp: as above; dataclass fields from annotations |
+
+The language is picked from the entry file's extension; force it with `--lang`.
 
 ## Use
 
@@ -35,7 +42,18 @@ hx extract src/dma.c:dma_start --depth 3            # callees, 3 levels
 hx extract src/hal.c:hal_write32 --include-callers   # who calls this (negative depth)
 hx extract include/dma.h:dma_poll --all -o out/g.json
 hx extract src/main.c:app_run --exclude 'third_party/*' --type-depth 1 -v
+hx extract rtl/top.sv:top -f files.f                 # SystemVerilog: module hierarchy from the top
+hx extract rtl/core.sv:top.u_core_b.u_alu --include-callers   # one instance path, parents included
+hx extract src/lib.rs:app_run                        # Rust via rust-analyzer
+hx extract pkg/main.py:app_run --lsp-timeout 120     # Python via pyright
 ```
+
+For HDL the nodes are module instances (`sv:rtl/core.sv::top.u_core_a`) carrying
+their module's ports, parameters and internal signals; `instance` edges carry the
+port connections as written; functions and tasks are nodes of their own; struct
+and enum sizes are in bits. LSP languages are labelled `precision: lsp` in every
+node: good call graphs and signatures, no memory layout, and calls through
+closures or function pointers are invisible to the server.
 
 Output summary:
 
@@ -104,9 +122,10 @@ python -m pytest -q
 ```
 
 Layout: `hx/model.py` (IR), `hx/ids.py` (stable ids), `hx/traverse.py` (BFS),
-`hx/cache.py`, `hx/frontends/clang_fe.py` (libclang), `hx/annotations.py`,
+`hx/cache.py`, `hx/frontends/clang_fe.py` (libclang), `hx/frontends/verilator_fe.py`
+(verilator XML), `hx/frontends/lsp_fe.py` (JSON-RPC client + call hierarchy), `hx/annotations.py`,
 `hx/serve/app.py` (FastAPI), `hx/export.py`, `hx/viewer/` (vanilla JS app +
-vendored Cytoscape/dagre, no build step), `hx/cli.py`, `tests/fixtures/c/`
-(fixture project exercising macros, fn pointers, bitfields, anonymous unions,
-statics). Headless check of the viewer:
+vendored Cytoscape/dagre, no build step), `hx/cli.py`, `tests/fixtures/{c,sv,rust,python}/`
+(fixture projects; `tests/test_conformance.py` runs the same invariants over
+every frontend whose toolchain is installed). Headless check of the viewer:
 `google-chrome --headless=new --screenshot --virtual-time-budget=3000 "http://127.0.0.1:8765/?live=0"`.

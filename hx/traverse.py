@@ -99,10 +99,10 @@ class _Builder:
             self.unresolved(decl.name, src_id, "excluded by filter", cs.loc, decl.id)
             return None
         if decl.system and not self.opts.include_system:
-            self.unresolved(decl.name, src_id, "system header excluded", cs.loc, decl.id)
+            self.unresolved(decl.name, src_id, decl.reason or "system header excluded", cs.loc, decl.id)
             return None
         if not decl.has_definition:
-            self.unresolved(decl.name, src_id, "no definition in TU set", cs.loc, decl.id)
+            self.unresolved(decl.name, src_id, decl.reason or "no definition in TU set", cs.loc, decl.id)
             return None
         if self.opts.depth is not None and abs(next_depth) > self.opts.depth:
             self.unresolved(decl.name, src_id, "beyond depth limit", cs.loc, decl.id)

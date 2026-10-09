@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 import os
+import shlex
 import sys
 
 from . import __version__
@@ -30,7 +31,15 @@ def _build_parser() -> argparse.ArgumentParser:
     e.add_argument("--resource-dir", help="clang resource dir (auto-detected from `clang -print-resource-dir`)")
     e.add_argument("--jobs", "-j", type=int, help="parallel parse workers (default: cpus-1)")
     e.add_argument("--no-cache", action="store_true", help="ignore and do not write .hx/cache")
-    e.add_argument("--lang", default="auto", help="auto|c|cpp (Phase 1: C/C++ only)")
+    e.add_argument("--lang", default="auto", help="auto (by extension) | c | cpp | sv | rust | python | go")
+    sv = e.add_argument_group("SystemVerilog (verilator)")
+    sv.add_argument("--sv-file", action="append", default=[], metavar="GLOB", help="source glob relative to root (repeatable); default: a *.f at root, else **/*.sv + **/*.v")
+    sv.add_argument("-f", "--filelist", help="verilator -f file list")
+    sv.add_argument("--top", help="top module (default: inferred from the entry symbol)")
+    sv.add_argument("--verilator", default="verilator", help="verilator executable")
+    lsp = e.add_argument_group("LSP languages (rust-analyzer, pyright, gopls)")
+    lsp.add_argument("--lsp-cmd", help="language server command line, e.g. 'rust-analyzer' or 'pyright-langserver --stdio'")
+    lsp.add_argument("--lsp-timeout", type=float, default=90.0, help="seconds to wait for the server to index (default 90)")
     e.add_argument("-o", "--output", help="output path (default <root>/.hx/graph.json)")
     e.add_argument("-v", "--verbose", action="store_true")
     sv = sub.add_parser("serve", help="open the browser viewer on a graph.json, with editable annotations")
@@ -97,7 +106,9 @@ def cmd_extract(a: argparse.Namespace) -> int:
                         include_callers=a.include_callers, include_system=a.include_system,
                         exclude=a.exclude, max_nodes=a.max_nodes, extra_args=a.extra_arg,
                         resource_dir=a.resource_dir, jobs=a.jobs, use_cache=not a.no_cache,
-                        verbose=a.verbose, lang=a.lang)
+                        verbose=a.verbose, lang=a.lang, sv_files=a.sv_file, filelist=a.filelist, top=a.top,
+                        verilator=a.verilator, lsp_cmd=shlex.split(a.lsp_cmd) if a.lsp_cmd else None,
+                        lsp_timeout=a.lsp_timeout)
     except EntryNotFound as e:
         print(f"hx: {e}", file=sys.stderr)
         if e.suggestions:
@@ -112,8 +123,11 @@ def cmd_extract(a: argparse.Namespace) -> int:
     print(f"entry       {graph.entry}")
     print(f"nodes       {len(graph.nodes)}   edges {len(graph.edges)}   types {len(graph.types)}   "
           f"globals {len(graph.globals)}   unresolved {len(graph.unresolved)}")
-    print(f"tus         {idx.get('tus', '?')} total, {idx.get('parsed', '?')} parsed, {idx.get('cached', '?')} cached, "
-          f"{idx.get('tu_errors', 0)} failed, {idx.get('diagnostics', 0)} compile errors   ({idx.get('index_seconds', '?')}s)")
+    if idx.get("server"):
+        print(f"server      {idx['server']}   ready in {idx.get('ready_seconds', '?')}s   ({len(graph.nodes)} functions resolved, precision lsp)")
+    else:
+        print(f"tus         {idx.get('tus', '?')} total, {idx.get('parsed', '?')} parsed, {idx.get('cached', '?')} cached, "
+              f"{idx.get('tu_errors', 0)} failed, {idx.get('diagnostics', 0)} compile errors   ({idx.get('index_seconds', '?')}s)")
     if graph.meta.get("truncated"):
         print("note        graph truncated by --max-nodes")
     for note in graph.meta.get("notes", []):
