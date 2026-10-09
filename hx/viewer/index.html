@@ -11,6 +11,7 @@
 <body>
 <header id="topbar">
   <span class="brand" title="hx: function-scoped structure viewer">hx</span>
+  <select id="graph-pick" hidden title="which graph (tracked entry point) to show"></select>
   <span id="entry-label" class="entry" title="entry point"></span>
   <input id="search" type="search" placeholder="search functions · types · globals   ( / )" autocomplete="off" spellcheck="false">
   <label class="ctl" title="how many call levels to show">depth <input id="depth" type="range" min="0" max="3" value="3"><span id="depth-val" class="mono">3</span></label>
@@ -21,6 +22,8 @@
   <button id="btn-fit" title="fit graph (f)">fit</button>
   <button id="btn-relayout" title="forget pinned positions and lay out again">re-layout</button>
   <button id="btn-extract" title="re-run hx extract with the same arguments">re-extract</button>
+  <select id="diff-base" title="compare the current graph against a snapshot"><option value="">no diff</option></select>
+  <button id="btn-baseline" title="snapshot the current graph as a comparison point">baseline</button>
   <button id="btn-download" hidden title="annotations are kept in this page until downloaded">download annotations</button>
   <button id="btn-theme" title="theme: auto / light / dark">◐</button>
   <span id="status" class="status" aria-live="polite"></span>

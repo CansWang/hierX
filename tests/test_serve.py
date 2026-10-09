@@ -1,5 +1,7 @@
 import json
 import os
+import subprocess
+import sys
 import time
 
 import pytest
@@ -134,3 +136,41 @@ def test_extract_disabled(cproj, extract):
     with TestClient(create_app(str(gp), allow_extract=False)) as c:
         assert c.post("/api/extract").status_code == 403
         assert '"allow_extract": false' in c.get("/").text
+
+
+def test_multi_graph_history_and_diff(cproj, extract):
+    """Tracked graphs under .hx/graphs are listed, diffable against snapshots, and watched."""
+    from hx import project
+    root = str(cproj)
+    project.track(root, "src/main.c:app_run", depth=3, jobs=1)
+    project.track(root, "src/hal.c:hal_write32", depth=1, jobs=1)
+    project.update(root)
+    extract(depth=1).save(str(cproj / ".hx" / "graph.json"))
+    with TestClient(create_app(str(cproj / ".hx" / "graph.json"), poll_interval=0.05)) as c:
+        names = [g["name"] for g in c.get("/api/graphs").json()]
+        assert names == ["graph", "src__hal.c__hal_write32", "src__main.c__app_run"]
+        assert c.get("/api/status").json()["graphs"] == names
+        g = c.get("/api/graph", params={"name": "src__hal.c__hal_write32"}).json()
+        assert g["entry"] == "c:src/hal.c::hal_write32"
+        assert c.get("/api/graph", params={"name": "nope"}).status_code == 404
+        h = c.get("/api/history", params={"name": "src__main.c__app_run"}).json()
+        assert h["entry"] == "src/main.c:app_run" and h["snapshots"] == []
+        assert c.get("/api/diff", params={"name": "src__main.c__app_run"}).status_code == 404
+        snap = c.post("/api/snapshot", params={"name": "src__main.c__app_run"}).json()
+        assert snap["snapshot"] and len(snap["snapshots"]) == 1
+        dma_c = cproj / "src" / "dma.c"
+        dma_c.write_text(dma_c.read_text().replace("    g_dma_active++;\n", "    g_dma_active += 1;\n    hal_read32(ch->base);\n"))
+        os.utime(dma_c, (time.time() + 5, time.time() + 5))
+        project.update(root, ["src/main.c:app_run"])
+        d = c.get("/api/diff", params={"name": "src__main.c__app_run"}).json()
+        assert d["schema"] == "hx-diff/1" and d["summary"]["nodes_changed"] == 1 and "calls +hal_read32" in d["markdown"]
+        assert d["since"] == snap["snapshot"]
+        md = c.get("/api/diff", params={"name": "src__main.c__app_run", "format": "md"}).text
+        assert md.startswith("# src/main.c:app_run since ")
+        src = c.get("/api/source", params={"file": "src/hal.c", "line": 1, "span": 1, "name": "src__hal.c__hal_write32"}).json()
+        assert src["lines"] == ['#include "hal.h"']
+    # serve picks a tracked graph when .hx/graph.json is absent
+    (cproj / ".hx" / "graph.json").unlink()
+    r = subprocess.run([sys.executable, "-c", "import hx.cli,sys; sys.argv=['hx','serve','--port','1']; print(hx.cli._default_graph(None))"],
+                       cwd=cproj, capture_output=True, text=True)
+    assert r.returncode == 0

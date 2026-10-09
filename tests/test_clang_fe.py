@@ -103,14 +103,16 @@ def test_struct_layout_matches_compiler(extract, layout_probe):
         ("src", truth["src"], 4), ("dst", truth["dst"], 4), ("len", truth["len"], 2), ("flags", truth["flags"], 1)]
     stat = next(f for f in chan.fields if f.name == "stat")
     anon = g.types[stat.type_ref]
-    assert anon.kind == "union" and anon.anonymous and anon.id.startswith("c:include/dma.h::anon@L")
+    assert anon.kind == "union" and anon.anonymous and anon.id == "c:include/dma.h::union dma_chan.stat"   # named by parent.member: survives line shifts
     assert [f.name for f in anon.fields] == ["raw", "bytes"]
     inner = g.types[next(f for f in anon.fields if f.name == "bytes").type_ref]
     assert [f.name for f in inner.fields] == ["a", "b", "c", "d"] and inner.size == 4
+    assert inner.id == "c:include/dma.h::struct dma_chan.stat.bytes"
     anon_member = [f for f in chan.fields if f.name == ""]
     assert len(anon_member) == 1 and anon_member[0].type == "struct (anonymous)"
     hdr = g.types[anon_member[0].type_ref]
     assert hdr.anonymous and [f.name for f in hdr.fields] == ["head", "tail"] and hdr.size == 4
+    assert hdr.id == "c:include/dma.h::struct dma_chan.(anon#7)"
     assert anon_member[0].offset == layout_probe["struct dma_chan"]["head"]
     cb = g.types["c:include/dma.h::dma_cb_t"]
     assert cb.kind == "typedef" and cb.underlying == "void (*)(void *, int)" and cb.underlying_ref is None

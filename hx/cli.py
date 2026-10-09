@@ -5,6 +5,7 @@ import argparse
 import os
 import shlex
 import sys
+import time
 
 from . import __version__
 from .frontends.base import FrontendError, EntryNotFound
@@ -51,6 +52,53 @@ def _build_parser() -> argparse.ArgumentParser:
     sv.add_argument("--open", action="store_true", help="open the browser")
     sv.add_argument("--no-extract", action="store_true", help="disable the re-extract button/endpoint")
 
+    tr = sub.add_parser("track", help="add an entry point to .hx/config.toml so `hx update`/`hx watch`/the hook re-extract it")
+    tr.add_argument("entry", nargs="?", help="<file>:<symbol>")
+    tr.add_argument("--root", default=".")
+    tr.add_argument("--list", action="store_true", help="list tracked entries")
+    tr.add_argument("--remove", action="store_true", help="remove the entry instead of adding it")
+    for flag, kw in (("--depth", dict(type=int)), ("--type-depth", dict(type=int)), ("--include-callers", dict(action="store_true")),
+                     ("--include-system", dict(action="store_true")), ("--exclude", dict(action="append", default=[])),
+                     ("--max-nodes", dict(type=int)), ("--extra-arg", dict(action="append", default=[])), ("--compile-commands", {}),
+                     ("--lang", {}), ("--sv-file", dict(action="append", default=[])), ("-f", dict(dest="filelist")), ("--top", {}),
+                     ("--lsp-cmd", {}), ("--lsp-timeout", dict(type=float))):
+        tr.add_argument(flag, **kw)
+
+    up = sub.add_parser("update", help="re-extract tracked entries, snapshot the previous graphs and print what changed")
+    up.add_argument("entries", nargs="*", help="only these entries (default: all tracked)")
+    up.add_argument("--root", default=".")
+    up.add_argument("--quiet", action="store_true", help="print one line per entry instead of the full diff")
+    up.add_argument("--json", action="store_true", help="print the diff JSON documents")
+    up.add_argument("--hook", action="store_true", help="hook mode: read and ignore stdin, never exit non-zero")
+
+    wa = sub.add_parser("watch", help="poll sources and run `hx update` after each quiet period")
+    wa.add_argument("--root", default=".")
+    wa.add_argument("--interval", type=float, help="poll interval seconds (config: watch.interval, default 2)")
+    wa.add_argument("--debounce", type=float, help="quiet seconds before updating (config: watch.debounce, default 1)")
+    wa.add_argument("--once", action="store_true", help="run one update and exit")
+    wa.add_argument("--no-initial", action="store_true", help="do not update at startup, only on change")
+
+    df = sub.add_parser("diff", help="structural diff between two graphs, or an entry against its history")
+    df.add_argument("old", nargs="?", help="old graph.json (or omit with --entry)")
+    df.add_argument("new", nargs="?", help="new graph.json")
+    df.add_argument("--entry", help="tracked entry: diff its current graph against history")
+    df.add_argument("--since", default="prev", help="history point for --entry: prev | <snapshot ts> | <ISO time>")
+    df.add_argument("--root", default=".")
+    df.add_argument("--format", choices=["md", "json"], default="md")
+    df.add_argument("-o", "--output")
+    df.add_argument("--exit-code", action="store_true", help="exit 1 when there are changes")
+
+    hk = sub.add_parser("hook", help="Claude Code hook that runs `hx update` after each agent turn")
+    hk.add_argument("action", choices=["print", "install"])
+    hk.add_argument("--root", default=".")
+    hk.add_argument("--event", default="Stop", choices=["Stop", "PostToolUse"])
+    hk.add_argument("--command", default="hx update --quiet --hook")
+    hk.add_argument("--settings-dir", help="directory holding settings.json (default <root>/.claude)")
+
+    mc = sub.add_parser("mcp", help="run the MCP server (stdio) so agents can query graphs instead of grepping")
+    mc.add_argument("--root", default=".")
+    mc.add_argument("--print-config", action="store_true", help="print the .mcp.json / `claude mcp add` snippet")
+
     ex = sub.add_parser("export", help="write a standalone viewer HTML with graph + annotations inlined")
     ex.add_argument("graph", nargs="?", help="graph.json (default .hx/graph.json)")
     ex.add_argument("--annotations", help="annotations.json (default: next to the graph)")
@@ -64,8 +112,13 @@ def _default_graph(path: str | None) -> str:
 
 def cmd_serve(a: argparse.Namespace) -> int:
     graph = _default_graph(a.graph)
+    if not os.path.exists(graph) and not a.graph:
+        gdir = os.path.join(os.path.dirname(graph), "graphs")
+        tracked = sorted(f for f in os.listdir(gdir) if f.endswith(".json")) if os.path.isdir(gdir) else []
+        if tracked:
+            graph = os.path.join(gdir, tracked[0])
     if not os.path.exists(graph):
-        print(f"hx: {graph} does not exist; run `hx extract` first or pass the graph path", file=sys.stderr)
+        print(f"hx: {graph} does not exist; run `hx extract` (or `hx track` + `hx update`) first, or pass the graph path", file=sys.stderr)
         return 2
     try:
         import uvicorn
@@ -94,6 +147,136 @@ def cmd_export(a: argparse.Namespace) -> int:
     out = a.output or os.path.join(os.path.dirname(graph), "view.html")
     export_file(graph, out, a.annotations)
     print(f"output      {out}  ({os.path.getsize(out) // 1024} KB)")
+    return 0
+
+
+def cmd_track(a: argparse.Namespace) -> int:
+    from . import project
+    root = os.path.abspath(a.root)
+    if a.list or not a.entry:
+        cfg = project.load_config(root)
+        if not cfg["entries"]:
+            print("no tracked entries (add one: hx track src/main.c:app_run --depth 3)")
+        for e in cfg["entries"]:
+            opts = ", ".join(f"{k}={v}" for k, v in e.items() if k != "entry")
+            print(f"{e['entry']:<48} {opts}")
+        return 0
+    if a.remove:
+        print("removed" if project.untrack(root, a.entry) else "not tracked", a.entry)
+        return 0
+    table = project.track(root, a.entry, depth=a.depth, type_depth=a.type_depth, include_callers=a.include_callers or None,
+                          include_system=a.include_system or None, exclude=a.exclude, max_nodes=a.max_nodes, extra_args=a.extra_arg,
+                          compile_commands=a.compile_commands, lang=a.lang, sv_files=a.sv_file, filelist=a.filelist, top=a.top,
+                          lsp_cmd=shlex.split(a.lsp_cmd) if a.lsp_cmd else None, lsp_timeout=a.lsp_timeout)
+    print(f"tracking    {table['entry']}  ({project.config_path(root)})")
+    return 0
+
+
+def cmd_update(a: argparse.Namespace) -> int:
+    from . import project
+    if a.hook:
+        try:
+            sys.stdin.read()
+        except Exception:  # noqa: BLE001
+            pass
+    try:
+        results = project.update(a.root, a.entries or None, progress=None if a.quiet else (lambda m: print(m, file=sys.stderr)))
+    except Exception as e:  # noqa: BLE001
+        print(f"hx update failed: {e}", file=sys.stderr)
+        return 0 if a.hook else 2
+    if a.json:
+        import json
+        print(json.dumps([{"entry": r.entry, "graph": r.graph_path, "previous": r.previous, "error": r.error, "diff": r.diff} for r in results], indent=1))
+    elif a.quiet:
+        print(project.summarize(results))
+    else:
+        for r in results:
+            print(r.markdown.rstrip())
+            print()
+        print(f"written     {os.path.join(project.hx_dir(a.root), 'last-diff.md')}")
+    return 0
+
+
+def cmd_watch(a: argparse.Namespace) -> int:
+    from . import project
+    root = os.path.abspath(a.root)
+    cfg = project.load_config(root)
+    if not cfg["entries"]:
+        print("hx: nothing tracked; run `hx track <file>:<symbol>` first", file=sys.stderr)
+        return 2
+
+    def report(results):
+        print(time.strftime("%H:%M:%S"), project.summarize(results).replace("\n", "\n         "))
+        sys.stdout.flush()
+
+    if a.once:
+        report(project.update(root))
+        return 0
+    print(f"hx watch    {len(cfg['entries'])} entr{'y' if len(cfg['entries']) == 1 else 'ies'}, every {a.interval or cfg['watch'].get('interval', 2.0)}s (Ctrl-C to stop)")
+    try:
+        project.watch(root, interval=a.interval, debounce=a.debounce, on_update=report, run_first=not a.no_initial)
+    except KeyboardInterrupt:
+        pass
+    return 0
+
+
+def cmd_diff(a: argparse.Namespace) -> int:
+    import json
+    from . import project
+    from .diff import diff_graphs, render_markdown
+    if a.entry:
+        root = os.path.abspath(a.root)
+        new_path = project.graph_path(root, a.entry)
+        if not os.path.exists(new_path):
+            print(f"hx: no graph for {a.entry}; run `hx update {a.entry}` first", file=sys.stderr)
+            return 2
+        h = project.resolve_history(root, a.entry, a.since)
+        if not h:
+            print(f"hx: no history for {a.entry} yet (snapshots appear after the second `hx update`)", file=sys.stderr)
+            return 2
+        old_path, title = h["path"], f"{a.entry} since {h['ts']}"
+    else:
+        if not (a.old and a.new):
+            print("hx: diff needs OLD NEW graph files, or --entry", file=sys.stderr)
+            return 2
+        old_path, new_path, title = a.old, a.new, None
+    old, new = project.load_graph(old_path), project.load_graph(new_path)
+    d = diff_graphs(old, new)
+    out = json.dumps(d, indent=1) if a.format == "json" else render_markdown(d, new, title=title)
+    if a.output:
+        os.makedirs(os.path.dirname(os.path.abspath(a.output)), exist_ok=True)
+        with open(a.output, "w", encoding="utf-8") as fh:
+            fh.write(out if out.endswith("\n") else out + "\n")
+        print(f"written     {a.output}")
+    else:
+        print(out, end="" if out.endswith("\n") else "\n")
+    return 1 if a.exit_code and d["summary"]["any"] else 0
+
+
+def cmd_hook(a: argparse.Namespace) -> int:
+    import json
+    from . import project
+    if a.action == "print":
+        print(json.dumps(project.hook_snippet(a.event, a.command), indent=2))
+        return 0
+    path, added = project.install_hook(a.root, a.event, a.command, a.settings_dir)
+    print(("installed   " if added else "already set ") + f"{a.event} hook → {a.command}  ({path})")
+    return 0
+
+
+def cmd_mcp(a: argparse.Namespace) -> int:
+    import json
+    root = os.path.abspath(a.root)
+    if a.print_config:
+        print(json.dumps({"mcpServers": {"hx": {"command": "hx", "args": ["mcp", "--root", root]}}}, indent=2))
+        print(f"\n# or: claude mcp add hx -- hx mcp --root {root}", file=sys.stderr)
+        return 0
+    try:
+        from .mcp_server import build_server
+    except ImportError as e:
+        print(f"hx: the MCP server needs the `mcp` package ({e}); pip install 'mcp>=2'", file=sys.stderr)
+        return 2
+    build_server(root).run(transport="stdio")
     return 0
 
 
@@ -155,6 +338,18 @@ def main(argv: list[str] | None = None) -> int:
         return cmd_serve(a)
     if a.cmd == "export":
         return cmd_export(a)
+    if a.cmd == "track":
+        return cmd_track(a)
+    if a.cmd == "update":
+        return cmd_update(a)
+    if a.cmd == "watch":
+        return cmd_watch(a)
+    if a.cmd == "diff":
+        return cmd_diff(a)
+    if a.cmd == "hook":
+        return cmd_hook(a)
+    if a.cmd == "mcp":
+        return cmd_mcp(a)
     p.error(f"unknown command {a.cmd}")
     return 2
 

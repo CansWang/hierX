@@ -148,3 +148,14 @@ input.tags { width: 100%; background: var(--surface); border: 1px solid var(--ax
   #left, #right { width: auto !important; max-height: 30vh; }
   .splitter { display: none; }
 }
+
+/* diff mode */
+.badge.d-add { border-color: var(--good); color: var(--good-text); }
+.badge.d-chg { border-color: var(--warn); color: var(--warn-text); }
+.badge.d-rm { border-color: var(--crit); color: var(--crit); }
+.row.d-rm .nm { text-decoration: line-through; color: var(--muted); }
+.diffbox { border: 1px solid var(--warn); border-radius: 6px; padding: 6px 8px; font-size: 12px; margin-top: 8px; }
+.diffbox .old { color: var(--crit); text-decoration: line-through; }
+.diffbox .new { color: var(--good-text); }
+.diffbox li { margin: 2px 0; }
+.status .d-add { color: var(--good-text); } .status .d-rm { color: var(--crit); } .status .d-chg { color: var(--warn-text); }

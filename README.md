@@ -12,9 +12,10 @@ after every AI-agent editing session and then **diffed and viewed** instead of
 reading the agent's narration. IDs are stable across regeneration, so notes
 you attach later survive.
 
-Status: **Phase 3** done — C/C++ (libclang), SystemVerilog/Verilog (verilator),
-Rust (rust-analyzer) and Python (pyright) frontends, plus the browser viewer with
-editable annotations and live reload. Diff and agent hooks follow; the plan
+Status: **Phase 4** done — C/C++ (libclang), SystemVerilog/Verilog (verilator),
+Rust (rust-analyzer) and Python (pyright) frontends; browser viewer with
+editable annotations, live reload and diff mode; tracked entry points with
+history, `hx diff`, a watch loop, a Claude Code hook and an MCP server. The plan
 lives in `dev/ssot/single-source-of-truth.md`.
 
 ## Install
@@ -97,6 +98,38 @@ URL hash carries selection, depth and layout, so links are shareable;
 API: `GET /api/graph`, `GET|PUT|PATCH /api/annotations`, `POST /api/extract`,
 `GET /api/source?file&line&span`, `GET /api/status`, `GET /events` (SSE).
 
+## Track, diff, watch (the agent loop)
+
+```bash
+hx track src/main.c:app_run --depth 3        # remember an entry point in .hx/config.toml
+hx track rtl/top.sv:top -f files.f
+hx update                                     # re-extract all tracked entries, snapshot the old graphs, print what changed
+hx update --quiet                             # one line per entry (used by the hook)
+hx diff --entry src/main.c:app_run            # current graph vs the last snapshot (or --since <ts>)
+hx diff old.json new.json --format json       # any two graphs
+hx watch                                      # poll sources; update after each quiet period
+hx hook install                               # Claude Code Stop hook: runs `hx update --quiet --hook` after every agent turn
+hx mcp --print-config                         # MCP server snippet for .mcp.json / `claude mcp add`
+```
+
+`hx update` writes one graph per entry under `.hx/graphs/`, keeps the previous
+graphs under `.hx/history/<entry>/` (pruned to 20), and writes `.hx/last-diff.md`:
+added/removed functions, signature and parameter changes, body changes with line
+deltas, struct field and offset shifts, new or removed call edges, changed call
+arguments, and newly unresolved targets. About twenty lines, meant to be read
+instead of the agent's narration. Line-number drift, whitespace-only edits and
+system typedef noise do not register as change.
+
+`hx serve` lists every tracked graph in a picker, offers a **baseline** button
+that snapshots the current graph, and a **diff** selector that colors the graph
+(green new, amber changed, red removed) with a changes list and per-symbol
+change details. Links carry `#graph=…&diff=…`.
+
+`hx mcp` exposes `list_graphs`, `search`, `get_function`, `callees`, `callers`,
+`get_type`, `diff_since`, `extract` and `annotate` as compact text tools, so an
+agent can ask "who calls this, with what arguments" or "what changed since the
+baseline" without re-reading files.
+
 ## What is in graph.json
 
 | key | content |
@@ -123,7 +156,8 @@ python -m pytest -q
 
 Layout: `hx/model.py` (IR), `hx/ids.py` (stable ids), `hx/traverse.py` (BFS),
 `hx/cache.py`, `hx/frontends/clang_fe.py` (libclang), `hx/frontends/verilator_fe.py`
-(verilator XML), `hx/frontends/lsp_fe.py` (JSON-RPC client + call hierarchy), `hx/annotations.py`,
+(verilator XML), `hx/frontends/lsp_fe.py` (JSON-RPC client + call hierarchy), `hx/diff.py`,
+`hx/project.py` (config, snapshots, update, watch, hook), `hx/mcp_server.py`, `hx/annotations.py`,
 `hx/serve/app.py` (FastAPI), `hx/export.py`, `hx/viewer/` (vanilla JS app +
 vendored Cytoscape/dagre, no build step), `hx/cli.py`, `tests/fixtures/{c,sv,rust,python}/`
 (fixture projects; `tests/test_conformance.py` runs the same invariants over

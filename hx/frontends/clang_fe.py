@@ -343,6 +343,7 @@ class _TUExtractor:
         self.vars: dict[str, dict] = {}
         self.types: dict[str, dict] = {}
         self._types_in_progress: set[str] = set()
+        self._anon_hint: list[str] = []          # stack of "<parent>.<member>" while recording fields
 
     # ------------------------------------------------------------- utilities
     def _file_of(self, cursor) -> Optional[str]:
@@ -750,8 +751,9 @@ class _TUExtractor:
             anonymous = anonymous or bool(decl.is_anonymous())
         except Exception:  # noqa: BLE001
             pass
+        anon_name = self._anon_hint[-1] if (anonymous and self._anon_hint) else ""
         entry = {"name": "" if anonymous else spelling,
-                 "qualname": "" if anonymous else (self._qualname(decl) if self.lang == "cpp" else spelling),
+                 "qualname": anon_name if anonymous else (self._qualname(decl) if self.lang == "cpp" else spelling),
                  "loc": self._loc(decl), "system": system, "anonymous": anonymous,
                  "size": None, "align": None, "fields": [], "enumerators": [],
                  "underlying": None, "underlying_usr": None, "field_usrs": []}
@@ -769,9 +771,14 @@ class _TUExtractor:
             entry["kind"] = self.RECORD_KINDS[kind]
             defn = decl if decl.is_definition() else decl.get_definition()
             if defn is not None and defn.kind != ck.NO_DECL_FOUND and (self.include_system or not system):
-                for f in defn.type.get_fields():
+                parent_name = anon_name or (self._qualname(decl) if self.lang == "cpp" else spelling) or f"anon@L{(self._loc(decl) or {}).get('line', 0)}"
+                for i, f in enumerate(defn.type.get_fields()):
                     ft = f.type
-                    fref = self._type_ref(ft)
+                    self._anon_hint.append(f"{parent_name}.{member_name(f.spelling) or f'(anon#{i})'}")
+                    try:
+                        fref = self._type_ref(ft)
+                    finally:
+                        self._anon_hint.pop()
                     bits = f.get_field_offsetof()
                     fld = {"name": member_name(f.spelling), "type": clean_spelling(ft.spelling), "type_usr": fref,
                            "offset": bits // 8 if bits >= 0 else None, "size": None,
@@ -972,8 +979,11 @@ class ClangFrontend(Frontend):
         for usr, t in self.types.items():
             relp = _ids.rel(t["loc"]["file"], self.root) if t.get("loc") else "?"
             line = t["loc"]["line"] if t.get("loc") else None
-            self.type_ids[usr] = _ids.type_id(t["lang"], relp, t["kind"], t.get("qualname") or t["name"],
-                                              anonymous=t["anonymous"], line=line)
+            if t["anonymous"] and t.get("qualname"):
+                self.type_ids[usr] = _ids.type_id(t["lang"], relp, t["kind"], t["qualname"])   # e.g. "union dma_chan.stat"
+            else:
+                self.type_ids[usr] = _ids.type_id(t["lang"], relp, t["kind"], t.get("qualname") or t["name"],
+                                                  anonymous=t["anonymous"], line=line)
 
     # ------------------------------------------------------------- Frontend API
     def _mkloc(self, d: Optional[dict]) -> Optional[Loc]:
@@ -1055,7 +1065,7 @@ class ClangFrontend(Frontend):
         if t is None:
             return None
         td = TypeDef(
-            id=self.type_ids[key], kind=t["kind"], name=t.get("qualname") or t["name"] or f"(anonymous {t['kind']})",
+            id=self.type_ids[key], kind=t["kind"], name=(t.get("qualname") or t["name"] or f"(anonymous {t['kind']})"),
             lang=t["lang"], loc=self._mkloc(t.get("loc")), size=t.get("size"), align=t.get("align"),
             fields=[Field(name=fl["name"], type=fl["type"], type_ref=self.type_ids.get(fl["type_usr"] or ""),
                           offset=fl["offset"], size=fl["size"], bit_offset=fl["bit_offset"], bit_width=fl["bit_width"])

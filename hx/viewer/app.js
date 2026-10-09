@@ -48,7 +48,9 @@ const S = {
   depthMax: 3, showFiles: true, showGhosts: true, showRefs: true, layout: "LR",
   collapsed: new Set(), treeOpen: new Set(), search: "",
   cy: null, pending: null, dirty: false, es: null, sourceCache: new Map(),
+  graphName: "", graphs: [], diff: null, diffBase: "", history: [],
 };
+const api = (path, params) => { const u = new URL(path, location.origin); if (S.graphName) u.searchParams.set("name", S.graphName); for (const [k, v] of Object.entries(params || {})) if (v != null) u.searchParams.set(k, v); return u.pathname + u.search; };
 
 // ------------------------------------------------------------------ data index
 function buildIndex(g) {
@@ -155,6 +157,103 @@ function downloadAnnotations() {
   S.dirty = false; setStatus("annotations downloaded " + fmtTime());
 }
 
+// ------------------------------------------------------------------ diff mode
+function diffClass(id) {
+  const d = S.diff; if (!d) return "";
+  if (d.nodes.removed.includes(id)) return "d-rm";
+  if (d.nodes.added.includes(id)) return "d-add";
+  if (d.nodes.changed[id]) return "d-chg";
+  return "";
+}
+function diffBadge(id) {
+  const c = diffClass(id); if (!c) return null;
+  const lbl = {"d-add": "+ new", "d-chg": "~ changed", "d-rm": "− removed"}[c];
+  return h("span", {class: "badge " + c}, lbl);
+}
+async function loadHistory() {
+  if (!SERVE) return;
+  try {
+    const hres = await fetch(api("/api/history"));
+    S.history = hres.ok ? (await hres.json()).snapshots : [];
+  } catch (e) { S.history = []; }
+  const sel = $("#diff-base");
+  const cur = S.diffBase;
+  sel.replaceChildren(h("option", {value: ""}, S.history.length ? "no diff" : "no snapshots yet"));
+  for (const sn of [...S.history].reverse()) sel.append(h("option", {value: sn.ts}, "vs " + sn.ts.replace("T", " ").slice(0, 19)));
+  sel.value = S.history.some((x) => x.ts === cur) ? cur : "";
+  if (sel.value !== cur) { S.diffBase = sel.value; }
+}
+async function applyDiff(base) {
+  S.diffBase = base || "";
+  if (!S.diffBase) { S.diff = null; renderAll(); setStatus(""); updateHash(); return; }
+  try {
+    const r = await fetch(api("/api/diff", {since: S.diffBase}));
+    if (!r.ok) throw new Error((await r.json()).detail || r.statusText);
+    S.diff = await r.json();
+  } catch (err) { S.diff = null; setStatus("diff failed: " + err.message, true); return; }
+  const s = S.diff.summary;
+  const st = $("#status"); st.classList.remove("err");
+  st.replaceChildren("diff vs " + S.diff.since.slice(0, 19).replace("T", " ") + " · functions ",
+    h("span", {class: "d-add"}, "+" + s.nodes_added), " ", h("span", {class: "d-rm"}, "−" + s.nodes_removed), " ",
+    h("span", {class: "d-chg"}, "~" + s.nodes_changed), " · types ~" + s.types_changed + " · edges +" + s.edges_added + " −" + s.edges_removed);
+  renderAll(); updateHash();
+}
+function renderAll() { renderTree(); if (S.cy) renderGraph({fit: false}); renderDetail(); }
+async function takeBaseline() {
+  const r = await fetch(api("/api/snapshot"), {method: "POST"});
+  if (!r.ok) { setStatus("baseline failed: " + r.statusText, true); return; }
+  const j = await r.json();
+  await loadHistory();
+  setStatus("baseline " + (j.snapshot || "").slice(0, 19).replace("T", " ") + " saved");
+}
+function changesSection(root) {
+  const d = S.diff; if (!d) return;
+  root.append(h("div", {class: "tree-h"}, "changes vs " + d.since.slice(0, 16).replace("T", " ")));
+  const row = (id, cls, label, kind, extra) => {
+    const r = h("div", {class: "row " + cls + (S.sel && S.sel.id === id ? " sel" : ""), title: id, onclick: () => select(kind, id)},
+      h("span", {class: "caret empty"}), h("span", {class: "nm"}, label), extra ? h("span", {class: "muted small"}, extra) : null);
+    root.append(r);
+  };
+  for (const id of d.nodes.added) row(id, "d-add", "+ " + shortId(id), "node");
+  for (const id of d.nodes.removed) row(id, "d-rm", "− " + shortId(id), "removed");
+  for (const [id, ch] of Object.entries(d.nodes.changed)) {
+    const what = [ch.signature ? "signature" : null, ch.body ? "body" : null, ch.globals ? "globals" : null, ch.calls ? "calls" : null, ch.moved ? "moved" : null].filter(Boolean).join(", ");
+    row(id, "d-chg", "~ " + shortId(id), "node", what);
+  }
+  for (const id of d.types.added) row(id, "d-add", "+ " + shortId(id), "type");
+  for (const id of d.types.removed) row(id, "d-rm", "− " + shortId(id), "type");
+  for (const [id, ch] of Object.entries(d.types.changed)) row(id, "d-chg", "~ " + shortId(id), "type", Object.keys(ch).join(", "));
+  if (!d.summary.any) root.append(h("p", {class: "muted small", style: "padding:0 6px"}, "no structural changes"));
+}
+function diffBlock(id) {
+  const d = S.diff; if (!d) return null;
+  const ch = d.nodes.changed[id] || d.types.changed[id];
+  if (d.nodes.added.includes(id) || d.types.added.includes(id)) return h("div", {class: "diffbox"}, h("b", {class: "new"}, "new since " + d.since.slice(0, 16)));
+  if (!ch) return null;
+  const items = [];
+  if (ch.signature) items.push(h("li", null, "signature: ", h("span", {class: "old mono"}, ch.signature.old), " → ", h("span", {class: "new mono"}, ch.signature.new)));
+  for (const p of ch.params || []) items.push(h("li", null, "param " + p.name + ": " + p.change + (p.old != null ? " " + JSON.stringify(p.old) : "") + (p.new != null ? " → " + JSON.stringify(p.new) : "")));
+  if (ch.returns) items.push(h("li", null, "returns: ", h("span", {class: "old"}, ch.returns.old), " → ", h("span", {class: "new"}, ch.returns.new)));
+  if (ch.body) items.push(h("li", null, "body changed" + (ch.body.loc_delta != null ? " (" + (ch.body.loc_delta >= 0 ? "+" : "") + ch.body.loc_delta + " lines)" : "")));
+  for (const [what, dd] of Object.entries(ch.globals || {})) items.push(h("li", null, what + ": " + (dd.added.length ? "+" + dd.added.map(shortId).join(", ") : "") + " " + (dd.removed.length ? "−" + dd.removed.map(shortId).join(", ") : "")));
+  if (ch.calls) items.push(h("li", null, "calls: " + (ch.calls.added.length ? "+" + ch.calls.added.map(shortId).join(", ") : "") + " " + (ch.calls.removed.length ? "−" + ch.calls.removed.map(shortId).join(", ") : "")));
+  for (const k of ["size", "align", "kind", "underlying"]) if (ch[k]) items.push(h("li", null, k + ": ", h("span", {class: "old"}, String(ch[k].old)), " → ", h("span", {class: "new"}, String(ch[k].new))));
+  for (const f of ch.fields || []) items.push(h("li", null, "field " + (f.name || "(reorder)") + ": " + f.change + (f.old != null ? " " + JSON.stringify(f.old) : "") + (f.new != null ? " → " + JSON.stringify(f.new) : "")));
+  for (const e of ch.enumerators || []) items.push(h("li", null, "enum " + e.name + ": " + e.change + (e.old != null ? " " + e.old : "") + (e.new != null ? " → " + e.new : "")));
+  if (ch.moved) items.push(h("li", null, "moved " + ch.moved.old + " → " + ch.moved.new));
+  if (ch.depth && items.length === 0) items.push(h("li", null, "depth " + ch.depth.old + " → " + ch.depth.new));
+  return h("div", {class: "diffbox"}, h("b", null, "changed since " + d.since.slice(0, 16)), h("ul", {class: "list"}, items));
+}
+function renderRemoved(d, id) {
+  const info = (S.diff && S.diff.nodes.removed_info[id]) || {};
+  d.append(navBar(h("span", {class: "muted small"}, "removed function")));
+  d.append(h("h2", null, info.name || shortId(id)));
+  d.append(h("div", {class: "diffbox"}, h("b", {class: "old"}, "no longer in the graph since " + S.diff.since.slice(0, 16)),
+    info.signature ? h("pre", {class: "sig", style: "margin-top:6px"}, info.signature) : null,
+    info.loc ? h("div", {class: "muted small"}, info.loc.file + ":" + info.loc.line) : null,
+    info.calls && info.calls.length ? h("div", {class: "small"}, "called: " + info.calls.map(shortId).join(", ")) : null));
+}
+
 // ------------------------------------------------------------------ selection
 function select(kind, id, {push = true, fromGraph = false} = {}) {
   if (S.sel && push && (S.sel.kind !== kind || S.sel.id !== id)) S.history.push(S.sel);
@@ -178,6 +277,7 @@ function kindBadge(e) {
 }
 function nodeBadges(n) {
   const out = [];
+  const db = diffBadge(n.id); if (db) out.push(db);
   const vs = verifyState(n);
   if (vs === "ok") out.push(h("span", {class: "badge ok", title: "verified: body unchanged since you marked it"}, "✓ verified"));
   if (vs === "changed") out.push(h("span", {class: "badge chg", title: "body changed since you verified it"}, "! changed"));
@@ -199,6 +299,7 @@ function renderTree() {
   const q = S.search.trim().toLowerCase();
   if (q) return renderSearch(root, q);
   const entry = g.nodes[g.entry];
+  changesSection(root);
   const callers = Object.values(g.nodes).filter((n) => n.depth < 0);
   if (callers.length) {
     root.append(h("div", {class: "tree-h"}, "callers"));
@@ -315,6 +416,11 @@ function buildStyle() {
       "label": "data(label)", "color": muted, "font-size": 10, "font-family": font, "text-valign": "top", "text-halign": "center", "text-margin-y": -2, "padding": "12px"}},
     {selector: "node:selected", style: {"border-color": sel, "border-width": 3, "overlay-opacity": 0}},
     {selector: "node.changed", style: {"underlay-color": cssVar("--warn"), "underlay-opacity": 0.35, "underlay-padding": 3}},
+    {selector: "node.d-add", style: {"underlay-color": cssVar("--good"), "underlay-opacity": 0.35, "underlay-padding": 4}},
+    {selector: "node.d-chg", style: {"underlay-color": cssVar("--warn"), "underlay-opacity": 0.45, "underlay-padding": 4}},
+    {selector: "node.d-rm", style: {"border-color": cssVar("--crit"), "color": cssVar("--crit"), "border-style": "dashed"}},
+    {selector: "edge.d-add", style: {"width": 3, "line-color": cssVar("--good"), "target-arrow-color": cssVar("--good")}},
+    {selector: "edge.d-rm", style: {"width": 2, "line-style": "dashed", "line-color": cssVar("--crit"), "target-arrow-color": cssVar("--crit"), "opacity": 0.8}},
     {selector: "edge", style: {"curve-style": "bezier", "width": 1.5, "line-color": "data(color)", "target-arrow-color": "data(color)",
       "target-arrow-shape": "triangle", "arrow-scale": 0.8, "line-style": "solid", "opacity": 0.9}},
     {selector: "edge[kind='macro']", style: {"line-style": "dashed", "line-dash-pattern": [6, 3]}},
@@ -336,7 +442,7 @@ function buildElements() {
   const parentFor = (file) => { if (!S.showFiles || !file) return undefined; const pid = "file:" + file; if (!parents.has(pid)) { parents.add(pid); els.push({data: {id: pid, label: file}, classes: "file", selectable: false}); } return pid; };
   for (const id of vis) {
     const n = g.nodes[id];
-    const cls = [id === g.entry ? "entry" : "", S.collapsed.has(id) ? "collapsed" : "", verifyState(n) === "changed" ? "changed" : ""].filter(Boolean).join(" ");
+    const cls = [id === g.entry ? "entry" : "", S.collapsed.has(id) ? "collapsed" : "", verifyState(n) === "changed" ? "changed" : "", diffClass(id)].filter(Boolean).join(" ");
     els.push({data: {id, label: n.name, w: labelWidth(n.name), color: depthColor(n), parent: parentFor(n.loc.file), kind: "node"}, classes: cls});
   }
   const ghostAdded = new Set();
@@ -354,6 +460,21 @@ function buildElements() {
         }
       } else if (!vis.has(t)) continue;
       els.push({data: {id: "e" + e._i, source: id, target: t, kind: e.kind, color: edgeColor(e.kind), ei: e._i}, classes: isGhost ? "ghostedge" : ""});
+    }
+  }
+  if (S.diff) {
+    const info = S.diff.nodes.removed_info || {};
+    for (const id of S.diff.nodes.removed) {
+      const inf = info[id] || {};
+      els.push({data: {id, label: inf.name || shortId(id), w: labelWidth(inf.name || shortId(id)), color: cssVar("--crit"), parent: parentFor(inf.loc && inf.loc.file), kind: "removed"}, classes: "ghost d-rm"});
+    }
+    const present = new Set(els.filter((e) => !e.data.source).map((e) => e.data.id));
+    S.diff.edges.removed.forEach((e, i) => {
+      if (present.has(e.from) && present.has(e.to)) els.push({data: {id: "rm" + i, source: e.from, target: e.to, kind: e.kind, color: cssVar("--crit"), ei: -1}, classes: "d-rm"});
+    });
+    for (const e of S.diff.edges.added) {
+      // mark the matching live edges as added
+      for (const el of els) if (el.data.source === e.from && el.data.target === e.to && el.data.kind === e.kind) el.classes = (el.classes || "") + " d-add";
     }
   }
   return els;
@@ -377,20 +498,21 @@ function renderGraph({fit = true} = {}) {
   cy.add(buildElements());
   cy.endBatch();
   runLayout(fit);
-  if (S.sel && (S.sel.kind === "node" || S.sel.kind === "ghost")) { const ele = cy.$id(S.sel.id); if (ele.length) ele.select(); }
+  if (S.sel && (S.sel.kind === "node" || S.sel.kind === "ghost" || S.sel.kind === "removed")) { const ele = cy.$id(S.sel.id); if (ele.length) ele.select(); }
 }
 function bindGraphEvents(cy) {
   const tip = $("#edge-tip");
   cy.on("tap", "node", (evt) => {
     const d = evt.target.data();
     if (evt.target.isParent()) return;
-    select(d.kind === "ghost" ? "ghost" : "node", d.id, {fromGraph: true});
+    select(d.kind === "ghost" ? "ghost" : (d.kind === "removed" ? "removed" : "node"), d.id, {fromGraph: true});
   });
   cy.on("dbltap", "node", (evt) => { const d = evt.target.data(); if (d.kind === "node") toggleCollapse(d.id); });
-  cy.on("tap", "edge", (evt) => { select("edge", String(evt.target.data("ei")), {fromGraph: true}); });
+  cy.on("tap", "edge", (evt) => { const ei = evt.target.data("ei"); if (ei >= 0) select("edge", String(ei), {fromGraph: true}); });
   cy.on("tap", (evt) => { if (evt.target === cy) { select(null, null); } });
   cy.on("mouseover", "edge", (evt) => {
     const e = S.graph.edges[evt.target.data("ei")];
+    if (!e) { tip.replaceChildren(h("div", {class: "k"}, "edge removed since baseline")); tip.hidden = false; return; }
     tip.replaceChildren(
       h("div", null, h("span", {class: "k"}, e.kind + (e.macro ? " via " + e.macro : "") + " → "), h("b", null, e.name || shortId(e.to || ""))),
       e.args && e.args.length ? h("div", {class: "mono"}, "(" + e.args.join(", ") + ")") : null,
@@ -404,7 +526,8 @@ function bindGraphEvents(cy) {
   cy.on("mouseover", "node", (evt) => {
     const d = evt.target.data(); if (evt.target.isParent()) return;
     const n = S.graph.nodes[d.id];
-    tip.replaceChildren(n ? h("div", {class: "mono"}, n.signature) : h("div", null, h("span", {class: "k"}, S.idx.ghosts[d.id].reason)),
+    const gh = S.idx.ghosts[d.id];
+    tip.replaceChildren(n ? h("div", {class: "mono"}, n.signature) : h("div", null, h("span", {class: "k"}, gh ? gh.reason : "removed since baseline")),
       n ? h("div", {class: "k"}, n.loc.file + ":" + n.loc.line + " · depth " + n.depth) : null);
     const p = evt.renderedPosition; tip.style.left = (p.x + 14) + "px"; tip.style.top = (p.y + 14) + "px"; tip.hidden = false;
   });
@@ -451,6 +574,7 @@ function renderDetail() {
   else if (kind === "global") renderGlobal(d, S.graph.globals[id]);
   else if (kind === "ghost") renderGhost(d, S.idx.ghosts[id]);
   else if (kind === "edge") renderEdge(d, S.graph.edges[Number(id)]);
+  else if (kind === "removed") renderRemoved(d, id);
   if (!d.childNodes.length) d.append(h("p", {class: "muted"}, "not in this graph: " + id));
 }
 function renderNode(d, n) {
@@ -463,6 +587,7 @@ function renderNode(d, n) {
     h("span", {class: "link mono", title: "show source", onclick: () => showSource(n)}, n.loc.file + ":" + n.loc.line + (n.loc.end_line ? "–" + n.loc.end_line : "")),
     h("span", {class: "muted mono small", title: "body hash (whitespace-insensitive)"}, (n.body_hash || "").slice(5, 13))));
   d.append(h("pre", {class: "sig"}, n.signature));
+  const dbn = diffBlock(n.id); if (dbn) d.append(dbn);
   if (n.attrs && Object.keys(n.attrs).length) d.append(attrsBlock(n.attrs));
   d.append(h("div", {class: "verify", style: "margin-top:8px"},
     h("label", null, h("input", {type: "checkbox", checked: vs !== "none", onchange: (ev) => { applyPatch({nodes: {[n.id]: {verified_body_hash: ev.target.checked ? n.body_hash : null}}}); rerenderSoft(); }}), " verified"),
@@ -565,6 +690,7 @@ function renderType(d, t) {
   d.append(h("h2", null, (t.kind === "typedef" ? "" : t.kind + " ") + t.name));
   d.append(h("div", {class: "meta"}, t.loc ? h("span", {class: "mono"}, t.loc.file + ":" + t.loc.line) : null,
     t.size != null ? h("span", null, "size ", h("b", {class: "mono"}, t.size + sizeUnit(t)), t.align != null ? [" align ", h("b", {class: "mono"}, t.align)] : null) : h("span", {class: "muted"}, "size unknown")));
+  const dbt = diffBlock(t.id); if (dbt) d.append(dbt);
   if (t.kind === "typedef") {
     d.append(h("h3", null, "alias of"));
     d.append(h("div", null, typeLink(t.underlying_ref, t.underlying || "?")));
@@ -632,7 +758,7 @@ async function showSource(n, hlLine) {
   try {
     let data = S.sourceCache.get(key);
     if (!data) {
-      const r = await fetch("/api/source?file=" + encodeURIComponent(n.loc.file) + "&line=" + start + "&span=" + span);
+      const r = await fetch(api("/api/source", {file: n.loc.file, line: start, span}));
       if (!r.ok) throw new Error((await r.json()).detail || r.statusText);
       data = await r.json(); S.sourceCache.set(key, data);
     }
@@ -652,19 +778,31 @@ function updateHash() {
   const p = new URLSearchParams();
   if (S.sel) { p.set("sel", S.sel.id); p.set("kind", S.sel.kind); }
   p.set("depth", S.depthMax); p.set("layout", S.layout);
+  if (S.graphName) p.set("graph", S.graphName);
+  if (S.diffBase) p.set("diff", S.diffBase);
   history.replaceState(null, "", "#" + p.toString());
 }
 function readHash() {
   const p = new URLSearchParams(location.hash.slice(1));
   if (p.get("depth")) S.depthMax = Number(p.get("depth"));
   if (p.get("layout")) S.layout = p.get("layout");
+  if (p.get("graph")) S.graphName = p.get("graph");
+  if (p.get("diff")) S.diffBase = p.get("diff").replace(/ /g, "+");   // a hand-typed '+' in the hash arrives as a space
   return p.get("sel") ? {kind: p.get("kind") || "node", id: p.get("sel")} : null;
 }
 async function loadData() {
   if (SERVE) {
-    const [g, a] = await Promise.all([fetch("/api/graph").then((r) => { if (!r.ok) throw new Error("graph: " + r.status); return r.json(); }),
+    try { S.graphs = await (await fetch("/api/graphs")).json(); } catch (e) { S.graphs = []; }
+    if (S.graphName && !S.graphs.some((x) => x.name === S.graphName)) S.graphName = "";
+    const pick = $("#graph-pick");
+    pick.replaceChildren(...S.graphs.map((x) => h("option", {value: x.name}, x.name + "  (" + shortId(x.entry || "") + ", " + x.nodes + ")")));
+    pick.hidden = S.graphs.length < 2;
+    if (!S.graphName && S.graphs.length) S.graphName = S.graphs[0].name;
+    pick.value = S.graphName;
+    const [g, a] = await Promise.all([fetch(api("/api/graph")).then((r) => { if (!r.ok) throw new Error("graph: " + r.status); return r.json(); }),
       fetch("/api/annotations").then((r) => r.json())]);
     S.graph = g; S.ann = a.annotations; S.rev = a.rev;
+    await loadHistory();
   } else {
     S.graph = JSON.parse($("#hx-graph").textContent);
     const a = JSON.parse($("#hx-annotations").textContent || "{}");
@@ -682,12 +820,23 @@ async function reloadGraph() {
   renderTree(); renderGraph({fit: false});
   if (keep) select(keep.kind, keep.id, {push: false}); else renderDetail();
   S.sourceCache.clear();
-  setStatus("graph reloaded " + fmtTime() + " · " + Object.keys(S.graph.nodes).length + " nodes");
+  if (S.diffBase) await applyDiff(S.diffBase);
+  else setStatus("graph reloaded " + fmtTime() + " · " + Object.keys(S.graph.nodes).length + " nodes");
+}
+async function switchGraph(name) {
+  S.graphName = name; S.diff = null; S.diffBase = ""; S.sel = null; S.history = []; S.collapsed = new Set();
+  await loadData();
+  renderTree(); renderGraph(); renderDetail(); updateHash();
+  setStatus("");
 }
 function connectEvents() {
   if (!LIVE || !window.EventSource) return;
   const es = new EventSource("/events"); S.es = es;
-  es.addEventListener("graph", () => { reloadGraph().catch((e) => setStatus("reload failed: " + e.message, true)); });
+  es.addEventListener("graph", (ev) => {
+    let name = null; try { name = JSON.parse(ev.data).name; } catch (e) { /* ignore */ }
+    if (name && S.graphName && name !== S.graphName) { setStatus("graph " + name + " updated " + fmtTime()); return; }
+    reloadGraph().catch((e) => setStatus("reload failed: " + e.message, true));
+  });
   es.addEventListener("annotations", async (ev) => {
     const rev = JSON.parse(ev.data).rev;
     if (rev === S.rev || S.pending) return;
@@ -695,6 +844,7 @@ function connectEvents() {
     S.ann = a.annotations; S.rev = a.rev; rerenderSoft(); setStatus("annotations updated elsewhere " + fmtTime());
   });
   es.addEventListener("extract-start", () => { setStatus("re-extracting…"); $("#btn-extract").disabled = true; });
+  es.addEventListener("extract-done", () => { loadHistory(); });
   es.addEventListener("extract-done", (ev) => { const d = JSON.parse(ev.data); setStatus("extracted " + d.nodes + " nodes " + fmtTime()); $("#btn-extract").disabled = false; });
   es.addEventListener("extract-error", (ev) => { setStatus("extract failed: " + JSON.parse(ev.data).error, true); $("#btn-extract").disabled = false; });
   es.onerror = () => setStatus("live connection lost; retrying…", true);
@@ -713,7 +863,12 @@ function bindUI() {
   $("#btn-relayout").addEventListener("click", () => { applyPatch({view: {pinned_positions: null}}); S.ann.view = S.ann.view || {}; S.ann.view.pinned_positions = {}; renderGraph(); });
   const bx = $("#btn-extract");
   if (!SERVE || !CFG.allow_extract) bx.hidden = true;
-  bx.addEventListener("click", async () => { bx.disabled = true; const r = await fetch("/api/extract", {method: "POST"}); if (!r.ok && r.status !== 202) { setStatus("extract: " + (await r.json()).detail, true); bx.disabled = false; } });
+  bx.addEventListener("click", async () => { bx.disabled = true; const r = await fetch(api("/api/extract"), {method: "POST"}); if (!r.ok && r.status !== 202) { setStatus("extract: " + (await r.json()).detail, true); bx.disabled = false; } });
+  $("#graph-pick").addEventListener("change", (ev) => switchGraph(ev.target.value));
+  $("#diff-base").addEventListener("change", (ev) => applyDiff(ev.target.value));
+  const bb = $("#btn-baseline");
+  if (!SERVE) { bb.hidden = true; $("#diff-base").hidden = true; }
+  bb.addEventListener("click", takeBaseline);
   $("#btn-download").addEventListener("click", downloadAnnotations);
   $("#btn-theme").addEventListener("click", () => {
     const cur = document.documentElement.dataset.theme || "auto";
@@ -750,6 +905,7 @@ async function init() {
   try { await loadData(); } catch (err) { $("#detail").replaceChildren(h("div", {class: "errbox"}, "failed to load graph: " + err.message)); setStatus(String(err.message), true); return; }
   renderTree(); renderGraph();
   if (initialSel) select(initialSel.kind, initialSel.id, {push: false}); else renderDetail();
+  if (SERVE && S.diffBase) { $("#diff-base").value = S.diffBase; await applyDiff(S.diffBase); }
   connectEvents();
   if (!SERVE) setStatus("static export · generated " + S.graph.generated);
 }

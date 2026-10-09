@@ -23,7 +23,7 @@ import time
 from typing import Any, Optional
 
 from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, StreamingResponse
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, PlainTextResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 
 from .. import annotations as ann_mod
@@ -42,8 +42,36 @@ class State:
         self.last_extract_error: Optional[str] = None
         self.subscribers: list[asyncio.Queue] = []
         self.loop: Optional[asyncio.AbstractEventLoop] = None
-        self._mtimes = {"graph": self._mtime(self.graph_path), "ann": self._mtime(self.ann_path)}
+        self.graphs_dir = os.path.join(os.path.dirname(self.graph_path), "graphs") if os.path.basename(self.graph_path) == "graph.json" \
+            else (os.path.dirname(self.graph_path) if os.path.basename(os.path.dirname(self.graph_path)) == "graphs" else None)
+        self._mtimes: dict[str, Optional[int]] = {"ann": self._mtime(self.ann_path)}
+        for g in self.graph_list():
+            self._mtimes["graph:" + g["name"]] = self._mtime(g["path"])
         self._lock = threading.Lock()
+
+    # -- graphs --------------------------------------------------------------
+    def graph_list(self) -> list[dict]:
+        """Served graphs: the main one first, then tracked graphs under .hx/graphs."""
+        out = []
+        seen = set()
+        main_name = "graph" if os.path.basename(self.graph_path) == "graph.json" else os.path.splitext(os.path.basename(self.graph_path))[0]
+        if os.path.exists(self.graph_path):
+            out.append({"name": main_name, "path": self.graph_path})
+            seen.add(self.graph_path)
+        if self.graphs_dir and os.path.isdir(self.graphs_dir):
+            for f in sorted(os.listdir(self.graphs_dir)):
+                p = os.path.join(self.graphs_dir, f)
+                if f.endswith(".json") and p not in seen:
+                    out.append({"name": f[:-5], "path": p})
+        return out
+
+    def resolve(self, name: Optional[str]) -> str:
+        if not name:
+            return self.graph_path
+        for g in self.graph_list():
+            if g["name"] == name:
+                return g["path"]
+        raise HTTPException(404, f"unknown graph {name!r}; see /api/graphs")
 
     @staticmethod
     def _mtime(p: str) -> Optional[int]:
@@ -52,22 +80,30 @@ class State:
         except OSError:
             return None
 
-    def load_graph(self) -> dict:
+    def load_graph(self, name: Optional[str] = None) -> dict:
+        path = self.resolve(name)
         try:
-            with open(self.graph_path, encoding="utf-8") as fh:
+            with open(path, encoding="utf-8") as fh:
                 return json.load(fh)
         except FileNotFoundError:
-            raise HTTPException(404, f"graph not found: {self.graph_path}. Run `hx extract` first.")
+            raise HTTPException(404, f"graph not found: {path}. Run `hx extract` or `hx update` first.")
         except ValueError as e:
             raise HTTPException(500, f"graph is not valid JSON: {e}")
 
-    def effective_root(self) -> Optional[str]:
+    def effective_root(self, name: Optional[str] = None) -> Optional[str]:
         if self.root:
             return self.root
         try:
-            return os.path.abspath(self.load_graph().get("root") or "")
+            return os.path.abspath(self.load_graph(name).get("root") or "")
         except HTTPException:
             return None
+
+    def project_root(self) -> str:
+        """Directory that holds .hx (history/snapshots live there)."""
+        d = os.path.dirname(self.graph_path)
+        if os.path.basename(d) == "graphs":
+            d = os.path.dirname(d)
+        return os.path.dirname(d) if os.path.basename(d) == ".hx" else (self.effective_root() or d)
 
     # -- events -------------------------------------------------------------
     def broadcast(self, event: str, data: Any = None) -> None:
@@ -77,18 +113,27 @@ class State:
         for q in list(self.subscribers):
             self.loop.call_soon_threadsafe(q.put_nowait, msg)
 
-    def note_written(self, which: str) -> None:
+    def note_written(self, which: str, name: Optional[str] = None) -> None:
         """Remember our own write so the file watcher does not echo it back as an external change."""
-        path = self.graph_path if which == "graph" else self.ann_path
-        self._mtimes[which] = self._mtime(path)
+        if which == "ann":
+            self._mtimes["ann"] = self._mtime(self.ann_path)
+        else:
+            key = "graph:" + (name or self.graph_list()[0]["name"] if self.graph_list() else "graph")
+            self._mtimes[key] = self._mtime(self.resolve(name))
 
-    def poll_files(self) -> list[str]:
-        changed = []
-        for which, path in (("graph", self.graph_path), ("ann", self.ann_path)):
-            m = self._mtime(path)
-            if m != self._mtimes[which]:
-                self._mtimes[which] = m
-                changed.append(which)
+    def poll_files(self) -> list[tuple[str, Optional[str]]]:
+        """[('ann', None) | ('graph', name)] for every file whose mtime moved since the last poll."""
+        changed: list[tuple[str, Optional[str]]] = []
+        m = self._mtime(self.ann_path)
+        if m != self._mtimes.get("ann"):
+            self._mtimes["ann"] = m
+            changed.append(("ann", None))
+        for g in self.graph_list():
+            key = "graph:" + g["name"]
+            m = self._mtime(g["path"])
+            if m != self._mtimes.get(key):
+                self._mtimes[key] = m
+                changed.append(("graph", g["name"]))
         return changed
 
 
@@ -120,22 +165,71 @@ def create_app(graph_path: str, annotations_path: Optional[str] = None, root: Op
         return HTMLResponse(html)
 
     @app.get("/api/status")
-    def status() -> dict:
+    def status(name: Optional[str] = None) -> dict:
         g = None
         try:
-            g = st.load_graph()
+            g = st.load_graph(name)
         except HTTPException:
             pass
-        return {"graph_path": st.graph_path, "annotations_path": st.ann_path, "root": st.effective_root(),
+        return {"graph_path": st.resolve(name) if (name or os.path.exists(st.graph_path)) else st.graph_path,
+                "annotations_path": st.ann_path, "root": st.effective_root(name),
                 "entry": g.get("entry") if g else None, "generated": g.get("generated") if g else None,
                 "rev": st.rev, "extracting": st.extracting, "allow_extract": st.allow_extract,
-                "last_extract_error": st.last_extract_error}
+                "last_extract_error": st.last_extract_error, "graphs": [x["name"] for x in st.graph_list()]}
+
+    @app.get("/api/graphs")
+    def graphs() -> list[dict]:
+        out = []
+        for g in st.graph_list():
+            try:
+                with open(g["path"], encoding="utf-8") as fh:
+                    d = json.load(fh)
+            except (OSError, ValueError):
+                continue
+            out.append({"name": g["name"], "entry": d.get("entry"), "entry_arg": (d.get("meta") or {}).get("entry_arg"),
+                        "lang": d.get("lang"), "generated": d.get("generated"), "nodes": len(d.get("nodes", {}))})
+        return out
 
     @app.get("/api/graph")
-    def graph() -> FileResponse:
-        if not os.path.exists(st.graph_path):
-            raise HTTPException(404, f"graph not found: {st.graph_path}. Run `hx extract` first.")
-        return FileResponse(st.graph_path, media_type="application/json")
+    def graph(name: Optional[str] = None) -> FileResponse:
+        path = st.resolve(name)
+        if not os.path.exists(path):
+            raise HTTPException(404, f"graph not found: {path}. Run `hx extract` first.")
+        return FileResponse(path, media_type="application/json")
+
+    def _entry_arg(name: Optional[str]) -> str:
+        g = st.load_graph(name)
+        return (g.get("meta") or {}).get("entry_arg") or g.get("entry") or "graph"
+
+    @app.get("/api/history")
+    def history(name: Optional[str] = None) -> dict:
+        from .. import project
+        entry = _entry_arg(name)
+        return {"entry": entry, "snapshots": project.list_history(st.project_root(), entry)}
+
+    @app.post("/api/snapshot")
+    def take_snapshot(name: Optional[str] = None) -> dict:
+        from .. import project
+        entry = _entry_arg(name)
+        path = project.snapshot(st.project_root(), entry, st.resolve(name))
+        return {"entry": entry, "snapshot": os.path.basename(path)[:-5] if path else None, "snapshots": project.list_history(st.project_root(), entry)}
+
+    @app.get("/api/diff")
+    def diff(name: Optional[str] = None, since: str = "prev", format: str = "json"):
+        from .. import project
+        from ..diff import diff_graphs, render_markdown
+        g = st.load_graph(name)
+        entry = (g.get("meta") or {}).get("entry_arg") or g.get("entry") or "graph"
+        h = project.resolve_history(st.project_root(), entry, since)
+        if not h:
+            raise HTTPException(404, "no history for this graph yet; take a baseline first")
+        old = project.load_graph(h["path"])
+        d = diff_graphs(old, g)
+        d["since"] = h["ts"]
+        if format == "md":
+            return PlainTextResponse(render_markdown(d, g, title=f"{entry} since {h['ts']}"))
+        d["markdown"] = render_markdown(d, g, title=f"{entry} since {h['ts']}")
+        return d
 
     @app.get("/api/annotations")
     def get_annotations() -> dict:
@@ -166,8 +260,8 @@ def create_app(graph_path: str, annotations_path: Optional[str] = None, root: Op
         return {"rev": st.rev, "annotations": doc}
 
     @app.get("/api/source")
-    def source(file: str, line: int = 1, span: int = 40) -> dict:
-        root = st.effective_root()
+    def source(file: str, line: int = 1, span: int = 40, name: Optional[str] = None) -> dict:
+        root = st.effective_root(name)
         if not root:
             raise HTTPException(400, "no project root known")
         target = os.path.abspath(file if os.path.isabs(file) else os.path.join(root, file))
@@ -188,19 +282,19 @@ def create_app(graph_path: str, annotations_path: Optional[str] = None, root: Op
         return {"file": file, "start": start, "lines": lines}
 
     @app.post("/api/extract")
-    async def extract() -> JSONResponse:
+    async def extract(name: Optional[str] = None) -> JSONResponse:
         if not st.allow_extract:
             raise HTTPException(403, "re-extraction disabled (--no-extract)")
         if st.extracting:
             return JSONResponse({"status": "already-running"}, status_code=409)
-        g = st.load_graph()
+        g = st.load_graph(name)
         args = (g.get("meta") or {}).get("extract_args")
         if not args:
             raise HTTPException(400, "graph has no meta.extract_args; re-run `hx extract` from the CLI once")
         st.extracting = True
         st.last_extract_error = None
-        st.broadcast("extract-start", {"entry": args.get("entry")})
-        asyncio.create_task(asyncio.to_thread(_run_extract, st, args))
+        st.broadcast("extract-start", {"entry": args.get("entry"), "name": name})
+        asyncio.create_task(asyncio.to_thread(_run_extract, st, args, name))
         return JSONResponse({"status": "started"}, status_code=202)
 
     @app.get("/events")
@@ -233,15 +327,18 @@ def _sse(event: str, data: Any) -> str:
     return f"event: {event}\ndata: {json.dumps(data)}\n\n"
 
 
-def _run_extract(st: State, args: dict) -> None:
+def _run_extract(st: State, args: dict, name: Optional[str] = None) -> None:
     try:
+        from .. import project
         from ..api import extract as do_extract
         kwargs = {k: v for k, v in args.items() if k != "entry"}
         graph = do_extract(args["entry"], **kwargs)
-        graph.save(st.graph_path)
-        st.note_written("graph")
-        st.broadcast("extract-done", {"entry": graph.entry, "nodes": len(graph.nodes)})
-        st.broadcast("graph", {"reason": "extract"})
+        path = st.resolve(name)
+        project.snapshot(st.project_root(), args["entry"], path)   # keep the previous graph so the viewer can diff
+        graph.save(path)
+        st.note_written("graph", name)
+        st.broadcast("extract-done", {"entry": graph.entry, "nodes": len(graph.nodes), "name": name})
+        st.broadcast("graph", {"reason": "extract", "name": name})
     except Exception as e:  # noqa: BLE001 - reported to the UI
         st.last_extract_error = f"{type(e).__name__}: {e}"
         st.broadcast("extract-error", {"error": st.last_extract_error})
@@ -252,9 +349,9 @@ def _run_extract(st: State, args: dict) -> None:
 async def _watch_files(st: State, interval: float) -> None:
     while True:
         await asyncio.sleep(interval)
-        for which in st.poll_files():
+        for which, name in st.poll_files():
             if which == "graph":
-                st.broadcast("graph", {"reason": "file-changed"})
+                st.broadcast("graph", {"reason": "file-changed", "name": name})
             else:
                 st.rev += 1
                 st.broadcast("annotations", {"rev": st.rev, "reason": "file-changed"})
