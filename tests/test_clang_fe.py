@@ -217,3 +217,110 @@ def test_entry_in_other_file_is_noted(extract):
     g = extract("src/main.c:hal_write32", depth=0)   # defined in src/hal.c, not even declared via main.c
     assert g.entry == "c:src/hal.c::hal_write32"
     assert g.meta["notes"] == ["'hal_write32' is not defined in src/main.c; using its definition in src/hal.c"]
+
+
+def test_comment_only_edit_keeps_body_hash(extract, cproj):
+    g0 = extract(depth=2)
+    dma_c = cproj / "src" / "dma.c"
+    src = dma_c.read_text()
+    assert "    ch->busy = 1;\n" in src
+    dma_c.write_text(src.replace("    ch->busy = 1;\n", "    ch->busy = 1; /* agent: mark busy */\n    // (comment-only edit)\n", 1))
+    g1 = extract(depth=2)
+    assert g1.nodes["c:src/dma.c::dma_start"].body_hash == g0.nodes["c:src/dma.c::dma_start"].body_hash
+    dma_c.write_text(src.replace("    ch->busy = 1;\n", "    ch->busy = 2;\n", 1))
+    g2 = extract(depth=2)
+    assert g2.nodes["c:src/dma.c::dma_start"].body_hash != g0.nodes["c:src/dma.c::dma_start"].body_hash
+
+
+def _shape(g):
+    """Everything in a graph that must not depend on cache state."""
+    d = g.to_dict()
+    return {"nodes": {k: {kk: vv for kk, vv in v.items() if kk != "depth" or True} for k, v in d["nodes"].items()},
+            "types": d["types"], "globals": d["globals"],
+            "edges": sorted((e["from"], e.get("to") or "", e["kind"], tuple(e.get("args") or [])) for e in d["edges"]),
+            "unresolved": sorted((u["name"], u["from"], u["reason"]) for u in d["unresolved"])}
+
+
+def test_index_is_independent_of_cache_state(tmp_path):
+    """Review finding H3: a header-defined inline function compiled under different macros must resolve to the
+    same build variant whether the TUs come from the cache or a fresh parse, and hx must report the ambiguity."""
+    import json
+    import shutil
+    import time
+    from hx.api import extract as _extract
+    src = os.path.join(os.path.dirname(__file__), "fixtures", "c_variants")
+    proj = tmp_path / "variants"
+    shutil.copytree(src, proj)
+    (proj / "build").mkdir()
+    cc = [{"directory": str(proj), "file": f"src/{f}", "command": f"gcc -Iinclude {d} -c src/{f} -o build/{f}.o"}
+          for f, d in (("a.c", "-DUSE_FA"), ("b.c", "-DUSE_FB"), ("impl.c", ""))]
+    (proj / "build" / "compile_commands.json").write_text(json.dumps(cc))
+
+    def run(**kw):
+        kw.setdefault("jobs", 1)
+        return _extract("src/a.c:run_a", root=str(proj), depth=3, **kw)
+
+    def touch(name):
+        time.sleep(0.01)
+        p = proj / "src" / name
+        p.write_text(p.read_text())
+        os.utime(p, None)
+
+    cold = run()
+    edges = {(e.src.split("::")[1], (e.dst or "").split("::")[-1]) for e in cold.edges}
+    assert ("helper", "fa") in edges and ("helper", "fb") not in edges, edges   # TU order a.c < b.c → a.c's variant
+    assert any("helper: compiled differently in 2 build variants" in n for n in cold.meta.get("notes", [])), cold.meta
+    assert cold.meta["index"]["variants"] == 1
+    warm = run()
+    assert warm.meta["index"]["cached"] == 3 and _shape(warm) == _shape(cold)
+    touch("b.c")                                   # the reviewer's reproduction: touching the *other* TU flipped helper → fb
+    partial = run()
+    assert partial.meta["index"]["parsed"] == 1 and _shape(partial) == _shape(cold)
+    touch("a.c")
+    assert _shape(run()) == _shape(cold)
+    nocache = run(use_cache=False)
+    assert _shape(nocache) == _shape(cold)
+
+
+def test_include_system_is_part_of_the_cache_key(extract):
+    g_off = extract(depth=2)                                   # populates the cache with include_system=False summaries
+    g_on_warm = extract(depth=2, include_system=True)
+    g_on_cold = extract(depth=2, include_system=True, use_cache=False)
+    assert g_on_warm.meta["index"]["cached"] == 0              # different key → nothing reused from the other mode
+    assert set(g_on_warm.nodes) == set(g_on_cold.nodes) and set(g_on_warm.types) == set(g_on_cold.types)
+    assert set(g_on_cold.types) >= set(g_off.types)
+
+
+def _cpp_project(tmp_path):
+    import json
+    import shutil
+    src = os.path.join(os.path.dirname(__file__), "fixtures", "cpp")
+    proj = tmp_path / "cpp"
+    shutil.copytree(src, proj)
+    (proj / "build").mkdir()
+    cc = [{"directory": str(proj), "file": f"src/{f}", "command": f"g++ -std=c++17 -Iinclude -c src/{f} -o build/{f}.o"} for f in ("bus.cpp", "main.cpp")]
+    (proj / "build" / "compile_commands.json").write_text(json.dumps(cc))
+    return proj
+
+
+def test_cpp_overload_ids_do_not_depend_on_siblings(tmp_path):
+    from hx.api import extract as _extract
+    proj = _cpp_project(tmp_path)
+    g = _extract("src/main.cpp:run", root=str(proj), depth=3, jobs=1)
+    ids = {n.qualname + "|" + n.signature: n.id for n in g.nodes.values()}
+    writes = sorted(i for i in g.nodes if "::hw::Bus::write(" in i)
+    assert writes == ["cpp:src/bus.cpp::hw::Bus::write(const Reg &)", "cpp:src/bus.cpp::hw::Bus::write(const uint8_t *, size_t)",
+                      "cpp:src/bus.cpp::hw::Bus::write(uint32_t, uint32_t)"], writes
+    assert "cpp:src/bus.cpp::hw::Bus::read(uint32_t)" in g.nodes and g.entry == "cpp:src/main.cpp::hw::run(Bus &)"   # spelled as written in scope
+    assert not any("#" in i for i in g.nodes)                                   # readable, no hash suffixes needed
+    tmpl = [i for i in g.nodes if "clamp" in i]
+    assert tmpl and tmpl[0].startswith("cpp:include/bus.hpp::hw::clamp(")
+    before = set(g.nodes)
+    # add a 4th overload: existing ids must be unchanged (annotations keep pointing at the same symbols)
+    hpp = proj / "include" / "bus.hpp"
+    hpp.write_text(hpp.read_text().replace("    uint32_t read(uint32_t addr) const;", "    int write(bool flag);\n    uint32_t read(uint32_t addr) const;"))
+    cpp = proj / "src" / "bus.cpp"
+    cpp.write_text(cpp.read_text().replace("uint32_t Bus::read(", "int Bus::write(bool flag) { return write(0u, flag ? 1u : 0u); }\n\nuint32_t Bus::read("))
+    g2 = _extract("src/main.cpp:run", root=str(proj), depth=3, jobs=1)
+    assert before <= set(g2.nodes) | {u.id for u in g2.unresolved}
+    assert all(i in g2.nodes for i in writes)

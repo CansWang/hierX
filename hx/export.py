@@ -21,7 +21,7 @@ def _inline_json(obj) -> str:
 def build_html(graph: dict, annotations: dict | None = None) -> str:
     html = _read("index.html")
     html = re.sub(r'<link rel="stylesheet" href="/static/style.css">', lambda m: "<style>\n" + _read("style.css") + "\n</style>", html)
-    for name in ("vendor/cytoscape.min.js", "vendor/dagre.min.js", "vendor/cytoscape-dagre.js", "app.js"):
+    for name in ("vendor/cytoscape.min.js", "vendor/dagre.min.js", "vendor/cytoscape-dagre.js", "patch.js", "app.js"):
         tag = f'<script src="/static/{name}"></script>'
         assert tag in html, f"index.html lacks {tag}"
         html = html.replace(tag, "<script>\n" + _read(name).replace("</script>", "<\\/script>") + "\n</script>")

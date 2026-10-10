@@ -26,18 +26,11 @@ function h(tag, attrs, ...kids) {
   }
   return e;
 }
-const shortId = (id) => { const i = id.lastIndexOf("::"); return i >= 0 ? id.slice(i + 2) : id; };
+const shortId = (id) => { const i = id.indexOf("::"); return i >= 0 ? id.slice(i + 2) : id; };   // first "::": C++ ids hold more
 const fileOfId = (id) => { const m = /^[a-z+]+:(.*?)::/.exec(id); return m ? m[1] : null; };
 const cssVar = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
 const debounce = (fn, ms) => { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; };
-function mergePatch(target, patch) {
-  if (patch === null || typeof patch !== "object" || Array.isArray(patch)) return patch;
-  const out = (target && typeof target === "object" && !Array.isArray(target)) ? {...target} : {};
-  for (const [k, v] of Object.entries(patch)) {
-    if (v === null) delete out[k]; else out[k] = mergePatch(out[k], v);
-  }
-  return out;
-}
+const {mergePatch, composePatch} = window.hxPatch;   // patch.js (shared with the Node tests)
 function setStatus(text, isErr) { const s = $("#status"); s.textContent = text || ""; s.classList.toggle("err", !!isErr); }
 const fmtTime = () => new Date().toLocaleTimeString();
 
@@ -47,7 +40,7 @@ const S = {
   idx: null, sel: null, history: [],
   depthMax: 3, showFiles: true, showGhosts: true, showRefs: true, layout: "LR",
   collapsed: new Set(), treeOpen: new Set(), search: "",
-  cy: null, pending: null, dirty: false, es: null, sourceCache: new Map(),
+  cy: null, queue: [], flushing: false, dirty: false, es: null, sourceCache: new Map(),
   graphName: "", graphs: [], diff: null, diffBase: "", history: [],
 };
 const api = (path, params) => { const u = new URL(path, location.origin); if (S.graphName) u.searchParams.set("name", S.graphName); for (const [k, v] of Object.entries(params || {})) if (v != null) u.searchParams.set(k, v); return u.pathname + u.search; };
@@ -127,7 +120,14 @@ function verifyState(node) {
 function applyPatch(patch) {
   S.ann = mergePatch(S.ann, patch);
   if (SERVE) {
-    S.pending = mergePatch(S.pending || {}, patch);
+    // Outgoing patches are a FIFO. Adjacent patches are coalesced only when the composition is exact
+    // (composePatch keeps null = delete markers; mergePatch would drop them and deletes would never persist).
+    const q = S.queue;
+    if (q.length) {
+      try { q[q.length - 1] = composePatch(q[q.length - 1], patch); } catch (_) { q.push(patch); }
+    } else {
+      q.push(patch);
+    }
     flushPatch();
   } else {
     S.dirty = true;
@@ -135,21 +135,32 @@ function applyPatch(patch) {
     setStatus("annotations edited (not saved) — download when done");
   }
 }
-const flushPatch = debounce(async () => {
-  if (!S.pending) return;
-  const body = S.pending; S.pending = null;
+const flushPatch = debounce(() => { void drainQueue(); }, 350);
+async function drainQueue() {
+  if (S.flushing) return;
+  S.flushing = true;
   try {
-    const r = await fetch("/api/annotations", {method: "PATCH", headers: {"content-type": "application/json"}, body: JSON.stringify(body)});
-    if (!r.ok) throw new Error(await r.text());
-    const j = await r.json();
-    S.rev = j.rev;
-    if (!S.pending) S.ann = j.annotations;
-    setStatus("saved " + fmtTime());
-  } catch (err) {
-    S.pending = mergePatch(body, S.pending || {});
-    setStatus("save failed: " + err.message, true);
+    while (S.queue.length) {
+      const body = S.queue[0];
+      let j;
+      try {
+        const r = await fetch("/api/annotations", {method: "PATCH", headers: {"content-type": "application/json"}, body: JSON.stringify(body)});
+        if (!r.ok) throw new Error(await r.text());
+        j = await r.json();
+      } catch (err) {
+        setStatus("save failed: " + err.message + " — retrying", true);   // head stays queued; retry shortly
+        setTimeout(flushPatch, 2000);
+        return;
+      }
+      S.queue.shift();
+      S.rev = j.rev;
+      if (!S.queue.length) S.ann = j.annotations;   // adopt the server's view only once nothing is in flight
+      setStatus("saved " + fmtTime());
+    }
+  } finally {
+    S.flushing = false;
   }
-}, 350);
+}
 function downloadAnnotations() {
   const blob = new Blob([JSON.stringify(S.ann, null, 2) + "\n"], {type: "application/json"});
   const a = h("a", {href: URL.createObjectURL(blob), download: "annotations.json"});
@@ -839,7 +850,7 @@ function connectEvents() {
   });
   es.addEventListener("annotations", async (ev) => {
     const rev = JSON.parse(ev.data).rev;
-    if (rev === S.rev || S.pending) return;
+    if (rev === S.rev || S.queue.length || S.flushing) return;   // our own write, or ours still in flight
     const a = await (await fetch("/api/annotations")).json();
     S.ann = a.annotations; S.rev = a.rev; rerenderSoft(); setStatus("annotations updated elsewhere " + fmtTime());
   });

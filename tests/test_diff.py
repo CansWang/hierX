@@ -60,7 +60,7 @@ def test_node_type_edge_changes():
     assert d["nodes"]["removed_info"][g["id"]]["signature"] == "void g(void)"
     tc = d["types"]["changed"]["c:a.h::struct s"]
     assert tc["size"] == {"old": 8, "new": 16}
-    assert {(x["name"], x["change"]) for x in tc["fields"]} == {("pad", "added"), ("y", "offset"), ("", "reordered")} - {("", "reordered")} or True
+    assert {(x["name"], x["change"]) for x in tc["fields"]} == {("pad", "added"), ("y", "offset")}   # inserting pad is not a reorder of x,y
     assert any(x["name"] == "y" and x["change"] == "offset" and (x["old"], x["new"]) == (4, 16) for x in tc["fields"])
     assert s["edges_added"] == 1 and s["edges_removed"] == 1 and s["unresolved_added"] == 1
     md = render_markdown(d, new)
@@ -82,6 +82,33 @@ def test_edge_args_and_counts():
     new2 = _graph([f, g], edges=[e(["1"], 12)])
     d2 = diff_graphs(old, new2)
     assert d2["summary"]["edges_removed"] == 1 and d2["edges"]["removed"][0]["count"] == 1
+
+
+def test_params_and_attrs_compared_without_signature_change():
+    """Review finding H7: a port direction flip or an HDL parameter change must show up even when the signature text is identical."""
+    f = _node("c:a.c::f", "void f(x)", params=[("x", "logic", "in")])
+    old = _graph([f])
+    new = copy.deepcopy(old)
+    new["nodes"][f["id"]]["params"][0]["dir"] = "out"
+    new["nodes"][f["id"]]["attrs"] = {"parameters": {"W": 10}, "signals": [{"name": "s1", "type": "logic"}]}
+    old["nodes"][f["id"]]["attrs"] = {"parameters": {"W": 8}, "signals": [{"name": "s0", "type": "logic"}, {"name": "s1", "type": "logic"}]}
+    d = diff_graphs(old, new)
+    ch = d["nodes"]["changed"][f["id"]]
+    assert "signature" not in ch and ch["params"] == [{"name": "x", "change": "dir", "old": "in", "new": "out"}]
+    assert ch["attrs"]["parameters.W"] == {"old": 8, "new": 10} and ch["attrs"]["signals"] == {"removed": ["s0"]}
+    md = render_markdown(d)
+    assert "param x dir in → out" in md and "attr parameters.W 8 → 10" in md and "attr signals −s0" in md
+
+
+def test_edge_args_change_reported_even_when_a_call_is_added():
+    f = _node("c:a.c::f", calls=["c:a.c::g"])
+    g = _node("c:a.c::g")
+    e = lambda args, line: {"from": f["id"], "to": g["id"], "kind": "call", "args": args, "loc": {"file": "a.c", "line": line}}
+    old = _graph([f, g], edges=[e(["1"], 12)])
+    new = _graph([f, g], edges=[e(["2"], 12), e(["3"], 13)])      # existing call's args changed AND a call added
+    d = diff_graphs(old, new)
+    assert d["summary"]["edges_added"] == 1 and d["summary"]["edges_args_changed"] == 1
+    assert d["edges"]["args_changed"][0]["old_args"] == [["1"]] and sorted(d["edges"]["args_changed"][0]["new_args"]) == [["2"], ["3"]]
 
 
 def test_real_extraction_diff(extract, cproj):

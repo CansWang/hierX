@@ -395,6 +395,43 @@ class LspFrontend(Frontend):
         chunk = [lines[s["line"]][s["character"]:]] + lines[s["line"] + 1:e["line"]] + [lines[e["line"]][:e["character"]] if e["line"] < len(lines) else ""]
         return "\n".join(chunk)
 
+    def _full_range(self, item: dict) -> dict:
+        """The function's whole extent. rust-analyzer's call-hierarchy items carry it; pyright's `range` covers only
+        the NAME, which would make the body hash a hash of the name. Prefer documentSymbol (full ranges), then a
+        structural scan (indentation for Python, brace matching otherwise)."""
+        rng = item["range"]
+        sel = item.get("selectionRange") or rng
+        if rng["end"]["line"] > rng["start"]["line"]:
+            return rng
+        uri = item["uri"]
+        for sym in self._symbols(uri):
+            if sym["selectionRange"]["start"] == sel["start"] and sym["range"]["end"]["line"] > sym["range"]["start"]["line"]:
+                return sym["range"]
+        lines = self._lines(uri)
+        start = rng["start"]["line"]
+        if start >= len(lines):
+            return rng
+        if self.lang == "py":
+            indent = len(lines[start]) - len(lines[start].lstrip())
+            end = start
+            for li in range(start + 1, len(lines)):
+                if not lines[li].strip():
+                    continue
+                if len(lines[li]) - len(lines[li].lstrip()) <= indent:
+                    break
+                end = li
+            return {"start": {"line": start, "character": 0}, "end": {"line": end, "character": len(lines[end])}}
+        depth, seen = 0, False
+        for li in range(start, len(lines)):
+            for ch in lines[li]:
+                if ch == "{":
+                    depth, seen = depth + 1, True
+                elif ch == "}":
+                    depth -= 1
+                if seen and depth == 0:
+                    return {"start": {"line": start, "character": 0}, "end": {"line": li, "character": len(lines[li])}}
+        return rng
+
     def _rel(self, uri: str) -> str:
         return _ids.rel(uri_to_path(uri), self.root)
 
@@ -644,7 +681,8 @@ class LspFrontend(Frontend):
             return None
         sig, path_block = self._hover_sig(item)
         params, ret = parse_signature(sig, self.lang)
-        positions = self._param_positions(item, params)
+        full = self._full_range(item)
+        positions = self._param_positions({**item, "range": full}, params)
         type_keys: list[str] = []
         pparams: list[Param] = []
         for p in params:
@@ -658,9 +696,9 @@ class LspFrontend(Frontend):
                                  dir_source="heuristic" if self.lang == "rs" else "explicit"))
         qual = self._qualname(item)
         is_method = item.get("kind") in (6, 9)
-        body = self._text(uri, item["range"])
+        body = self._text(uri, full)
         node = Node(id=self.ids[key], kind="method" if is_method else "function", name=item["name"], qualname=qual, lang=self.lang,
-                    loc=self._mkloc(uri, item["range"]), signature=sig, storage=None, body_hash=_ids.body_hash(body), precision="lsp",
+                    loc=self._mkloc(uri, full), signature=sig, storage=None, body_hash=_ids.body_hash(body, self.lang), precision="lsp",
                     returns=TypeUse(type=ret) if ret else None, params=pparams, globals=GlobalRefs(),
                     attrs={"module": path_block} if path_block else {})
         callsites: list[CallSite] = []

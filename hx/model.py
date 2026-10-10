@@ -12,7 +12,23 @@ import typing
 from dataclasses import dataclass, field, fields as _dc_fields, is_dataclass
 from typing import Any, Optional
 
-SCHEMA = "hx/1"
+SCHEMA = "hx/1"          # "<name>/<major>": a different major is incompatible; fields may be ADDED within a major
+
+
+class SchemaError(ValueError):
+    """The document's `schema` is missing or belongs to another major version."""
+
+
+def check_schema(d: Any) -> None:
+    if not isinstance(d, dict):
+        raise SchemaError("graph document is not a JSON object")
+    s = d.get("schema")
+    if s is None:
+        raise SchemaError(f"graph has no 'schema' field (expected {SCHEMA!r})")
+    name, _, major = str(s).partition("/")
+    want_name, _, want_major = SCHEMA.partition("/")
+    if name != want_name or major.split(".")[0] != want_major:
+        raise SchemaError(f"unsupported graph schema {s!r}: this hx reads {SCHEMA!r}")
 
 _RENAME = {"src": "from", "dst": "to"}
 _UNRENAME = {v: k for k, v in _RENAME.items()}
@@ -161,14 +177,12 @@ class Graph:
         return json.dumps(self.to_dict(), indent=indent, ensure_ascii=False)
 
     def save(self, path: str) -> None:
-        import os
-        os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
-        with open(path, "w", encoding="utf-8") as fh:
-            fh.write(self.to_json())
-            fh.write("\n")
+        from .fsutil import atomic_write
+        atomic_write(path, self.to_json() + "\n")
 
     @classmethod
     def from_dict(cls, d: dict) -> "Graph":
+        check_schema(d)
         return _de(cls, d)
 
     @classmethod

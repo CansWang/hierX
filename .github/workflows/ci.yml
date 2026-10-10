@@ -1,0 +1,55 @@
+name: ci
+# Every toolchain is installed on purpose and HX_REQUIRE_TOOLS=1 turns any skipped test into a failure:
+# optional dependencies must not make the suite look green by skipping.
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.10", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: toolchains (verilator, clang, rust-analyzer)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends verilator clang gcc
+          rustup toolchain install stable --profile minimal
+          rustup component add --toolchain stable rust-analyzer rust-src
+          echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
+      - name: isolated Python environment
+        run: |
+          python -m venv "$RUNNER_TEMP/hx-ci"
+          echo "$RUNNER_TEMP/hx-ci/bin" >> "$GITHUB_PATH"
+      - name: clean base install (runtime dependencies must be sufficient)
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install .
+          python -m pip check
+          hx --help
+          hx mcp --help
+          hx serve --help
+          python -c "import hx.project, hx.mcp_server, hx.diff"
+          pyright --version
+      - name: developer dependencies
+        run: |
+          python -m pip install ".[dev]"
+          python -m pip check
+      - name: tests (skips are failures)
+        env:
+          HX_REQUIRE_TOOLS: "1"
+        run: |
+          rust-analyzer --version
+          python -m pytest -q -ra
+      - name: node unit tests for the viewer
+        run: node --test tests/js

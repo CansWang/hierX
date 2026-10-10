@@ -24,6 +24,8 @@ from typing import Optional
 
 from .. import ids as _ids
 from ..cache import TUCache
+
+SUMMARY_VERSION = 2   # part of the cache key: bump when the index format or hashing rules change
 from ..model import Loc, Node, Param, TypeUse, GlobalRefs, TypeDef, Field, Enumerator, GlobalVar
 from .base import Frontend, FunctionRecord, DeclRecord, TypeRecord, CallSite, EntryNotFound, FrontendError
 
@@ -140,6 +142,40 @@ class _XmlIndexer:
             except OSError:
                 self.src_cache[path] = []
         return self.src_cache[path]
+
+    def source_slice(self, loc: Optional[dict], end_kw: tuple[str, ...] = ()) -> Optional[str]:
+        """Source text from loc's first line to its end line (verilator gives both for modules, functions and
+        tasks). When no end line is known, extend to the first line containing one of `end_kw`."""
+        if not loc or not loc.get("file"):
+            return None
+        lines = self.src_lines(loc["file"])
+        if not lines or loc["line"] > len(lines):
+            return None
+        start = loc["line"] - 1
+        end = loc.get("end_line")
+        if not end or end <= loc["line"]:
+            end = None
+            for i in range(start, len(lines)):
+                if any(re.search(r"\b" + kw + r"\b", lines[i]) for kw in end_kw):
+                    end = i + 1
+                    break
+            if end is None:
+                return None
+        return "\n".join(lines[start:end])
+
+    @staticmethod
+    def xml_without_locations(el: ET.Element) -> str:
+        """Fallback fingerprint: the elaborated XML subtree with every source position stripped."""
+        import copy
+        c = copy.deepcopy(el)
+        for e in c.iter():
+            for a in ("loc", "fl"):
+                e.attrib.pop(a, None)
+        return ET.tostring(c, encoding="unicode")
+
+    def content_hash(self, el: ET.Element, loc: Optional[dict], end_kw: tuple[str, ...]) -> str:
+        text = self.source_slice(loc, end_kw)
+        return _ids.body_hash(text if text is not None else self.xml_without_locations(el), "sv")
 
     def paren_text(self, loc: Optional[dict]) -> Optional[str]:
         """Text inside the parentheses that follow a token located at loc (call args, port connection)."""
@@ -401,11 +437,10 @@ class _XmlIndexer:
         kw = "function" if el.tag == "func" else "task"
         sig = f"{kw} {ret['type'] + ' ' if ret else ''}{scope}::{name}({ptxt})"
         calls = self.collect_calls(el)
-        body_text = ET.tostring(el, encoding="unicode")
         self.routines[key] = {"key": key, "kind": "function" if el.tag == "func" else "task", "name": name, "scope": scope,
                               "qualname": f"{scope}.{name}", "loc": loc, "file": (loc or {}).get("file") or scope_file,
                               "signature": sig, "params": params, "returns": ret, "calls": calls, "type_keys": type_keys,
-                              "body_hash": _ids.body_hash(body_text)}
+                              "body_hash": self.content_hash(el, loc, ("endfunction", "endtask"))}
         return key
 
     def collect_calls(self, el: ET.Element, skip_nested_routines: bool = False) -> list[dict]:
@@ -477,7 +512,10 @@ class _XmlIndexer:
             self.modules[xname] = {"xname": xname, "name": oname, "loc": mloc, "file": (mloc or {}).get("file"),
                                    "ports": ports, "params": params, "signals": signals, "routines": routines,
                                    "instances": instances, "calls": calls, "type_keys": _uniq(type_keys),
-                                   "top": m.get("topModule") == "1"}
+                                   "top": m.get("topModule") == "1",
+                                   # the module's SOURCE, module…endmodule: procedural logic and assigns count,
+                                   # comments and line positions do not (review finding H2)
+                                   "body_hash": self.content_hash(m, mloc, ("endmodule",))}
         cells = self.tree.find("cells")
         if cells is not None:
             for c in cells:
@@ -536,7 +574,8 @@ class VerilatorFrontend(Frontend):
         files, filelist = find_sources(self.root, self.sv_files, self.filelist)
         key_args = ["-f", filelist] if filelist else files
         key_args = key_args + (["--top-module", self.top] if self.top else []) + self.extra_args
-        cached = self.cache.load("<verilator>", key_args)
+        extra = (SUMMARY_VERSION,)
+        cached = self.cache.load("<verilator>", key_args, extra)
         if cached is not None:
             self.idx = cached
             self.stats["cached"] = 1
@@ -544,7 +583,7 @@ class VerilatorFrontend(Frontend):
             xml, cmd = run_verilator(self.root, files, filelist, self.top, self.extra_args, self.verilator)
             self.idx = _XmlIndexer(xml, self.root).index()
             self.idx["command"] = cmd
-            self.cache.store("<verilator>", key_args, self.idx)
+            self.cache.store("<verilator>", key_args, self.idx, extra)
             self.stats["cached"] = 0
         self._link()
         self.stats.update({"tus": 1, "parsed": 1 - self.stats["cached"], "tu_errors": 0, "diagnostics": 0,
@@ -641,7 +680,7 @@ class VerilatorFrontend(Frontend):
                 sig = f"module {m['name']}{' #(' + params_txt + ')' if params_txt else ''} ({ports_txt})"
             node = Node(id=self.ids[key], kind="module" if not c["parent"] else "instance", name=c["name"], qualname=c["hier"],
                         lang="sv", loc=self._mkloc(m["loc"]) or Loc(file="?", line=0), signature=sig, storage=None,
-                        body_hash=_ids.body_hash(repr(m["ports"]) + repr(m["signals"]) + repr(m["instances"]) + repr(m["calls"])),
+                        body_hash=m["body_hash"],
                         precision="exact", returns=None, params=self._port_params(m["ports"]), globals=GlobalRefs(),
                         attrs={"module": m["name"], "specialization": m["xname"] if m["xname"] != m["name"] else None,
                                "parameters": {p["name"]: p.get("value") for p in m["params"]},

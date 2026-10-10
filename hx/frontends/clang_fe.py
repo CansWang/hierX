@@ -25,6 +25,10 @@ from typing import Optional
 
 from .. import ids as _ids
 from ..cache import TUCache
+
+# Bump whenever the per-TU summary format or the hashing/ID rules change: it is part of the cache key,
+# so stale .hx/cache entries from an older hx can never be mixed with fresh ones.
+SUMMARY_VERSION = 2
 from ..model import Loc, Node, Param, TypeUse, GlobalRefs, TypeDef, Field, Enumerator, GlobalVar
 from .base import Frontend, FunctionRecord, DeclRecord, TypeRecord, CallSite, EntryNotFound, FrontendError
 
@@ -477,9 +481,9 @@ class _TUExtractor:
         ctx = {"callsites": [], "reads": [], "writes": [], "fn_refs": [], "func": c, "func_name": qualname}
         if body is not None:
             self._walk(body, ctx, False, False)
-            bh = _ids.body_hash(self._raw(body))
+            bh = _ids.body_hash(self._raw(body), self.lang)
         else:
-            bh = _ids.body_hash(self._raw(c))
+            bh = _ids.body_hash(self._raw(c), self.lang)
         for cs in ctx["fn_refs"]:
             ctx["callsites"].append(cs)
         self.functions[usr] = {
@@ -492,7 +496,8 @@ class _TUExtractor:
             "type_usrs": _uniq(type_usrs), "system": self._is_system(c),
         }
         # the definition is also its own declaration
-        self.decls.setdefault(usr, {"name": name, "qualname": qualname, "loc": self._loc(c), "system": self._is_system(c)})
+        self.decls.setdefault(usr, {"name": name, "qualname": qualname, "ptypes": [p["type"] for p in params],
+                                    "loc": self._loc(c), "system": self._is_system(c)})
 
     def _raw(self, cursor) -> bytes:
         ext = cursor.extent
@@ -539,6 +544,7 @@ class _TUExtractor:
                 if usr:
                     (ctx["writes"] if write_ctx else ctx["reads"]).append(usr)
             elif ref.kind in self.FUNC_KINDS and not callee_ctx:
+                ref = self._primary_template(ref) or ref
                 usr = ref.get_usr()
                 if usr:
                     self._record_decl(ref)
@@ -640,6 +646,17 @@ class _TUExtractor:
                 return name
         return None
 
+    def _primary_template(self, ref):
+        """For a call to `clamp<uint32_t>(…)` libclang references the implicit specialization, whose USR has no
+        definition anywhere; map it back to the function template (or class-template method) that does."""
+        try:
+            t = self.cindex.conf.lib.clang_getSpecializedCursorTemplate(ref)
+        except Exception:  # noqa: BLE001 - binding missing in an old libclang
+            return None
+        if t is None or t.kind not in self.FUNC_KINDS:
+            return None
+        return t
+
     def _callsite(self, c, ctx: dict) -> None:
         ref = c.referenced
         macro = self._macro_at(c)
@@ -649,6 +666,7 @@ class _TUExtractor:
         else:
             args = [self._text(a) for a in c.get_arguments()]
         if ref is not None and ref.kind in self.FUNC_KINDS:
+            ref = self._primary_template(ref) or ref
             usr = ref.get_usr()
             self._record_decl(ref)
             ctx["callsites"].append({"callee_usr": usr, "name": ref.spelling, "loc": loc,
@@ -675,9 +693,13 @@ class _TUExtractor:
         usr = ref.get_usr()
         if not usr or usr in self.decls:
             return
+        try:
+            ptypes = [clean_spelling(t.spelling) for t in ref.type.argument_types()]
+        except Exception:  # noqa: BLE001 - not a function type (e.g. a variable referenced through a template)
+            ptypes = []
         self.decls[usr] = {"name": ref.spelling,
                            "qualname": self._qualname(ref) if self.lang == "cpp" else ref.spelling,
-                           "loc": self._loc(ref), "system": self._is_system(ref)}
+                           "ptypes": ptypes, "loc": self._loc(ref), "system": self._is_system(ref)}
 
     # ------------------------------------------------------------- globals
     def _is_global(self, var) -> bool:
@@ -900,6 +922,11 @@ class ClangFrontend(Frontend):
         self.errors: list[dict] = []
         self.diagnostics: list[dict] = []
         self.notes: list[str] = []
+        self.variants: dict[str, dict[tuple, list[str]]] = {}   # usr -> {variant signature: [TU files]} when TUs disagree
+
+    def _cache_extra(self) -> tuple:
+        """Everything besides (file, args) that shapes a summary — all of it must be in the cache key."""
+        return (SUMMARY_VERSION, self.root, int(self.include_system))
 
     # ------------------------------------------------------------- index
     def build_index(self) -> None:
@@ -909,8 +936,9 @@ class ClangFrontend(Frontend):
             self.lang = "cpp" if all(j.lang == "cpp" for j in jobs) else "c"
         summaries: list[dict] = []
         todo: list[dict] = []
+        extra = self._cache_extra()
         for j in jobs:
-            s = self.cache.load(j.file, j.args)
+            s = self.cache.load(j.file, j.args, extra)
             if s is not None:
                 summaries.append(s)
             else:
@@ -926,22 +954,42 @@ class ClangFrontend(Frontend):
                 if "error" in r:
                     self.errors.append(r)
                     continue
-                self.cache.store(j["file"], j["args"], r)
+                self.cache.store(j["file"], j["args"], r, extra)
                 summaries.append(r)
         self._merge(summaries)
         self.stats = {"tus": len(jobs), "parsed": len(todo) - len(self.errors), "cached": len(jobs) - len(todo),
                       "tu_errors": len(self.errors), "diagnostics": sum(s.get("n_errors", 0) for s in summaries),
                       "index_seconds": round(time.time() - t0, 2), "resource_dir": self.resource_dir,
-                      "functions_indexed": len(self.functions), "types_indexed": len(self.types)}
+                      "functions_indexed": len(self.functions), "types_indexed": len(self.types),
+                      "variants": len(self.variants)}
+
+    @staticmethod
+    def _same_file(a: Optional[str], b: Optional[str]) -> bool:
+        return bool(a and b) and os.path.normcase(os.path.abspath(a)) == os.path.normcase(os.path.abspath(b))
 
     def _merge(self, summaries: list[dict]) -> None:
-        for s in summaries:
+        """Fold per-TU summaries into one index. The result must not depend on which TUs came from the
+        cache, so summaries are merged in TU-path order and, for a function seen in several TUs (inline /
+        header-defined), the TU that *is* the defining file wins, else the first TU in that order."""
+        owner: dict[str, str] = {}                       # usr -> TU file whose summary we kept
+        shapes: dict[str, dict[tuple, list[str]]] = {}   # usr -> {(body_hash, callees): [TU files]}
+
+        def shape(f: dict) -> tuple:
+            return (f.get("body_hash"), tuple(c.get("callee_usr") or c.get("name") for c in f["callsites"]))
+
+        for s in sorted(summaries, key=lambda x: os.path.normcase(os.path.abspath(x["file"]))):
             lang = s["lang"]
+            tu = s["file"]
             for usr, f in s["functions"].items():
-                if usr not in self.functions:
-                    f = dict(f)
-                    f["lang"] = lang
-                    self.functions[usr] = f
+                shapes.setdefault(usr, {}).setdefault(shape(f), []).append(tu)
+                prev = self.functions.get(usr)
+                if prev is not None:
+                    if not (self._same_file(tu, f["loc"]["file"]) and not self._same_file(owner[usr], prev["loc"]["file"])):
+                        continue                           # keep the earlier one unless this TU owns the definition
+                f = dict(f)
+                f["lang"] = lang
+                self.functions[usr] = f
+                owner[usr] = tu
             for usr, d in s["decls"].items():
                 if usr not in self.decls:
                     d = dict(d)
@@ -960,20 +1008,34 @@ class ClangFrontend(Frontend):
                     self.types[usr] = t
             for d in s.get("diagnostics", []):
                 self.diagnostics.append(d)
+        self.variants = {usr: sh for usr, sh in shapes.items() if len(sh) > 1}
+        for usr, sh in sorted(self.variants.items(), key=lambda kv: self.functions[kv[0]]["qualname"])[:8]:
+            f = self.functions[usr]
+            others = sorted({_ids.rel(t, self.root) for tus in sh.values() for t in tus if t != owner[usr]})
+            self.notes.append(f"{f['qualname']}: compiled differently in {len(sh)} build variants "
+                              f"(using {_ids.rel(owner[usr], self.root)}; others: " + ", ".join(others[:3])
+                              + (" …" if len(others) > 3 else "") + ")")
+        if len(self.variants) > 8:
+            self.notes.append(f"… {len(self.variants) - 8} more functions differ between build variants")
         # callers index
         for usr, f in self.functions.items():
             for cs in f["callsites"]:
                 if cs.get("callee_usr"):
                     self.callers_idx.setdefault(cs["callee_usr"], []).append((usr, cs))
-        # stable ids: functions (with overload disambiguation), then declarations, vars, types
+        # stable ids. C++ functions always carry their parameter type list (overloads), so an id never changes
+        # because a sibling overload appeared; a #hash is added only on a residual collision (review finding H5).
+        def symbol(rec: dict, ptypes: list[str]) -> str:
+            if rec["lang"] == "cpp":
+                return f"{rec['qualname']}({', '.join(ptypes)})"
+            return rec["qualname"]
         cand = {}
         for usr, f in self.functions.items():
-            cand[usr] = _ids.node_id(f["lang"], _ids.rel(f["loc"]["file"], self.root), f["qualname"])
+            cand[usr] = _ids.node_id(f["lang"], _ids.rel(f["loc"]["file"], self.root), symbol(f, [p["type"] for p in f["params"]]))
         self.ids = _ids.disambiguate(cand)
         for usr, d in self.decls.items():
             if usr in self.ids or not d.get("loc"):
                 continue
-            self.ids[usr] = _ids.node_id(d["lang"], _ids.rel(d["loc"]["file"], self.root), d["qualname"])
+            self.ids[usr] = _ids.node_id(d["lang"], _ids.rel(d["loc"]["file"], self.root), symbol(d, d.get("ptypes") or []))
         for usr, v in self.vars.items():
             self.var_ids[usr] = _ids.var_id(v["lang"], _ids.rel(v["loc"]["file"], self.root) if v.get("loc") else "?", v["qualname"])
         for usr, t in self.types.items():

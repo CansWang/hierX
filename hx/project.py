@@ -22,9 +22,12 @@ except ModuleNotFoundError:  # pragma: no cover
     import tomli as tomllib  # type: ignore
 
 from .diff import diff_graphs, render_markdown
+from .fsutil import atomic_write
 
 HX_DIR = ".hx"
 SOURCE_EXTS = {".c", ".h", ".cc", ".cpp", ".cxx", ".hpp", ".hh", ".sv", ".svh", ".v", ".vh", ".rs", ".py", ".pyi", ".go", ".f"}
+# build descriptions that change what an extraction means, watched by name regardless of extension
+WATCHED_NAMES = {"compile_commands.json", "Cargo.toml", "Cargo.lock", "pyrightconfig.json", "pyproject.toml", "CMakeLists.txt"}
 SKIP_DIRS = {".git", ".hx", ".venv", "venv", "node_modules", "target", "build", "obj_dir", "__pycache__", ".cache", "dist"}
 EXTRACT_KEYS = ("depth", "type_depth", "include_callers", "include_system", "exclude", "max_nodes", "extra_args", "resource_dir",
                 "lang", "compile_commands", "sv_files", "filelist", "top", "verilator", "lsp_cmd", "lsp_timeout", "jobs")
@@ -38,16 +41,40 @@ def config_path(root: str) -> str:
     return os.path.join(hx_dir(root), "config.toml")
 
 
-def slug(entry: str) -> str:
+def _legacy_slug(entry: str) -> str:
     s = entry.replace("/", "__").replace(":", "__").replace("\\", "__")
     return re.sub(r"[^A-Za-z0-9._-]+", "_", s)
 
 
+def slug(entry: str) -> str:
+    """File-name for an entry: readable prefix + a short hash of the exact entry text, so two different entries
+    can never share a graph/history path (`a/b.c:f` vs `a__b.c:f` used to collide)."""
+    from .ids import short_hash
+    return _legacy_slug(entry)[:80] + "-" + short_hash(entry, 6)
+
+
+def _migrate_legacy(root: str, entry: str) -> None:
+    """Rename files written by hx < 0.2 (slug without hash) once, so tracked projects keep their history."""
+    old, new = _legacy_slug(entry), slug(entry)
+    if old == new:
+        return
+    for sub, ext in (("graphs", ".json"), ("history", "")):
+        o = os.path.join(hx_dir(root), sub, old + ext)
+        n = os.path.join(hx_dir(root), sub, new + ext)
+        if os.path.exists(o) and not os.path.exists(n):
+            try:
+                os.replace(o, n)
+            except OSError:
+                pass
+
+
 def graph_path(root: str, entry: str) -> str:
+    _migrate_legacy(root, entry)
     return os.path.join(hx_dir(root), "graphs", slug(entry) + ".json")
 
 
 def history_dir(root: str, entry: str) -> str:
+    _migrate_legacy(root, entry)
     return os.path.join(hx_dir(root), "history", slug(entry))
 
 
@@ -100,8 +127,7 @@ def save_config(root: str, cfg: dict) -> str:
                 continue
             lines.append(f"{k} = {_toml_value(v)}")
         lines.append("")
-    with open(p, "w", encoding="utf-8") as fh:
-        fh.write("\n".join(lines).rstrip() + "\n")
+    atomic_write(p, "\n".join(lines).rstrip() + "\n")
     return p
 
 
@@ -177,8 +203,7 @@ def snapshot(root: str, entry: str, src_path: Optional[str] = None, keep: int = 
                 return dst
         n += 1
         dst = f"{base}-{n}.json"
-    with open(dst, "wb") as fh:
-        fh.write(payload)
+    atomic_write(dst, payload)
     prune_history(root, entry, keep)
     return dst
 
@@ -297,8 +322,7 @@ def write_last_diff(root: str, results: list[UpdateResult]) -> str:
     for r in results:
         if r.changed or r.error or r.previous is None:
             parts.append(r.markdown.rstrip())
-    with open(p, "w", encoding="utf-8") as fh:
-        fh.write("\n\n".join(parts) + "\n")
+    atomic_write(p, "\n\n".join(parts) + "\n")
     return p
 
 
@@ -335,14 +359,16 @@ def source_signature(root: str, paths: Optional[Iterable[str]] = None, exts: Ite
                 pass
             continue
         for dirpath, dirnames, filenames in os.walk(base):
-            dirnames[:] = [d for d in dirnames if d not in SKIP_DIRS and not d.startswith(".")]
-            for fn in filenames:
-                if os.path.splitext(fn)[1] in exts:
-                    p = os.path.join(dirpath, fn)
-                    try:
-                        sig[p] = os.stat(p).st_mtime_ns
-                    except OSError:
-                        pass
+            skipped = [d for d in dirnames if d in SKIP_DIRS or d.startswith(".")]
+            dirnames[:] = [d for d in dirnames if d not in skipped]
+            candidates = [os.path.join(dirpath, fn) for fn in filenames if os.path.splitext(fn)[1] in exts or fn in WATCHED_NAMES]
+            for d in skipped:   # build dirs are not walked, but a compile_commands.json right inside one still counts
+                candidates += [os.path.join(dirpath, d, n) for n in WATCHED_NAMES if os.path.exists(os.path.join(dirpath, d, n))]
+            for p in candidates:
+                try:
+                    sig[p] = os.stat(p).st_mtime_ns
+                except OSError:
+                    pass
     return sig
 
 
@@ -412,8 +438,5 @@ def install_hook(root: str, event: str = "Stop", command: str = "hx update --qui
             if hk.get("command") == command:
                 return path, False
     lst.append(hook_snippet(event, command, timeout)["hooks"][event][0])
-    os.makedirs(sdir, exist_ok=True)
-    with open(path, "w", encoding="utf-8") as fh:
-        json.dump(settings, fh, indent=2)
-        fh.write("\n")
+    atomic_write(path, json.dumps(settings, indent=2) + "\n")
     return path, True

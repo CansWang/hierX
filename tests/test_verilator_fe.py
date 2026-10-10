@@ -114,3 +114,32 @@ def test_callers_and_cache(svproj):
     os.utime(svproj / "rtl" / "alu.sv", (time.time() + 3, time.time() + 3))
     fe, g = run(svproj, depth=1)
     assert fe.stats["cached"] == 0
+
+
+def test_module_hash_tracks_logic_not_layout(svproj):
+    """Review finding H2: the module fingerprint must change when the logic changes and must NOT change when
+    only comments/line positions move."""
+    _, g0 = run(svproj, depth=4)
+    alu = "sv:rtl/alu.sv::top.u_core_a.u_alu"
+    core = "sv:rtl/core.sv::top.u_core_a"
+    h0 = {k: n.body_hash for k, n in g0.nodes.items()}
+    alu_sv = svproj / "rtl" / "alu.sv"
+    src = alu_sv.read_text()
+    assert "a - b : a + b" in src
+    alu_sv.write_text(src.replace("a - b : a + b", "a + b : a - b"))      # swap the operators: a real logic change
+    _, g1 = run(svproj, depth=4)
+    assert g1.nodes[alu].body_hash != h0[alu]
+    assert g1.nodes[core].body_hash == h0[core] and g1.nodes[g1.entry].body_hash == h0[g1.entry]
+    alu_sv.write_text(src)
+    core_sv = svproj / "rtl" / "core.sv"
+    csrc = core_sv.read_text()
+    assert "  alu #(.W(W)) u_alu (" in csrc
+    core_sv.write_text(csrc.replace("  alu #(.W(W)) u_alu (", "  // the ALU instance (comment added above it)\n\n  alu #(.W(W)) u_alu ("))
+    _, g2 = run(svproj, depth=4)
+    assert set(g2.nodes) == set(g0.nodes) and {k: n.body_hash for k, n in g2.nodes.items()} == h0
+    assert g2.nodes[core].loc.line == g0.nodes[core].loc.line                 # module loc unchanged, instance moved 2 lines
+    assert set(g2.types) == set(g0.types)
+    fn = "sv:rtl/core.sv::core.saturate"
+    core_sv.write_text(csrc.replace("  alu #(.W(W)) u_alu (", "  // c\n  alu #(.W(W)) u_alu ("))
+    _, g3 = run(svproj, depth=4)
+    assert g3.nodes[fn].body_hash == h0[fn]

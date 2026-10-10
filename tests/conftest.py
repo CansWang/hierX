@@ -7,6 +7,45 @@ from pathlib import Path
 import pytest
 
 FIXTURE_C = Path(__file__).parent / "fixtures" / "c"
+REQUIRE_TOOLS = bool(os.environ.get("HX_REQUIRE_TOOLS"))
+
+
+def require_tool(name: str, *fallbacks: str) -> str:
+    """Path of an external tool, or skip the test — unless HX_REQUIRE_TOOLS=1 (CI), where a missing tool FAILS.
+
+    Optional toolchains must never make the suite look green by silently skipping."""
+    p = shutil.which(name)
+    for fb in fallbacks:
+        if p:
+            break
+        fb = os.path.expanduser(fb)
+        if os.path.exists(fb):
+            p = fb
+    if p:
+        return p
+    msg = f"{name} not installed"
+    if REQUIRE_TOOLS:
+        pytest.fail("HX_REQUIRE_TOOLS=1: " + msg)
+    pytest.skip(msg)
+
+
+@pytest.hookimpl(hookwrapper=True)
+def pytest_runtest_makereport(item, call):
+    """With HX_REQUIRE_TOOLS=1 every skip (markers, pytest.skip, importorskip) becomes a failure."""
+    outcome = yield
+    rep = outcome.get_result()
+    if REQUIRE_TOOLS and rep.skipped:
+        rep.outcome = "failed"
+        rep.longrepr = f"HX_REQUIRE_TOOLS=1: skipped test treated as failure: {rep.longrepr}"
+
+
+@pytest.hookimpl(hookwrapper=True)
+def pytest_make_collect_report(collector):
+    outcome = yield
+    rep = outcome.get_result()
+    if REQUIRE_TOOLS and rep.skipped:
+        rep.outcome = "failed"
+        rep.longrepr = f"HX_REQUIRE_TOOLS=1: skipped module treated as failure: {rep.longrepr}"
 
 
 def write_compile_commands(proj: Path) -> Path:

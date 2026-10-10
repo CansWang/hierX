@@ -15,6 +15,8 @@ import os
 import threading
 from typing import Any
 
+from .fsutil import file_lock
+
 SCHEMA = "hx-ann/1"
 _lock = threading.Lock()
 
@@ -102,8 +104,9 @@ def _nonempty(v: Any) -> bool:
 
 
 def patch_file(path: str, patch: dict) -> dict:
-    """Atomically load → merge → save; returns the new document."""
-    with _lock:
+    """load → merge → save under a thread lock AND a cross-process file lock (`hx serve`, `hx mcp` and the CLI
+    may all write the same annotations.json); returns the new document."""
+    with _lock, file_lock(path):
         doc = load(path)
         doc = prune_empty(merge_patch(doc, patch))
         save(path, doc)
@@ -111,7 +114,7 @@ def patch_file(path: str, patch: dict) -> dict:
 
 
 def replace_file(path: str, doc: dict) -> dict:
-    with _lock:
+    with _lock, file_lock(path):
         doc = prune_empty(doc)
         save(path, doc)
         return doc

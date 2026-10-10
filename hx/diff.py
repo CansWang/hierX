@@ -19,6 +19,35 @@ def _short(i: Optional[str]) -> str:
     return i.split(":", 1)[1] if ":" in i and "::" in i else i
 
 
+def _leaf(i: Optional[str]) -> str:
+    """Symbol part of an id: everything after the first '::' (C++ ids contain further '::' and parameter lists)."""
+    if not i:
+        return "?"
+    return i.split("::", 1)[1] if "::" in i else i
+
+
+def _diff_attrs(a: dict, b: dict) -> dict:
+    """Frontend extras (SV parameters/signals, Rust module path, …) compared key-wise; lists of named dicts as
+    added/removed names, everything else by JSON equality."""
+    out: dict[str, Any] = {}
+    for k in sorted(set(a) | set(b)):
+        va, vb = a.get(k), b.get(k)
+        if va == vb:
+            continue
+        if isinstance(va, dict) and isinstance(vb, dict) and not (va and all(isinstance(x, dict) for x in va.values())):
+            for kk in sorted(set(va) | set(vb)):
+                if va.get(kk) != vb.get(kk):
+                    out[f"{k}.{kk}"] = {"old": va.get(kk), "new": vb.get(kk)}
+        elif isinstance(va, list) and isinstance(vb, list) and all(isinstance(x, dict) and "name" in x for x in va + vb):
+            na, nb = {x["name"]: x for x in va}, {x["name"]: x for x in vb}
+            d = {"added": sorted(set(nb) - set(na)), "removed": sorted(set(na) - set(nb)),
+                 "changed": sorted(n for n in set(na) & set(nb) if na[n] != nb[n])}
+            out[k] = {kk: vv for kk, vv in d.items() if vv}
+        else:
+            out[k] = {"old": va, "new": vb}
+    return out
+
+
 def _loc_lines(n: dict) -> Optional[int]:
     loc = n.get("loc") or {}
     if loc.get("end_line") and loc.get("line"):
@@ -95,9 +124,12 @@ def diff_graphs(old: dict, new: dict) -> dict:
         ch: dict[str, Any] = {}
         if a.get("signature") != b.get("signature"):
             ch["signature"] = {"old": a.get("signature"), "new": b.get("signature")}
-            pd = _diff_params(a.get("params", []), b.get("params", []))
-            if pd:
-                ch["params"] = pd
+        pd = _diff_params(a.get("params", []), b.get("params", []))   # always: a dir flip need not change the text
+        if pd:
+            ch["params"] = pd
+        ad = _diff_attrs(a.get("attrs") or {}, b.get("attrs") or {})
+        if ad:
+            ch["attrs"] = ad
         ra, rb = (a.get("returns") or {}).get("type"), (b.get("returns") or {}).get("type")
         if ra != rb:
             ch["returns"] = {"old": ra, "new": rb}
@@ -173,8 +205,9 @@ def diff_graphs(old: dict, new: dict) -> dict:
                 edges_removed.append(_edge_view(k, sum(ca.values()) - sum(cb.values())))
             elif sum(cb.values()) > sum(ca.values()):
                 edges_added.append(_edge_view(k, sum(cb.values()) - sum(ca.values())))
-            if ca != cb and sum(ca.values()) == sum(cb.values()):
-                edges_args.append({**_edge_view(k, 0), "old_args": [list(x) for x in ca.elements()], "new_args": [list(x) for x in cb.elements()]})
+            gone, came = ca - cb, cb - ca            # argument tuples that changed, independent of the count delta
+            if gone and came:
+                edges_args.append({**_edge_view(k, 0), "old_args": [list(x) for x in gone.elements()], "new_args": [list(x) for x in came.elements()]})
 
     ou = {(u["name"], u["from"], u["reason"]) for u in old.get("unresolved", [])}
     nu = {(u["name"], u["from"], u["reason"]) for u in new.get("unresolved", [])}
@@ -260,17 +293,22 @@ def render_markdown(d: dict, new_graph: Optional[dict] = None, limit: int = 12, 
             parts = []
             if "signature" in ch:
                 parts.append(f"signature `{ch['signature']['old']}` → `{ch['signature']['new']}`")
-                for p in ch.get("params", []):
-                    if p["change"] == "added":
-                        parts.append(f"+param {p['name']}: {p['new']['type']} ({p['new']['dir']})")
-                    elif p["change"] == "removed":
-                        parts.append(f"−param {p['name']}")
-                    elif p["change"] in ("type", "dir"):
-                        parts.append(f"param {p['name']} {p['change']} {p['old']} → {p['new']}")
-                    elif p["change"] == "reordered":
-                        parts.append("params reordered")
-            elif "returns" in ch:
+            for p in ch.get("params", []):
+                if p["change"] == "added":
+                    parts.append(f"+param {p['name']}: {p['new']['type']} ({p['new']['dir']})")
+                elif p["change"] == "removed":
+                    parts.append(f"−param {p['name']}")
+                elif p["change"] in ("type", "dir"):
+                    parts.append(f"param {p['name']} {p['change']} {p['old']} → {p['new']}")
+                elif p["change"] == "reordered":
+                    parts.append("params reordered")
+            if "returns" in ch and "signature" not in ch:
                 parts.append(f"returns {ch['returns']['old']} → {ch['returns']['new']}")
+            for k, v in list(ch.get("attrs", {}).items())[:6]:
+                if "old" in v or "new" in v:
+                    parts.append(f"attr {k} {v.get('old')} → {v.get('new')}")
+                else:
+                    parts.append(f"attr {k}" + "".join(f" {sign}{', '.join(v[w])}" for sign, w in (("+", "added"), ("−", "removed"), ("~", "changed")) if v.get(w)))
             if "body" in ch:
                 delta = ch["body"].get("loc_delta")
                 parts.append("body changed" + (f" ({delta:+d} lines)" if delta is not None else ""))
@@ -282,9 +320,9 @@ def render_markdown(d: dict, new_graph: Optional[dict] = None, limit: int = 12, 
                         parts.append(f"{what} −{', '.join(_short(x) for x in dd['removed'])}")
             if "calls" in ch:
                 if ch["calls"]["added"]:
-                    parts.append(f"calls +{', '.join(_short(x).split('::')[-1] for x in ch['calls']['added'])}")
+                    parts.append(f"calls +{', '.join(_leaf(x) for x in ch['calls']['added'])}")
                 if ch["calls"]["removed"]:
-                    parts.append(f"calls −{', '.join(_short(x).split('::')[-1] for x in ch['calls']['removed'])}")
+                    parts.append(f"calls −{', '.join(_leaf(x) for x in ch['calls']['removed'])}")
             if "moved" in ch:
                 parts.append(f"moved {ch['moved']['old']} → {ch['moved']['new']}")
             if "storage" in ch:
@@ -350,22 +388,22 @@ def render_markdown(d: dict, new_graph: Optional[dict] = None, limit: int = 12, 
         lines.append("## Edges")
         items, more = _cap(d["edges"]["added"], limit)
         for e in items:
-            lines.append(f"+ {_short(e['from']).split('::')[-1]} → {_short(e['to']).split('::')[-1] if not e['to'].startswith('fnptr:') else e['to']} ({e['kind']}{'×' + str(e['count']) if e['count'] > 1 else ''})")
+            lines.append(f"+ {_leaf(e['from'])} → {_leaf(e['to']) if not e['to'].startswith('fnptr:') else e['to']} ({e['kind']}{'×' + str(e['count']) if e['count'] > 1 else ''})")
         if more:
             lines.append(f"  … {more} more added")
         items, more = _cap(d["edges"]["removed"], limit)
         for e in items:
-            lines.append(f"− {_short(e['from']).split('::')[-1]} → {_short(e['to']).split('::')[-1] if not e['to'].startswith('fnptr:') else e['to']} ({e['kind']}{'×' + str(e['count']) if e['count'] > 1 else ''})")
+            lines.append(f"− {_leaf(e['from'])} → {_leaf(e['to']) if not e['to'].startswith('fnptr:') else e['to']} ({e['kind']}{'×' + str(e['count']) if e['count'] > 1 else ''})")
         if more:
             lines.append(f"  … {more} more removed")
         for e in d["edges"]["args_changed"][:limit]:
-            lines.append(f"~ {_short(e['from']).split('::')[-1]} → {_short(e['to']).split('::')[-1]} args {e['old_args']} → {e['new_args']}")
+            lines.append(f"~ {_leaf(e['from'])} → {_leaf(e['to'])} args {e['old_args']} → {e['new_args']}")
 
     if d["unresolved"]["added"] or d["unresolved"]["removed"]:
         lines.append("")
         lines.append("## Unresolved")
         for u in d["unresolved"]["added"][:limit]:
-            lines.append(f"+ {u['name']}  ({u['reason']}) from {_short(u['from']).split('::')[-1]}")
+            lines.append(f"+ {u['name']}  ({u['reason']}) from {_leaf(u['from'])}")
         for u in d["unresolved"]["removed"][:limit]:
-            lines.append(f"− {u['name']}  ({u['reason']}) from {_short(u['from']).split('::')[-1]}")
+            lines.append(f"− {u['name']}  ({u['reason']}) from {_leaf(u['from'])}")
     return "\n".join(lines) + "\n"

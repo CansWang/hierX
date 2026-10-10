@@ -25,6 +25,7 @@ def test_index_and_static(served):
     r = c.get("/")
     assert r.status_code == 200 and 'window.HX_CONFIG = {"mode": "serve", "allow_extract": true};' in r.text
     assert c.get("/static/app.js").status_code == 200
+    assert c.get("/static/patch.js").status_code == 200 and "root.hxPatch" in c.get("/static/patch.js").text
     assert c.get("/static/vendor/cytoscape.min.js").status_code == 200
     assert c.get("/api/status").json()["entry"] == "c:src/main.c::app_run"
 
@@ -44,6 +45,21 @@ def test_graph_and_annotations_roundtrip(served):
     assert c.patch("/api/annotations", json=[1, 2]).status_code == 400
 
 
+def test_delete_patches_persist(served):
+    """The exact patches the UI sends for clear-note / un-verify / reset-dir / relayout must delete on disk (review finding H4)."""
+    c, cproj, _ = served
+    nid = "c:src/dma.c::dma_start"
+    c.patch("/api/annotations", json={"nodes": {nid: {"note": "n", "tags": ["t"], "verified_body_hash": "sha1:x", "params": {"ch": {"dir": "out"}}}},
+                                      "view": {"pinned_positions": {nid: {"x": 1, "y": 2}, "c:src/main.c::app_run": {"x": 3, "y": 4}}}})
+    for patch in ({"nodes": {nid: {"note": None}}}, {"nodes": {nid: {"tags": None}}}, {"nodes": {nid: {"verified_body_hash": None}}},
+                  {"nodes": {nid: {"params": {"ch": {"dir": None}}}}}, {"view": {"pinned_positions": None}}):
+        assert c.patch("/api/annotations", json=patch).status_code == 200
+    doc = c.get("/api/annotations").json()["annotations"]
+    assert nid not in doc["nodes"] and doc["view"]["pinned_positions"] == {}
+    on_disk = json.load(open(cproj / ".hx" / "annotations.json"))
+    assert on_disk["nodes"] == {} and on_disk["view"]["pinned_positions"] == {}
+
+
 def test_source_confined_to_root(served):
     c, cproj, _ = served
     r = c.get("/api/source", params={"file": "src/dma.c", "line": 1, "span": 2})
@@ -51,6 +67,10 @@ def test_source_confined_to_root(served):
     assert c.get("/api/source", params={"file": "../../etc/passwd"}).status_code == 403
     assert c.get("/api/source", params={"file": "/etc/passwd"}).status_code == 403
     assert c.get("/api/source", params={"file": "src/nope.c"}).status_code == 404
+    os.symlink("/etc/hostname", cproj / "src" / "escape.c")           # symlink inside the root pointing outside it
+    assert c.get("/api/source", params={"file": "src/escape.c"}).status_code == 403
+    os.symlink(cproj / "src" / "dma.c", cproj / "src" / "alias.c")   # symlink that stays inside is fine
+    assert c.get("/api/source", params={"file": "src/alias.c"}).status_code == 200
     r = c.get("/api/source", params={"file": "src/dma.c", "line": 5, "span": 9999})
     assert len(r.json()["lines"]) <= 400
 
@@ -148,26 +168,26 @@ def test_multi_graph_history_and_diff(cproj, extract):
     extract(depth=1).save(str(cproj / ".hx" / "graph.json"))
     with TestClient(create_app(str(cproj / ".hx" / "graph.json"), poll_interval=0.05)) as c:
         names = [g["name"] for g in c.get("/api/graphs").json()]
-        assert names == ["graph", "src__hal.c__hal_write32", "src__main.c__app_run"]
+        assert names == ["graph", project.slug("src/hal.c:hal_write32"), project.slug("src/main.c:app_run")]
         assert c.get("/api/status").json()["graphs"] == names
-        g = c.get("/api/graph", params={"name": "src__hal.c__hal_write32"}).json()
+        g = c.get("/api/graph", params={"name": project.slug("src/hal.c:hal_write32")}).json()
         assert g["entry"] == "c:src/hal.c::hal_write32"
         assert c.get("/api/graph", params={"name": "nope"}).status_code == 404
-        h = c.get("/api/history", params={"name": "src__main.c__app_run"}).json()
+        h = c.get("/api/history", params={"name": project.slug("src/main.c:app_run")}).json()
         assert h["entry"] == "src/main.c:app_run" and h["snapshots"] == []
-        assert c.get("/api/diff", params={"name": "src__main.c__app_run"}).status_code == 404
-        snap = c.post("/api/snapshot", params={"name": "src__main.c__app_run"}).json()
+        assert c.get("/api/diff", params={"name": project.slug("src/main.c:app_run")}).status_code == 404
+        snap = c.post("/api/snapshot", params={"name": project.slug("src/main.c:app_run")}).json()
         assert snap["snapshot"] and len(snap["snapshots"]) == 1
         dma_c = cproj / "src" / "dma.c"
         dma_c.write_text(dma_c.read_text().replace("    g_dma_active++;\n", "    g_dma_active += 1;\n    hal_read32(ch->base);\n"))
         os.utime(dma_c, (time.time() + 5, time.time() + 5))
         project.update(root, ["src/main.c:app_run"])
-        d = c.get("/api/diff", params={"name": "src__main.c__app_run"}).json()
+        d = c.get("/api/diff", params={"name": project.slug("src/main.c:app_run")}).json()
         assert d["schema"] == "hx-diff/1" and d["summary"]["nodes_changed"] == 1 and "calls +hal_read32" in d["markdown"]
         assert d["since"] == snap["snapshot"]
-        md = c.get("/api/diff", params={"name": "src__main.c__app_run", "format": "md"}).text
+        md = c.get("/api/diff", params={"name": project.slug("src/main.c:app_run"), "format": "md"}).text
         assert md.startswith("# src/main.c:app_run since ")
-        src = c.get("/api/source", params={"file": "src/hal.c", "line": 1, "span": 1, "name": "src__hal.c__hal_write32"}).json()
+        src = c.get("/api/source", params={"file": "src/hal.c", "line": 1, "span": 1, "name": project.slug("src/hal.c:hal_write32")}).json()
         assert src["lines"] == ['#include "hal.h"']
     # serve picks a tracked graph when .hx/graph.json is absent
     (cproj / ".hx" / "graph.json").unlink()

@@ -264,8 +264,10 @@ def create_app(graph_path: str, annotations_path: Optional[str] = None, root: Op
         root = st.effective_root(name)
         if not root:
             raise HTTPException(400, "no project root known")
-        target = os.path.abspath(file if os.path.isabs(file) else os.path.join(root, file))
-        if os.path.commonpath([root, target]) != root:
+        # realpath on both sides: a symlink inside the project must not read files outside it (review finding H8)
+        real_root = os.path.realpath(root)
+        target = os.path.realpath(file if os.path.isabs(file) else os.path.join(root, file))
+        if os.path.commonpath([real_root, target]) != real_root:
             raise HTTPException(403, "path outside project root")
         if not os.path.isfile(target):
             raise HTTPException(404, f"no such file: {file}")

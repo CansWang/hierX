@@ -1,0 +1,562 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/canswang/hx/schema/hx-1.schema.json",
+  "title": "hx graph (schema hx/1)",
+  "description": "Function-scoped structure graph produced by `hx extract`. Compatibility policy: within major 1 fields may be ADDED (readers must ignore unknown fields); removing or re-typing a field, or changing an id rule, bumps the major. Units: C/C++ `offset`/`size`/`align` are BYTES and `bit_offset`/`bit_width` describe bitfields; SystemVerilog `size`, `offset` (= bit offset, MSB first) and `bit_width` are BITS. Precision per node: `exact` = compiler/elaborator derived (libclang, verilator); `lsp` = from a language server (no sizes/offsets, call edges as the server reports them).",
+  "type": "object",
+  "required": [
+    "schema",
+    "generated",
+    "root",
+    "lang",
+    "entry",
+    "nodes",
+    "types",
+    "globals",
+    "edges",
+    "unresolved"
+  ],
+  "properties": {
+    "schema": {
+      "const": "hx/1"
+    },
+    "generated": {
+      "type": "string",
+      "description": "ISO-8601 UTC timestamp"
+    },
+    "root": {
+      "type": "string",
+      "description": "absolute project root; every relpath in ids/locs is relative to it"
+    },
+    "lang": {
+      "type": "string",
+      "examples": [
+        "c",
+        "cpp",
+        "sv",
+        "rs",
+        "py",
+        "go"
+      ],
+      "description": "frontend language tag; new frontends add tags without a major bump"
+    },
+    "entry": {
+      "$ref": "#/$defs/id"
+    },
+    "meta": {
+      "type": "object",
+      "description": "free-form: extract_args, options, index stats, notes, truncated"
+    },
+    "nodes": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/$defs/node"
+      }
+    },
+    "types": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/$defs/typedef"
+      }
+    },
+    "globals": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/$defs/global"
+      }
+    },
+    "edges": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/edge"
+      }
+    },
+    "unresolved": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/unresolved"
+      }
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z]+:[^\\n]+::.+$",
+      "description": "<lang>:<relpath>::<qualname>. C++ functions carry their parameter type list, e.g. cpp:src/bus.cpp::hw::Bus::write(uint32_t, uint32_t); a #<8hex> suffix is appended only on a residual collision. Records: '<kind> <name>' (struct dma_chan); anonymous records: '<kind> <parent>.<member>'."
+    },
+    "loc": {
+      "type": "object",
+      "required": [
+        "file",
+        "line"
+      ],
+      "properties": {
+        "file": {
+          "type": "string"
+        },
+        "line": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "end_line": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "col": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        }
+      }
+    },
+    "typeuse": {
+      "type": "object",
+      "required": [
+        "type"
+      ],
+      "properties": {
+        "type": {
+          "type": "string"
+        },
+        "type_ref": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "param": {
+      "type": "object",
+      "required": [
+        "name",
+        "type",
+        "dir",
+        "dir_source"
+      ],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        },
+        "type_ref": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "dir": {
+          "enum": [
+            "in",
+            "out",
+            "inout"
+          ]
+        },
+        "dir_source": {
+          "enum": [
+            "explicit",
+            "heuristic",
+            "user"
+          ]
+        }
+      }
+    },
+    "field": {
+      "type": "object",
+      "required": [
+        "name",
+        "type"
+      ],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        },
+        "type_ref": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "offset": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "size": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "bit_offset": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "bit_width": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        }
+      }
+    },
+    "node": {
+      "type": "object",
+      "required": [
+        "id",
+        "kind",
+        "name",
+        "qualname",
+        "lang",
+        "loc",
+        "signature",
+        "depth",
+        "precision",
+        "params",
+        "globals",
+        "calls"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "kind": {
+          "enum": [
+            "function",
+            "method",
+            "module",
+            "instance",
+            "task"
+          ]
+        },
+        "name": {
+          "type": "string"
+        },
+        "qualname": {
+          "type": "string"
+        },
+        "lang": {
+          "type": "string"
+        },
+        "loc": {
+          "$ref": "#/$defs/loc"
+        },
+        "signature": {
+          "type": "string"
+        },
+        "storage": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "depth": {
+          "type": "integer",
+          "description": "min BFS distance from the entry; negative on the caller side"
+        },
+        "body_hash": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^sha1:[0-9a-f]{40}$",
+          "description": "token hash of the body: formatting and comments do not change it; literals, operator adjacency and Python indentation do"
+        },
+        "precision": {
+          "enum": [
+            "exact",
+            "lsp",
+            "syntax"
+          ]
+        },
+        "returns": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/typeuse"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "params": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/param"
+          }
+        },
+        "globals": {
+          "type": "object",
+          "properties": {
+            "reads": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "writes": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "calls": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "attrs": {
+          "type": "object"
+        },
+        "runtime": {
+          "description": "reserved (Phase 5)"
+        }
+      }
+    },
+    "typedef": {
+      "type": "object",
+      "required": [
+        "id",
+        "kind",
+        "name",
+        "lang"
+      ],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "kind": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "lang": {
+          "type": "string"
+        },
+        "loc": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/loc"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "size": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "align": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "fields": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/field"
+          }
+        },
+        "enumerators": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "name",
+              "value"
+            ]
+          }
+        },
+        "underlying": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "underlying_ref": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "anonymous": {
+          "type": "boolean"
+        },
+        "system": {
+          "type": "boolean"
+        },
+        "used_by": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "global": {
+      "type": "object",
+      "required": [
+        "id",
+        "name",
+        "type",
+        "lang"
+      ],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        },
+        "lang": {
+          "type": "string"
+        },
+        "type_ref": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "loc": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/loc"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "storage": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "scope": {
+          "type": "string"
+        }
+      }
+    },
+    "edge": {
+      "type": "object",
+      "required": [
+        "from",
+        "kind"
+      ],
+      "properties": {
+        "from": {
+          "type": "string"
+        },
+        "to": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "null for calls through function pointers"
+        },
+        "kind": {
+          "enum": [
+            "call",
+            "ref",
+            "fnptr",
+            "macro",
+            "instance"
+          ]
+        },
+        "loc": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/loc"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "args": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "name": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "macro": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "ptr_type": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "unresolved": {
+      "type": "object",
+      "required": [
+        "name",
+        "from",
+        "reason"
+      ],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "from": {
+          "type": "string",
+          "description": "always a node id present in `nodes`"
+        },
+        "reason": {
+          "type": "string"
+        },
+        "loc": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/loc"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    }
+  }
+}

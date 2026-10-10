@@ -29,7 +29,8 @@ def test_track_config_roundtrip(cproj):
     project.track(str(cproj), "src/main.c:app_run", depth=4)       # replace keeps one entry per id
     assert [e["depth"] for e in project.load_config(str(cproj))["entries"] if e["entry"] == "src/main.c:app_run"] == [4]
     assert project.untrack(str(cproj), "src/hal.c:hal_write32") and not project.untrack(str(cproj), "nope")
-    assert project.slug("src/main.c:app_run") == "src__main.c__app_run"
+    assert project.slug("src/main.c:app_run").startswith("src__main.c__app_run-") and len(project.slug("src/main.c:app_run")) == len("src__main.c__app_run-") + 6
+    assert project.slug("a/b.c:f") != project.slug("a__b.c:f")       # review finding H5: the old slug mapped both to one file
 
 
 def test_update_snapshots_and_diffs(cproj):
@@ -53,7 +54,7 @@ def test_update_snapshots_and_diffs(cproj):
     assert project.resolve_history(root, "src/main.c:app_run", hist[0]["ts"])["ts"] == hist[0]["ts"]
     assert project.resolve_history(root, "src/main.c:app_run", "1999-01-01T00:00:00+00:00")["ts"] == hist[0]["ts"]
     graphs = project.find_graphs(root)
-    assert graphs[0]["name"] == "src__main.c__app_run" and graphs[0]["entry"] == "c:src/main.c::app_run"
+    assert graphs[0]["name"] == project.slug("src/main.c:app_run") and graphs[0]["entry"] == "c:src/main.c::app_run"
     project.prune_history(root, "src/main.c:app_run", 1)
     assert len(project.list_history(root, "src/main.c:app_run")) == 1
     summary = project.summarize(r3)

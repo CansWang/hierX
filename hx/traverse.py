@@ -13,7 +13,7 @@ from collections import deque
 from dataclasses import dataclass, field
 from typing import Optional
 
-from .frontends.base import Frontend, CallSite
+from .frontends.base import Frontend, CallSite, FunctionRecord
 from .model import Graph, Edge, Unresolved, Node
 
 
@@ -34,6 +34,7 @@ class _Builder:
         self.g = graph
         self.seen_unresolved: set[tuple] = set()
         self.truncated = False
+        self.type_level: dict[str, int] = {}   # type id -> smallest nesting level it was expanded at
 
     # -- helpers -----------------------------------------------------------
     def excluded(self, relpath: Optional[str]) -> bool:
@@ -55,6 +56,9 @@ class _Builder:
         return e
 
     def add_type(self, key: str, level: int, used_by: Optional[str]) -> None:
+        """Record a type and expand its nested types down to --type-depth. A type met again at a SMALLER level
+        (closer to a signature) is re-expanded with the larger remaining budget, so the result does not depend
+        on traversal order."""
         rec = self.fe.type(key)
         if rec is None:
             return
@@ -65,8 +69,10 @@ class _Builder:
             existing = td
         if used_by and used_by not in existing.used_by:
             existing.used_by.append(used_by)
-        if existing is not td:
-            return  # already expanded
+        prev = self.type_level.get(td.id)
+        if prev is not None and prev <= level:
+            return  # already expanded with at least this much budget
+        self.type_level[td.id] = level
         for ak in rec.alias_keys:
             self.add_type(ak, level, None)
         if level < self.opts.type_depth:
@@ -110,18 +116,39 @@ class _Builder:
         return target_id
 
     # -- passes -----------------------------------------------------------
+    def add_globals(self, rec: FunctionRecord) -> None:
+        for gk in rec.global_keys:
+            gv = self.fe.global_var(gk)
+            if gv is not None and gv.id not in self.g.globals:
+                self.g.globals[gv.id] = gv
+
+    def truncate(self, queue: deque, reason: str = "truncated by --max-nodes") -> None:
+        """--max-nodes reached: every queued-but-unexpanded target gets an unresolved record whose `from` is
+        the node that reached it (always in the graph), so nothing disappears silently."""
+        self.truncated = True
+        while queue:
+            key, _d, parent_id, cs = queue.popleft()
+            if parent_id is None:
+                continue
+            decl = self.fe.declaration(key)
+            name = cs.name if cs else (decl.name if decl else key)
+            self.unresolved(name, parent_id, reason, cs.loc if cs else (decl.loc if decl else None),
+                            decl.id if decl else self.fe.stable_id(key))
+
+    # -- passes -----------------------------------------------------------
     def callees(self, entry_key: str) -> None:
-        queue = deque([(entry_key, 0)])
+        queue: deque = deque([(entry_key, 0, None, None)])     # (key, depth, parent id, call site)
         seen = {entry_key}
         while queue:
-            key, d = queue.popleft()
+            key, d, parent_id, pcs = queue.popleft()
             rec = self.fe.function(key)
             if rec is None:
                 continue
             node = rec.node
             if not self.add_node(node, d):
                 if self.truncated:
-                    self.unresolved(node.name, node.id, "truncated by --max-nodes", node.loc, node.id)
+                    queue.appendleft((key, d, parent_id, pcs))
+                    self.truncate(queue)
                     break
                 continue
             for cs in rec.callsites:
@@ -142,18 +169,13 @@ class _Builder:
                 if target_id is None:
                     continue
                 seen.add(cs.callee_key)
-                queue.append((cs.callee_key, d + 1))
+                queue.append((cs.callee_key, d + 1, node.id, cs))
             for tk in rec.type_keys:
                 self.add_type(tk, 0, node.id)
-            for gk in rec.global_keys:
-                gv = self.fe.global_var(gk)
-                if gv is None:
-                    continue
-                if gv.id not in self.g.globals:
-                    self.g.globals[gv.id] = gv
+            self.add_globals(rec)
 
     def callers(self, entry_key: str) -> None:
-        queue = deque([(entry_key, 0)])
+        queue: deque = deque([(entry_key, 0)])
         seen = {entry_key}
         while queue:
             key, d = queue.popleft()
@@ -168,16 +190,20 @@ class _Builder:
                 decl = self.fe.declaration(caller_key)
                 if decl and (self.excluded(decl.relpath) or (decl.system and not self.opts.include_system)):
                     continue
+                if node.id not in self.g.nodes:
+                    if self.opts.max_nodes is not None and len(self.g.nodes) >= self.opts.max_nodes:
+                        # the caller would not fit: no edge from a node that is not in the graph, just the record
+                        self.truncated = True
+                        if callee_id:
+                            self.unresolved(node.name, callee_id, "caller truncated by --max-nodes", cs.loc, node.id)
+                        continue
+                    self.add_node(node, d - 1)
+                    for tk in rec.type_keys:
+                        self.add_type(tk, 0, node.id)
+                    self.add_globals(rec)
                 self.edge_from(node.id, cs, callee_id)
                 if callee_id and callee_id not in node.calls:
                     node.calls.append(callee_id)
-                if node.id not in self.g.nodes:
-                    if not self.add_node(node, d - 1):
-                        if self.truncated:
-                            return
-                        continue
-                    for tk in rec.type_keys:
-                        self.add_type(tk, 0, node.id)
                 if caller_key not in seen:
                     seen.add(caller_key)
                     queue.append((caller_key, d - 1))

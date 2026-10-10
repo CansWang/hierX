@@ -7,12 +7,13 @@ from hx.traverse import TraverseOptions, extract_graph
 class FakeFE(Frontend):
     lang = "fake"
 
-    def __init__(self, calls, defined=None, system=(), types=None, node_types=None):
+    def __init__(self, calls, defined=None, system=(), types=None, node_types=None, node_globals=None):
         self.calls = calls                      # name -> [callee names]
         self.defined = set(defined if defined is not None else calls)
         self.system = set(system)
         self.types = types or {}                # tname -> (TypeDef, nested)
         self.node_types = node_types or {}      # fname -> [tnames]
+        self.node_globals = node_globals or {}  # fname -> [global names]
 
     def _id(self, k):
         return f"fake:{k}.c::{k}"
@@ -27,7 +28,7 @@ class FakeFE(Frontend):
                  loc=Loc(f"{key}.c", 1), signature=f"void {key}()")
         cs = [CallSite(callee_key=c, name=c, loc=Loc(f"{key}.c", 2 + i), kind="call") for i, c in enumerate(self.calls.get(key, []))]
         cs += [CallSite(callee_key=None, name="(*fp)", loc=Loc(f"{key}.c", 99), kind="fnptr")] if key == "withfp" else []
-        return FunctionRecord(node=n, callsites=cs, type_keys=self.node_types.get(key, []), global_keys=[])
+        return FunctionRecord(node=n, callsites=cs, type_keys=self.node_types.get(key, []), global_keys=self.node_globals.get(key, []))
 
     def declaration(self, key):
         if key == "ghost":
@@ -42,7 +43,7 @@ class FakeFE(Frontend):
         return TypeRecord(typedef=TypeDef(**td), nested_keys=nested, alias_keys=[])
 
     def global_var(self, key):
-        return None
+        return GlobalVar(id=f"fake:g.c::{key}", name=key, type="int", lang="fake")
 
     def callers(self, key):
         return [(f, CallSite(callee_key=key, name=key, loc=Loc(f"{f}.c", 5), kind="call"))
@@ -96,6 +97,44 @@ def test_max_nodes_truncates():
     g = extract_graph(fe, "a.c", "a", TraverseOptions(depth=3, max_nodes=2), "/r")
     assert len(g.nodes) == 2 and g.meta["truncated"] is True
     assert any(u.reason == "truncated by --max-nodes" for u in g.unresolved)
+
+
+def test_truncation_records_every_dropped_target_from_a_node_in_the_graph():
+    """Review finding H6: the unresolved `from` must be in the graph and no queued target may vanish."""
+    fe = FakeFE({"a": ["b", "c", "d"], "b": ["e"], "c": [], "d": [], "e": []})
+    g = extract_graph(fe, "a.c", "a", TraverseOptions(depth=3, max_nodes=2), "/r")
+    assert set(names(g)) == {"a", "b"}
+    trunc = {(u.name, u.src) for u in g.unresolved if u.reason == "truncated by --max-nodes"}
+    assert trunc == {("c", "fake:a.c::a"), ("d", "fake:a.c::a"), ("e", "fake:b.c::b")}
+    assert all(u.src in g.nodes for u in g.unresolved) and all(e.src in g.nodes for e in g.edges)
+    assert {u.id for u in g.unresolved} == {"fake:c.c::c", "fake:d.c::d", "fake:e.c::e"}
+    # callers side: a caller that does not fit is recorded against the callee, never as an edge from a missing node
+    fe = FakeFE({"top": ["leaf"], "other": ["leaf"], "leaf": []})
+    g = extract_graph(fe, "leaf.c", "leaf", TraverseOptions(depth=2, include_callers=True, max_nodes=2), "/r")
+    assert len(g.nodes) == 2 and g.meta["truncated"] is True
+    assert all(e.src in g.nodes for e in g.edges) and all(u.src in g.nodes for u in g.unresolved)
+    assert any(u.reason == "caller truncated by --max-nodes" and u.src == "fake:leaf.c::leaf" for u in g.unresolved)
+
+
+def test_callers_collect_globals_too():
+    fe = FakeFE({"top": ["leaf"], "leaf": []}, node_globals={"top": ["g_top"], "leaf": ["g_leaf"]})
+    g = extract_graph(fe, "leaf.c", "leaf", TraverseOptions(depth=1), "/r")
+    assert set(g.globals) == {"fake:g.c::g_leaf"}
+    g = extract_graph(fe, "leaf.c", "leaf", TraverseOptions(depth=1, include_callers=True), "/r")
+    assert set(g.globals) == {"fake:g.c::g_leaf", "fake:g.c::g_top"}
+
+
+def test_type_expansion_is_independent_of_visit_order():
+    """A type first met deep (little budget left) and later used directly must still be expanded fully."""
+    T = lambda i: dict(id=f"fake:t.h::struct {i}", kind="struct", name=i, lang="fake", fields=[Field(name="x", type="int")])
+    types = {"t0": (T("t0"), ["t1"]), "t1": (T("t1"), ["t2"]), "t2": (T("t2"), ["t3"]), "t3": (T("t3"), ["t4"]), "t4": (T("t4"), [])}
+    deep_first = FakeFE({"a": ["b"], "b": []}, types=types, node_types={"a": ["t0"], "b": ["t2"]})
+    direct_first = FakeFE({"a": ["b"], "b": []}, types=types, node_types={"a": ["t2"], "b": ["t0"]})
+    g1 = extract_graph(deep_first, "a.c", "a", TraverseOptions(type_depth=2), "/r")
+    g2 = extract_graph(direct_first, "a.c", "a", TraverseOptions(type_depth=2), "/r")
+    assert set(g1.types) == set(g2.types) == {f"fake:t.h::struct t{i}" for i in range(5)}   # t2 direct → t3 → t4
+    g3 = extract_graph(FakeFE({"a": []}, types=types, node_types={"a": ["t0"]}), "a.c", "a", TraverseOptions(type_depth=2), "/r")
+    assert set(g3.types) == {f"fake:t.h::struct t{i}" for i in range(3)}
 
 
 def test_callers_negative_depth():

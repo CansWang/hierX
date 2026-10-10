@@ -7,12 +7,13 @@ resolved types behind them (structs with field offsets, typedef chains,
 enums), the globals it touches, and every call edge, including calls hidden
 behind macros and calls through function pointers.
 
-The output is a schema-versioned JSON graph. It is designed to be regenerated
-after every AI-agent editing session and then **diffed and viewed** instead of
-reading the agent's narration. IDs are stable across regeneration, so notes
-you attach later survive.
+The output is a schema-versioned JSON graph (`hx/schema/hx-1.schema.json`). It
+is designed to be regenerated after every AI-agent editing session and then
+**diffed and viewed** instead of reading the agent's narration. IDs are stable
+across regeneration for the same build configuration, so notes you attach later
+survive; see [Boundaries](#boundaries) for what does and does not move them.
 
-Status: **Phase 4** done — C/C++ (libclang), SystemVerilog/Verilog (verilator),
+Status: **Phase 4 + hardening (4.5)** done — C/C++ (libclang), SystemVerilog/Verilog (verilator),
 Rust (rust-analyzer) and Python (pyright) frontends; browser viewer with
 editable annotations, live reload and diff mode; tracked entry points with
 history, `hx diff`, a watch loop, a Claude Code hook and an MCP server. The plan
@@ -21,18 +22,56 @@ lives in `dev/ssot/single-source-of-truth.md`.
 ## Install
 
 ```bash
-python3 -m venv .venv && . .venv/bin/activate
-pip install -e ".[dev]"
+python3 -m venv .venv
+. .venv/bin/activate
+python -m pip install -e .
 ```
 
-Requirements: Python 3.10+. Per language:
+Requires Python 3.10+. The base install includes C/C++ bindings, the viewer
+server, MCP support and Pyright with its [packaged Node.js runtime](https://pypi.org/project/pyright/).
+Python 3.10 also pulls in `tomli` automatically. The `mcp` extra remains
+available for compatibility with existing install commands.
+
+### Optional installations
+
+Choose the tools needed for your languages and development workflow. Run the
+Python commands in the activated virtual environment above. The system-package
+commands below are Ubuntu/Debian examples; run `sudo apt-get update` first.
+
+| purpose | installation commands |
+|---|---|
+| Development and the pytest suite | `python -m pip install -e ".[dev]"` |
+| Browser automation with Playwright | `python -m pip install -e ".[dev,e2e]"`, then `python -m playwright install --with-deps chromium` |
+| C/C++ compiler, standard headers and Clang resource headers | `sudo apt-get install -y clang build-essential` |
+| SystemVerilog / Verilog extraction | `sudo apt-get install -y verilator` |
+| Rust extraction, with Rustup installed | `rustup toolchain install stable --profile minimal`, then `rustup component add --toolchain stable rust-analyzer rust-src` |
+| Standalone JavaScript tests (`node --test tests/js`) | `sudo apt-get install -y nodejs` |
+| Optional Clang LSP profile | `sudo apt-get install -y clangd` |
+| Experimental Go profile, with Go installed | `go install golang.org/x/tools/gopls@latest` |
+
+For Rust, install [Rustup](https://rustup.rs/) if needed and load its shell
+environment with `. "$HOME/.cargo/env"` so `cargo`, `rustc` and `rust-analyzer`
+are on PATH. The [rust-analyzer instructions](https://rust-analyzer.github.io/book/installation.html)
+explain the standard-library source requirement. For Go, install the
+[Go SDK](https://go.dev/doc/install) first and put `$(go env GOPATH)/bin` on
+PATH (or your configured `GOBIN`); see [gopls installation](https://go.dev/gopls/).
+The Go profile has no integration tests yet. A cross-compiled C/C++ project
+also needs its target compiler/SDK headers as specified by its compilation
+database.
+
+The `e2e` extra supplies [Playwright browser automation](https://playwright.dev/python/docs/browsers);
+browser workflow tests are not implemented yet. Its Chromium installation is
+separate from Pyright's Node.js runtime. The JavaScript unit tests need a
+standalone `node` executable on PATH.
+
+Per-language project requirements:
 
 | language | needs | precision |
 |---|---|---|
 | C / C++ | `compile_commands.json` (`cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON` or `bear -- make`) and a clang resource dir (auto-detected via `clang -print-resource-dir`, override with `--resource-dir`) | exact: sizes, offsets, macros, globals |
 | SystemVerilog / Verilog | `verilator` on PATH; sources via `-f list.f`, `--sv-file GLOB`, a lone `*.f` at the root, or every `*.sv`/`*.v` under it | exact: hierarchy, ports with explicit direction, parameters, packed-struct bit layouts |
 | Rust | `rust-analyzer` (rustup component) and a `Cargo.toml` at the root | lsp: signatures from hover, struct fields without sizes, no globals |
-| Python | `pip install pyright` (needs node) | lsp: as above; dataclass fields from annotations |
+| Python | Pyright and its Node.js runtime are included in the base install | lsp: as above; dataclass fields from annotations |
 
 The language is picked from the entry file's extension; force it with `--lang`.
 
@@ -141,18 +180,69 @@ baseline" without re-reading files.
 | `unresolved` | anything reached but not expanded, with a reason: beyond depth, no definition, system header, excluded, function pointer |
 
 Stable id forms: `c:src/dma.c::dma_start`, `c:include/dma.h::struct dma_chan`,
-`c:include/dma.h::dma_chan_t`, `c:include/dma.h::anon@L23`,
-`c:src/main.c::app_run.ch` (function-local static).
+`c:include/dma.h::dma_chan_t`, `c:include/dma.h::union dma_chan.stat` (anonymous
+member type, named after the member that holds it), `c:src/main.c::app_run.ch`
+(function-local static), `cpp:src/bus.cpp::hw::Bus::write(const Reg &)` (C++
+functions always carry their parameter types, so overloads never rename each
+other).
+
+`body_hash` is a token hash: whitespace between tokens, blank lines and comments
+do not change it; string and character literals (verbatim), operator adjacency
+(`a--b` vs `a - -b`), Python indentation (relative to the function's first
+line) and everything else do. SystemVerilog modules hash their
+`module … endmodule` source, so procedural logic counts and a comment above an
+instance does not.
 
 In/out for C is a heuristic (`dir_source: heuristic`): by-value and
 pointer-to-const are `in`, other pointers/arrays are `inout`. The annotation
 layer (Phase 2) lets you override per parameter.
 
+## Boundaries
+
+What the tool promises, and where the promise stops:
+
+- **IDs and build variants.** A function compiled in several translation units
+  under different macros (an inline helper in a header) has one graph entry: the
+  variant from the TU that defines it, else the first TU in path order. The
+  choice is deterministic across cold, partial and warm caches, and
+  `meta.notes` says "compiled differently in N build variants". Switching
+  `compile_commands.json` (another target, another config) is a different build
+  and may legitimately change ids and bodies.
+- **C++.** Overloads are distinguished by the spelled parameter type list in the
+  id; changing a parameter's type therefore reads as a removed + added function.
+  Template instantiations are not expanded; the primary template is recorded.
+  Residual collisions (identical spelled signatures) get a `#hash` suffix.
+- **Body hashes** see tokens, not semantics: a renamed local variable is a
+  change, a reformat or comment is not. For Rust and Python the body is the text
+  of the function's range as the language server reports it.
+- **Language-server precision** (`precision: lsp`): no sizes or offsets, call
+  edges exactly as the server reports them, no globals, and extraction restarts
+  the server per run (seconds, not milliseconds).
+- **Watching** polls mtimes (default every 2 s) under the project root, skipping
+  `build`, `target`, `.venv` and similar, but still watching a
+  `compile_commands.json`, `Cargo.toml` or `pyrightconfig.json` placed inside
+  them. There is no inotify backend.
+- **Persistence.** Graphs, snapshots, config, `last-diff.md` and annotations are
+  written atomically (temp file + rename). Annotation read-modify-write takes a
+  cross-process file lock, so `hx serve`, `hx mcp` and the CLI can share one
+  `annotations.json`; two servers on different machines sharing a network
+  drive are not supported.
+- **Schema.** Readers must ignore unknown fields; `hx/1.x` only adds fields, a
+  different major is refused by the loader.
+
 ## Develop
 
 ```bash
-python -m pytest -q
+python -m pytest -q                      # skips tests whose toolchain is missing
+HX_REQUIRE_TOOLS=1 python -m pytest -q   # CI mode: a missing toolchain is a failure, never a skip
+node --test tests/js                     # viewer merge-patch unit tests (also run from pytest)
 ```
+
+`.github/workflows/ci.yml` installs every toolchain (verilator, clang,
+rust-analyzer, node) on Python 3.10 and 3.12, checks a clean base
+`python -m pip install .` before adding developer dependencies, and verifies
+MCP imports, Pyright and dependency consistency. It then installs `.[dev]`
+and runs the suite with `HX_REQUIRE_TOOLS=1`.
 
 Layout: `hx/model.py` (IR), `hx/ids.py` (stable ids), `hx/traverse.py` (BFS),
 `hx/cache.py`, `hx/frontends/clang_fe.py` (libclang), `hx/frontends/verilator_fe.py`

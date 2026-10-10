@@ -1,14 +1,52 @@
 from hx import ids
 
 
-def test_body_hash_ignores_whitespace():
-    a = ids.body_hash(b"{ int x = 1;\n  return x; }")
-    b = ids.body_hash(b"{int x=1; return x;}".replace(b"=1", b" = 1").replace(b"x;", b"x ;"))
-    c = ids.body_hash(b"{   int x = 1;   return x;   }")
-    assert a == c
-    assert a != b  # token boundary moved ("x ;" vs "x;") is a real change
-    assert ids.body_hash(b"{ return 1; }") != ids.body_hash(b"{ return 2; }")
+def H(text, lang="c"):
+    return ids.body_hash(text, lang)
+
+
+def test_body_hash_ignores_formatting_between_tokens():
+    a = H(b"{ int x = 1;\n  return x; }")
+    assert a == H(b"{int x=1; return x;}") == H(b"{ int x = 1 ; return x ; }") == H(b"{\n\tint x = 1;\n\treturn x;\n}")
+    assert H("y = x+1;") == H("y = x + 1;") == H("y=x+1;")
+    assert H("x = -1;") == H("x =-1;")            # maximal munch splits "=-" into "=" "-"
     assert a.startswith("sha1:")
+
+
+def test_body_hash_sees_meaning():
+    assert H(b"{ return 1; }") != H(b"{ return 2; }")
+    assert H('f("a b");') != H('f("a  b");')       # whitespace inside a literal is significant
+    assert H("c = 'x';") != H("c = ' ';")
+    assert H("a--b;") != H("a - -b;")              # operator adjacency is significant
+    assert H("a+++b;") != H("a + ++b;")
+    assert H("int x;") != H("intx;")
+
+
+def test_body_hash_ignores_comments():
+    assert H("{ return 1; }") == H("{ return 1; /* why */ }") == H("{ // why\n return 1; }")
+    assert H("{ return 1; }", "rs") == H("{ return 1; // note\n }", "rs")
+    assert H("x = 1\n", "py") == H("x = 1  # note\n", "py") == H("# head\nx = 1\n", "py")
+    assert H("y <= a + b;", "sv") == H("y <= a + b; // sum\n", "sv")
+    assert H('s = "// not a comment";') != H('s = "";')
+
+
+def test_python_indentation_is_significant_but_relative():
+    conditional = "def f(c):\n    if c:\n        x = 1\n    return x\n"
+    unconditional = "def f(c):\n    if c:\n    x = 1\n    return x\n"           # the reviewer's case
+    assert H(conditional, "py") != H(unconditional, "py")
+    nested = "    def f(c):\n        if c:\n            x = 1\n        return x\n"   # same body, moved into a class
+    assert H(conditional, "py") == H(nested, "py")
+    assert H(conditional, "py") == H("def f(c):\n\n    if c:\n        # c\n        x = 1\n\n    return x\n", "py")
+    assert H("f(a,\n  b)\n", "py") == H("f(a, b)\n", "py")                       # implicit line joining inside brackets
+    assert H("s = f'{x}  y'\n", "py") != H("s = f'{x} y'\n", "py")
+
+
+def test_language_literals():
+    assert H("let s = r#\"a \" b\"#;", "rs") != H("let s = r#\"a  \" b\"#;", "rs")
+    assert H("fn f<'a>(x: &'a str) {}", "rs") == H("fn f<'a>(x: &'a  str) {}", "rs")  # lifetimes are not char literals
+    assert ids.tokenize("assign z = 8'hFF + 'h1 + 4'b1010;", "sv")[3:4] == ["8'hFF"]
+    assert H("y <= a - b;", "sv") != H("y <= a + b;", "sv")
+    assert H('R"x(a  b)x"') != H('R"x(a b)x"')
 
 
 def test_type_id_forms():

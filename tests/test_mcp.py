@@ -45,7 +45,7 @@ def test_tools_end_to_end(cproj):
             out["graphs2"] = _text(await c.call_tool("list_graphs", {}))
             return out
     out = asyncio.run(go())
-    assert "src__main.c__app_run" in out["graphs"] and "c:src/main.c::app_run" in out["graphs"]
+    assert project.slug("src/main.c:app_run") in out["graphs"] and "c:src/main.c::app_run" in out["graphs"]
     assert "int dma_start(dma_chan_t * ch, const uint8_t * buf, size_t len)" in out["fn"]
     assert "ch: dma_chan_t * [inout heuristic] -> c:include/dma.h::dma_chan_t" in out["fn"]
     assert "globals: reads src/dma.c::g_dma_active, src/dma.c::g_dma_max; writes src/dma.c::g_dma_active" in out["fn"]
@@ -57,15 +57,15 @@ def test_tools_end_to_end(cproj):
     assert "function c:src/dma.c::dma_start" in out["search"] and "type     c:include/dma.h::struct dma_desc" in out["search"]
     assert "no history" in out["diff0"]
     assert "annotated c:src/dma.c::dma_start" in out["ann"] and "note: agent: touched" in out["fn2"] and "tags: dma, hot" in out["fn2"]
-    assert out["extract"].startswith("graph src__hal.c__hal_read32: c:src/hal.c::hal_read32  1 functions")
-    assert "src__hal.c__hal_read32" in out["graphs2"]
+    assert out["extract"].startswith(f"graph {project.slug('src/hal.c:hal_read32')}: c:src/hal.c::hal_read32  1 functions")
+    assert project.slug("src/hal.c:hal_read32") in out["graphs2"]
     # second update creates history; diff_since now reports
     dma_c = cproj / "src" / "dma.c"
     dma_c.write_text(dma_c.read_text().replace("    g_dma_active++;\n", "    g_dma_active += 1;\n    hal_read32(ch->base);\n"))
     import time
     os.utime(dma_c, (time.time() + 5, time.time() + 5))
     project.update(root, ["src/main.c:app_run"])
-    txt = asyncio.run(_call(srv, "diff_since", {"graph": "src__main.c__app_run"}))
+    txt = asyncio.run(_call(srv, "diff_since", {"graph": project.slug("src/main.c:app_run")}))
     assert "calls +hal_read32" in txt and "since" in txt
 
 

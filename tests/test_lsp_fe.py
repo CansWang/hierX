@@ -112,3 +112,29 @@ def test_python_entry_errors(py_fe):
     with pytest.raises(EntryNotFound) as ei:
         extract_graph(fe, "hxfix/main.py", "app_rnu", TraverseOptions(), str(root))
     assert "app_run" in ei.value.suggestions
+
+
+def test_python_indentation_change_is_a_body_change(py_fe):
+    """Review finding H1: dedenting `return -1` out of its `if` makes the return unconditional; the hash must move."""
+    fe, dst = py_fe
+    g0 = extract_graph(fe, "hxfix/main.py", "app_run", TraverseOptions(depth=2), str(dst))
+    nid = "py:hxfix/dma.py::dma_start"
+    dma = dst / "hxfix" / "dma.py"
+    src = dma.read_text()
+    assert "    if not buf:\n        return -1\n" in src
+    dma.write_text(src.replace("    if not buf:\n        return -1\n", "    if not buf:\n        pass\n    return -1\n"))
+    fe2 = LspFrontend(str(dst), server="python", timeout=120)
+    fe2.build_index()
+    try:
+        g1 = extract_graph(fe2, "hxfix/main.py", "app_run", TraverseOptions(depth=2), str(dst))
+    finally:
+        fe2.close()
+    assert g1.nodes[nid].body_hash != g0.nodes[nid].body_hash
+    dma.write_text(src.replace("    n = _prog_desc(ch, buf)\n", "    # program the descriptor first\n    n = _prog_desc(ch,   buf)\n"))
+    fe3 = LspFrontend(str(dst), server="python", timeout=120)
+    fe3.build_index()
+    try:
+        g2 = extract_graph(fe3, "hxfix/main.py", "app_run", TraverseOptions(depth=2), str(dst))
+    finally:
+        fe3.close()
+    assert g2.nodes[nid].body_hash == g0.nodes[nid].body_hash
