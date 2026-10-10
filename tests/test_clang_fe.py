@@ -250,7 +250,7 @@ def test_index_is_independent_of_cache_state(tmp_path):
     from hx.api import extract as _extract
     src = os.path.join(os.path.dirname(__file__), "fixtures", "c_variants")
     proj = tmp_path / "variants"
-    shutil.copytree(src, proj)
+    shutil.copytree(src, proj, ignore=shutil.ignore_patterns(".hx", "__pycache__", "obj_dir"))
     (proj / "build").mkdir()
     cc = [{"directory": str(proj), "file": f"src/{f}", "command": f"gcc -Iinclude {d} -c src/{f} -o build/{f}.o"}
           for f, d in (("a.c", "-DUSE_FA"), ("b.c", "-DUSE_FB"), ("impl.c", ""))]
@@ -296,7 +296,7 @@ def _cpp_project(tmp_path):
     import shutil
     src = os.path.join(os.path.dirname(__file__), "fixtures", "cpp")
     proj = tmp_path / "cpp"
-    shutil.copytree(src, proj)
+    shutil.copytree(src, proj, ignore=shutil.ignore_patterns(".hx", "__pycache__", "obj_dir"))
     (proj / "build").mkdir()
     cc = [{"directory": str(proj), "file": f"src/{f}", "command": f"g++ -std=c++17 -Iinclude -c src/{f} -o build/{f}.o"} for f in ("bus.cpp", "main.cpp")]
     (proj / "build" / "compile_commands.json").write_text(json.dumps(cc))

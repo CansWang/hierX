@@ -46,7 +46,7 @@ def py_fe(tmp_path):
     if not PYRIGHT:
         pytest.skip("pyright-langserver not installed")
     dst = tmp_path / "python"
-    shutil.copytree(os.path.join(FIX, "python"), dst)
+    shutil.copytree(os.path.join(FIX, "python"), dst, ignore=shutil.ignore_patterns(".hx", "__pycache__", "obj_dir"))
     fe = LspFrontend(str(dst), server="python", timeout=120)
     fe.build_index()
     yield fe, dst

@@ -27,6 +27,7 @@ from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, PlainTex
 from fastapi.staticfiles import StaticFiles
 
 from .. import annotations as ann_mod
+from ..graphio import load_graph_dict
 
 VIEWER_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "viewer")
 
@@ -83,8 +84,7 @@ class State:
     def load_graph(self, name: Optional[str] = None) -> dict:
         path = self.resolve(name)
         try:
-            with open(path, encoding="utf-8") as fh:
-                return json.load(fh)
+            return load_graph_dict(path)      # shared reader: wide values normalized, hx/1 upgraded in memory
         except FileNotFoundError:
             raise HTTPException(404, f"graph not found: {path}. Run `hx extract` or `hx update` first.")
         except ValueError as e:
@@ -171,9 +171,13 @@ def create_app(graph_path: str, annotations_path: Optional[str] = None, root: Op
             g = st.load_graph(name)
         except HTTPException:
             pass
+        mig = ((g or {}).get("meta") or {}).get("migration") or {}
         return {"graph_path": st.resolve(name) if (name or os.path.exists(st.graph_path)) else st.graph_path,
                 "annotations_path": st.ann_path, "root": st.effective_root(name),
                 "entry": g.get("entry") if g else None, "generated": g.get("generated") if g else None,
+                "schema": g.get("schema") if g else None,
+                "migration": ("pending" if mig.get("needs_reextract_total") else "done") if mig else None,
+                "migration_detail": mig or None,
                 "rev": st.rev, "extracting": st.extracting, "allow_extract": st.allow_extract,
                 "last_extract_error": st.last_extract_error, "graphs": [x["name"] for x in st.graph_list()]}
 
@@ -182,20 +186,19 @@ def create_app(graph_path: str, annotations_path: Optional[str] = None, root: Op
         out = []
         for g in st.graph_list():
             try:
-                with open(g["path"], encoding="utf-8") as fh:
-                    d = json.load(fh)
+                d = load_graph_dict(g["path"])
             except (OSError, ValueError):
                 continue
+            mig = (d.get("meta") or {}).get("migration") or {}
             out.append({"name": g["name"], "entry": d.get("entry"), "entry_arg": (d.get("meta") or {}).get("entry_arg"),
-                        "lang": d.get("lang"), "generated": d.get("generated"), "nodes": len(d.get("nodes", {}))})
+                        "lang": d.get("lang"), "generated": d.get("generated"), "nodes": len(d.get("nodes", {})),
+                        "migration": ("pending" if mig.get("needs_reextract_total") else "done") if mig else None})
         return out
 
     @app.get("/api/graph")
-    def graph(name: Optional[str] = None) -> FileResponse:
-        path = st.resolve(name)
-        if not os.path.exists(path):
-            raise HTTPException(404, f"graph not found: {path}. Run `hx extract` first.")
-        return FileResponse(path, media_type="application/json")
+    def graph(name: Optional[str] = None) -> JSONResponse:
+        # the normalized document, not the raw file: wide values are strings and hx/1 files arrive upgraded
+        return JSONResponse(st.load_graph(name))
 
     def _entry_arg(name: Optional[str]) -> str:
         g = st.load_graph(name)

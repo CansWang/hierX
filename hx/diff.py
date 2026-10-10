@@ -7,8 +7,11 @@ macro) so line-number drift does not register as change.
 """
 from __future__ import annotations
 
+import re
 from collections import Counter
 from typing import Any, Optional
+
+from . import values as _values
 
 SCHEMA = "hx-diff/1"
 
@@ -36,8 +39,9 @@ def _diff_attrs(a: dict, b: dict) -> dict:
             continue
         if isinstance(va, dict) and isinstance(vb, dict) and not (va and all(isinstance(x, dict) for x in va.values())):
             for kk in sorted(set(va) | set(vb)):
-                if va.get(kk) != vb.get(kk):
-                    out[f"{k}.{kk}"] = {"old": va.get(kk), "new": vb.get(kk)}
+                x, y = va.get(kk), vb.get(kk)
+                if x != y and not (k == "parameters" and kk in va and kk in vb and _values.equal(x, y)):
+                    out[f"{k}.{kk}"] = {"old": x, "new": y}
         elif isinstance(va, list) and isinstance(vb, list) and all(isinstance(x, dict) and "name" in x for x in va + vb):
             na, nb = {x["name"]: x for x in va}, {x["name"]: x for x in vb}
             d = {"added": sorted(set(nb) - set(na)), "removed": sorted(set(na) - set(nb)),
@@ -107,6 +111,52 @@ def _field_view(f: dict) -> dict:
     return {k: f.get(k) for k in ("type", "offset", "size", "bit_offset", "bit_width") if f.get(k) is not None}
 
 
+_PARAM_VALUE = re.compile(r"(\w+)=[^,()]*(?:\([^()]*\))?")
+
+
+def _sig_shape(n: dict) -> Optional[str]:
+    """Signature text compared across graphs. Nodes that carry `attrs.parameters` (SV modules/instances) have their
+    parameter VALUES reduced to placeholders: values are compared numerically through `values.equal` in
+    `_diff_attrs`, so a legacy decimal and a new hex rendering of one value never register as a signature change
+    while a renamed port, an added/removed parameter or a genuinely different value still does."""
+    sig = n.get("signature")
+    if not sig or not isinstance((n.get("attrs") or {}).get("parameters"), dict):
+        return sig
+    i, j = sig.find("#("), sig.find(")", sig.find("#(") + 2) if "#(" in sig else (-1, -1)
+    if i < 0 or j < 0:
+        return sig
+    # the parameter list may contain nested parentheses; find its matching close
+    depth, k = 0, i + 1
+    while k < len(sig):
+        if sig[k] == "(":
+            depth += 1
+        elif sig[k] == ")":
+            depth -= 1
+            if depth == 0:
+                break
+        k += 1
+    inner = sig[i + 2:k]
+    names = [seg.split("=", 1)[0].strip() for seg in _split_top(inner)]
+    return sig[:i] + "#(" + ", ".join(f"{nm}=…" for nm in names) + sig[k + 1:]
+
+
+def _split_top(text: str) -> list[str]:
+    out, depth, cur = [], 0, []
+    for ch in text:
+        if ch in "([{":
+            depth += 1
+        elif ch in ")]}":
+            depth -= 1
+        if ch == "," and depth == 0:
+            out.append("".join(cur))
+            cur = []
+        else:
+            cur.append(ch)
+    if cur or out:
+        out.append("".join(cur))
+    return [x for x in out if x.strip()]
+
+
 def _edge_key(e: dict) -> tuple:
     return (e["from"], e.get("to") or f"fnptr:{e.get('name')}", e["kind"], e.get("macro") or "")
 
@@ -122,7 +172,7 @@ def diff_graphs(old: dict, new: dict) -> dict:
     for nid in sorted(set(on) & set(nn)):
         a, b = on[nid], nn[nid]
         ch: dict[str, Any] = {}
-        if a.get("signature") != b.get("signature"):
+        if _sig_shape(a) != _sig_shape(b):
             ch["signature"] = {"old": a.get("signature"), "new": b.get("signature")}
         pd = _diff_params(a.get("params", []), b.get("params", []))   # always: a dir flip need not change the text
         if pd:
@@ -159,6 +209,19 @@ def diff_graphs(old: dict, new: dict) -> dict:
     types_added = sorted(set(nt) - set(ot))
     types_removed = sorted(set(ot) - set(nt))
     types_changed: dict[str, dict] = {}
+    pairs = _pair_relayouts(types_removed, types_added, ot, nt)       # layout-identified types edited in place
+    types_removed = [t for t in types_removed if t not in pairs]
+    types_added = [t for t in types_added if t not in pairs.values()]
+    for old_id, new_id in pairs.items():
+        a, b = ot[old_id], nt[new_id]
+        ch = {"renamed": {"old": old_id, "new": new_id}}
+        for attr in ("size", "align", "kind", "underlying"):
+            if a.get(attr) != b.get(attr):
+                ch[attr] = {"old": a.get(attr), "new": b.get(attr)}
+        fd = _diff_fields(a.get("fields", []), b.get("fields", []))
+        if fd:
+            ch["fields"] = fd
+        types_changed[new_id] = ch
     for tid in sorted(set(ot) & set(nt)):
         a, b = ot[tid], nt[tid]
         ch = {}
@@ -172,7 +235,7 @@ def diff_graphs(old: dict, new: dict) -> dict:
         eb = {e["name"]: e["value"] for e in b.get("enumerators", [])}
         ed = [{"name": k, "change": "removed", "old": ea[k]} for k in ea if k not in eb]
         ed += [{"name": k, "change": "added", "new": eb[k]} for k in eb if k not in ea]
-        ed += [{"name": k, "change": "value", "old": ea[k], "new": eb[k]} for k in eb if k in ea and ea[k] != eb[k]]
+        ed += [{"name": k, "change": "value", "old": ea[k], "new": eb[k]} for k in eb if k in ea and not _values.equal(ea[k], eb[k])]
         if ed:
             ch["enumerators"] = ed
         if ch:
@@ -239,6 +302,28 @@ def diff_graphs(old: dict, new: dict) -> dict:
         "edges": {"added": edges_added, "removed": edges_removed, "args_changed": edges_args},
         "unresolved": {"added": unresolved_added, "removed": unresolved_removed},
     }
+
+
+_LAYOUT_SUFFIX = re.compile(r"@[0-9a-f]{8}$")
+
+
+def _pair_relayouts(removed: list, added: list, ot: dict, nt: dict) -> dict:
+    """Pair a removed with an added type when they share the base id (the `@fingerprint` suffix stripped) AND
+    their `used_by` sets intersect: instance ids are stable hierarchy paths, so the users identify the
+    specialization. Ambiguous (several candidates either way) -> left as removed/added."""
+    base = lambda t: _LAYOUT_SUFFIX.sub("", t)
+    by_base: dict[str, list] = {}
+    for t in added:
+        by_base.setdefault(base(t), []).append(t)
+    pairs: dict = {}
+    taken: set = set()
+    for r in removed:
+        cands = [a for a in by_base.get(base(r), []) if a not in taken and set(ot[r].get("used_by") or []) & set(nt[a].get("used_by") or [])]
+        rivals = [x for x in removed if x != r and base(x) == base(r) and any(set(ot[x].get("used_by") or []) & set(nt[a].get("used_by") or []) for a in cands)]
+        if len(cands) == 1 and not rivals:
+            pairs[r] = cands[0]
+            taken.add(cands[0])
+    return pairs
 
 
 def _edge_view(k: tuple, count: int) -> dict:
@@ -348,6 +433,8 @@ def render_markdown(d: dict, new_graph: Optional[dict] = None, limit: int = 12, 
         items, more = _cap(list(d["types"]["changed"].items()), limit)
         for tid, ch in items:
             parts = []
+            if "renamed" in ch:
+                parts.append("layout changed (id " + _leaf(ch["renamed"]["old"]).rsplit("@", 1)[-1] + " → " + _leaf(ch["renamed"]["new"]).rsplit("@", 1)[-1] + ")")
             for attr in ("size", "align", "kind", "underlying"):
                 if attr in ch:
                     parts.append(f"{attr} {ch[attr]['old']} → {ch[attr]['new']}")

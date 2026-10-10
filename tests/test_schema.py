@@ -7,7 +7,7 @@ import pytest
 from hx.model import Graph, SchemaError
 
 jsonschema = pytest.importorskip("jsonschema")
-SCHEMA_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "hx", "schema", "hx-1.schema.json")
+SCHEMA_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "hx", "schema", "hx-2.schema.json")
 
 
 def _validator():
@@ -37,14 +37,25 @@ def test_fake_graph_validates_and_roundtrips():
     assert Graph.from_dict(d).to_dict() == g.to_dict()
 
 
-def test_loader_enforces_schema_major():
-    d = {"schema": "hx/1", "root": "/r", "lang": "c", "entry": "c:a.c::f", "nodes": {}, "types": {}, "globals": {}, "edges": [], "unresolved": []}
+def test_loader_enforces_schema_major(tmp_path):
+    from hx import graphio
+    d = {"schema": "hx/2", "root": "/r", "lang": "c", "entry": "c:a.c::f", "nodes": {}, "types": {}, "globals": {}, "edges": [], "unresolved": []}
     assert Graph.from_dict(d).entry == "c:a.c::f"
-    d2 = dict(d, schema="hx/1.3")           # minor additions are fine
-    assert Graph.from_dict(d2).schema == "hx/1.3"
+    d2 = dict(d, schema="hx/2.3")           # minor additions are fine
+    assert Graph.from_dict(d2).schema == "hx/2.3"
     with pytest.raises(SchemaError):
-        Graph.from_dict(dict(d, schema="hx/2"))
+        Graph.from_dict(dict(d, schema="hx/3"))
     with pytest.raises(SchemaError):
         Graph.from_dict({k: v for k, v in d.items() if k != "schema"})
     with pytest.raises(SchemaError):
         Graph.from_dict(dict(d, schema="other/1"))
+    with pytest.raises(SchemaError):          # the dataclass boundary takes only the current major …
+        Graph.from_dict(dict(d, schema="hx/1"))
+    up, rep = graphio.upgrade(dict(d, schema="hx/1"))   # … the shared loader upgrades hx/1 in memory first
+    assert up["schema"] == "hx/2" and rep is not None and rep.from_schema == "hx/1" and not rep.pending
+    p = tmp_path / "old.json"
+    p.write_text(json.dumps(dict(d, schema="hx/1")))
+    assert Graph.load(str(p)).schema == "hx/2"
+    p.write_text(json.dumps(dict(d, schema="hx/3")))
+    with pytest.raises(SchemaError):
+        Graph.load(str(p))

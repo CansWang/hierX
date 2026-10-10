@@ -35,8 +35,8 @@ def build_html(graph: dict, annotations: dict | None = None) -> str:
 
 def export_file(graph_path: str, out_path: str, annotations_path: str | None = None) -> str:
     from . import annotations as ann_mod
-    with open(graph_path, encoding="utf-8") as fh:
-        graph = json.load(fh)
+    from .graphio import load_graph_dict
+    graph = load_graph_dict(graph_path)
     ann_path = annotations_path or os.path.join(os.path.dirname(os.path.abspath(graph_path)), "annotations.json")
     ann = ann_mod.load(ann_path) if os.path.exists(ann_path) else ann_mod.empty()
     html = build_html(graph, ann)

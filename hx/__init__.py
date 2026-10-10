@@ -6,4 +6,4 @@ types (structs with field offsets), globals touched and call edges. Output is a
 schema-versioned JSON graph meant to be viewed in a browser and diffed between
 agent sessions.
 """
-__version__ = "0.1.0"
+__version__ = "0.3.0"   # the single source: pyproject reads it (dynamic version)

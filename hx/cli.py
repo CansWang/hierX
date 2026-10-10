@@ -99,6 +99,11 @@ def _build_parser() -> argparse.ArgumentParser:
     mc.add_argument("--root", default=".")
     mc.add_argument("--print-config", action="store_true", help="print the .mcp.json / `claude mcp add` snippet")
 
+    mg = sub.add_parser("migrate", help="upgrade a project from schema hx/1: re-extract every tracked entry, then rewrite annotation keys once")
+    mg.add_argument("--root", default=".")
+    mg.add_argument("--keep-history", type=int, default=None)
+    mg.set_defaults(func=cmd_migrate)
+
     ex = sub.add_parser("export", help="write a standalone viewer HTML with graph + annotations inlined")
     ex.add_argument("graph", nargs="?", help="graph.json (default .hx/graph.json)")
     ex.add_argument("--annotations", help="annotations.json (default: next to the graph)")
@@ -253,6 +258,29 @@ def cmd_diff(a: argparse.Namespace) -> int:
     return 1 if a.exit_code and d["summary"]["any"] else 0
 
 
+def cmd_migrate(a: argparse.Namespace) -> int:
+    from . import project
+    res = project.migrate(os.path.abspath(a.root), keep_history=a.keep_history, progress=lambda m: print(f"migrate     {m}"))
+    for e in res["entries"]:
+        print(f"entry       {e['entry']}  was {e.get('was_schema') or 'new'}  renamed {e['renamed']}  unmapped {e['unmapped']}")
+    for f in res["failed"]:
+        print(f"FAILED      {f['entry']}: {f['error']}", file=sys.stderr)
+    if res["status"] == "failed":
+        print("hx: nothing was written (graphs, history, annotations and backups are unchanged); fix the failures and re-run", file=sys.stderr)
+        return 2
+    for k, v in list(res["ambiguous"].items())[:10]:
+        print(f"ambiguous   {k} -> {', '.join(v)} (not rewritten)")
+    for u in res["unmapped"][:10]:
+        print(f"unmapped    {u['id']}  ({u['reason']})")
+    if len(res["unmapped"]) > 10:
+        print(f"            … {len(res['unmapped']) - 10} more unmapped")
+    ann = res.get("annotations") or {}
+    print(f"annotations {ann.get('status', 'none')}  renamed {ann.get('renamed', 0)}  conflicts {len(ann.get('conflicts', []))}"
+          + (f"  backup {ann['backup']}" if ann.get("backup") else ""))
+    print(f"status      {res['status']}")
+    return 0
+
+
 def cmd_hook(a: argparse.Namespace) -> int:
     import json
     from . import project
@@ -310,7 +338,7 @@ def cmd_extract(a: argparse.Namespace) -> int:
         print(f"server      {idx['server']}   ready in {idx.get('ready_seconds', '?')}s   ({len(graph.nodes)} functions resolved, precision lsp)")
     else:
         print(f"tus         {idx.get('tus', '?')} total, {idx.get('parsed', '?')} parsed, {idx.get('cached', '?')} cached, "
-              f"{idx.get('tu_errors', 0)} failed, {idx.get('diagnostics', 0)} compile errors   ({idx.get('index_seconds', '?')}s)")
+              f"{idx.get('tu_errors', 0)} failed, {idx.get('diagnostics', 0)} errors, {idx.get('warnings', 0)} warnings   ({idx.get('index_seconds', '?')}s)")
     if graph.meta.get("truncated"):
         print("note        graph truncated by --max-nodes")
     for note in graph.meta.get("notes", []):
@@ -350,6 +378,8 @@ def main(argv: list[str] | None = None) -> int:
         return cmd_hook(a)
     if a.cmd == "mcp":
         return cmd_mcp(a)
+    if a.cmd == "migrate":
+        return cmd_migrate(a)
     p.error(f"unknown command {a.cmd}")
     return 2
 

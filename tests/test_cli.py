@@ -13,7 +13,7 @@ def test_extract_writes_graph_and_summary(cproj):
     assert "entry       c:src/main.c::app_run" in r.stdout
     assert "nodes       7" in r.stdout and "output" in r.stdout
     g = json.load(open(cproj / "out" / "g.json"))
-    assert g["schema"] == "hx/1" and g["entry"] == "c:src/main.c::app_run"
+    assert g["schema"] == "hx/2" and g["entry"] == "c:src/main.c::app_run"
     assert len(g["nodes"]) == 7
     assert (cproj / ".hx" / "cache").is_dir()
 

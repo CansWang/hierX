@@ -165,8 +165,7 @@ def find_graphs(root: str) -> list[dict]:
         paths.append(default)
     for p in paths:
         try:
-            with open(p, encoding="utf-8") as fh:
-                g = json.load(fh)
+            g = load_graph(p)
         except (OSError, ValueError):
             continue
         name = "graph" if p == default else os.path.splitext(os.path.basename(p))[0]
@@ -186,8 +185,7 @@ def snapshot(root: str, entry: str, src_path: Optional[str] = None, keep: int = 
     if not os.path.exists(src):
         return None
     try:
-        with open(src, encoding="utf-8") as fh:
-            g = json.load(fh)
+        g = load_graph(src)
     except (OSError, ValueError):
         return None
     hdir = history_dir(root, entry)
@@ -247,8 +245,9 @@ def resolve_history(root: str, entry: str, since: str = "prev") -> Optional[dict
 
 
 def load_graph(path: str) -> dict:
-    with open(path, encoding="utf-8") as fh:
-        return json.load(fh)
+    """Shared reader (hx/graphio): wide values normalized, hx/1 upgraded in memory."""
+    from .graphio import load_graph_dict
+    return load_graph_dict(path)
 
 
 # ---------------------------------------------------------------- update
@@ -440,3 +439,119 @@ def install_hook(root: str, event: str = "Stop", command: str = "hx update --qui
     lst.append(hook_snippet(event, command, timeout)["hooks"][event][0])
     atomic_write(path, json.dumps(settings, indent=2) + "\n")
     return path, True
+
+
+# ---------------------------------------------------------------- migration (hx/1 -> hx/2)
+
+_LAYOUT_SUFFIX = re.compile(r"@[0-9a-f]{8}$")
+
+
+def _type_shape(t: dict) -> tuple:
+    return (t.get("kind"), t.get("size"), tuple((f.get("name"), f.get("bit_width"), f.get("bit_offset"), f.get("size"), f.get("offset"))
+                                               for f in t.get("fields") or []))
+
+
+def map_type_ids(old: dict, new: dict, report, lossless: dict) -> tuple[dict, list[dict]]:
+    """Old (hx/1) type ids that hx/1 could not settle -> new ids, established ONLY from the fresh graph: a module-scoped
+    type maps when exactly one new type shares its base id and its users; an anonymous `anon@L` type maps when exactly
+    one new anonymous type has the identical layout and users. Anything else stays unmapped and is listed."""
+    mapped: dict = {}
+    unmapped: list[dict] = []
+    nt = new.get("types") or {}
+    ot = old.get("types") or {}
+    users_of = lambda t: frozenset(lossless.get(u, u) for u in (t.get("used_by") or []))
+    for item in (report.needs_reextract if report else []):
+        oid = item["id"]
+        t = ot.get(oid)
+        if t is None:
+            continue
+        sym = oid.split("::", 1)[1] if "::" in oid else oid
+        if sym.startswith("anon@L") or t.get("anonymous"):
+            related = [nid for nid, n in nt.items() if n.get("anonymous") and _type_shape(n) == _type_shape(t)]
+            how = "anonymous type with identical layout and users"
+        else:
+            related = [nid for nid, n in nt.items() if _LAYOUT_SUFFIX.sub("", nid) == oid]
+            how = "module-scoped type with the same base id and users"
+        cands = [nid for nid in related if users_of(nt[nid]) == users_of(t)]
+        if len(cands) == 1:
+            mapped[oid] = cands[0]
+        else:
+            unmapped.append({"id": oid, "reason": item["reason"], "candidates": sorted(related)[:4], "note": f"no unique {how}"})
+    return mapped, unmapped
+
+
+def migrate(root: str, *, keep_history: Optional[int] = None, progress: Optional[Callable[[str], None]] = None) -> dict:
+    """The one persistent hx/1 -> hx/2 operation. Every tracked entry is re-extracted into a staging directory; only
+    when ALL succeed are the graphs committed (previous ones snapshotted), and annotations rewritten once under the
+    file lock with a one-time backup. Any failure leaves graphs, history, annotations and backups byte-for-byte unchanged."""
+    import shutil
+    from . import annotations as ann_mod
+    from .api import extract
+    from .graphio import load_graph_with_report
+    root = os.path.abspath(root)
+    cfg = load_config(root)
+    keep = keep_history if keep_history is not None else int(cfg["watch"].get("history", 20))
+    staging = os.path.join(hx_dir(root), f"staging-{os.getpid()}")
+    out: dict = {"status": "noop", "entries": [], "failed": [], "id_map": {}, "ambiguous": {}, "unmapped": [], "annotations": None}
+    staged: list[tuple[str, str, str, dict, list]] = []
+    try:
+        os.makedirs(staging, exist_ok=True)
+        for table in cfg["entries"]:
+            entry = table["entry"]
+            gp = graph_path(root, entry)
+            kwargs = {k: v for k, v in table.items() if k in EXTRACT_KEYS}
+            old_doc, rep = (None, None)
+            if os.path.exists(gp):
+                try:
+                    old_doc, rep = load_graph_with_report(gp)
+                except Exception as e:  # noqa: BLE001
+                    out["failed"].append({"entry": entry, "error": f"cannot read {gp}: {type(e).__name__}: {e}"})
+                    continue
+            if progress:
+                progress(f"re-extracting {entry} …")
+            try:
+                graph = extract(entry, root=root, **kwargs)
+            except Exception as e:  # noqa: BLE001
+                out["failed"].append({"entry": entry, "error": f"{type(e).__name__}: {e}"})
+                continue
+            sp = os.path.join(staging, os.path.basename(gp))
+            graph.save(sp)
+            id_map: dict = {}
+            unmapped: list = []
+            if old_doc is not None:
+                lossless = dict(rep.id_map) if rep else {}
+                id_map.update(lossless)
+                by_layout, unmapped = map_type_ids(old_doc, graph.to_dict(), rep, lossless) if rep else ({}, [])
+                id_map.update(by_layout)
+            staged.append((entry, gp, sp, id_map, unmapped))
+            out["entries"].append({"entry": entry, "renamed": len(id_map), "unmapped": len(unmapped),
+                                   "was_schema": (rep.from_schema if rep else None) or (old_doc or {}).get("schema")})
+        if out["failed"]:
+            out["status"] = "failed"
+            return out
+        merged: dict = {}
+        ambiguous: dict = {}
+        for entry, gp, sp, id_map, unmapped in staged:
+            for k, v in id_map.items():
+                if k in merged and merged[k] != v:
+                    ambiguous.setdefault(k, {merged[k]}).add(v)
+                else:
+                    merged.setdefault(k, v)
+            out["unmapped"] += [dict(u, entry=entry) for u in unmapped]
+        for k in ambiguous:
+            merged.pop(k, None)
+        out["ambiguous"] = {k: sorted(v) for k, v in ambiguous.items()}
+        # commit: snapshot previous graphs, move staged graphs into place, then annotations (backup first, inside)
+        for entry, gp, sp, _m, _u in staged:
+            if os.path.exists(gp):
+                snapshot(root, entry, gp, keep)
+            os.makedirs(os.path.dirname(gp), exist_ok=True)
+            os.replace(sp, gp)
+        out["id_map"] = merged
+        ann_path = os.path.join(hx_dir(root), "annotations.json")
+        if os.path.exists(ann_path):
+            out["annotations"] = ann_mod.migrate_file(ann_path, merged) if merged else {"status": "noop", "renamed": 0}
+        out["status"] = "migrated" if staged else "noop"
+        return out
+    finally:
+        shutil.rmtree(staging, ignore_errors=True)

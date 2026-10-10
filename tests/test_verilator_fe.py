@@ -14,7 +14,7 @@ FIX = os.path.join(os.path.dirname(__file__), "fixtures", "sv")
 @pytest.fixture
 def svproj(tmp_path):
     dst = tmp_path / "sv"
-    shutil.copytree(FIX, dst)
+    shutil.copytree(FIX, dst, ignore=shutil.ignore_patterns(".hx", "__pycache__", "obj_dir"))
     return dst
 
 

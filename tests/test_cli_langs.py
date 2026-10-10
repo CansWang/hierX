@@ -20,7 +20,7 @@ def run(args, cwd, env_extra=None):
 @pytest.mark.skipif(shutil.which("verilator") is None, reason="verilator missing")
 def test_sv_cli(tmp_path):
     dst = tmp_path / "sv"
-    shutil.copytree(os.path.join(FIX, "sv"), dst)
+    shutil.copytree(os.path.join(FIX, "sv"), dst, ignore=shutil.ignore_patterns(".hx", "__pycache__", "obj_dir"))
     r = run(["extract", "rtl/top.sv:top", "--depth", "2", "-o", "out/g.json"], cwd=dst)
     assert r.returncode == 0, r.stderr
     assert "entry       sv:rtl/top.sv::top" in r.stdout
@@ -51,7 +51,7 @@ def test_rust_cli(tmp_path):
 @pytest.mark.skipif(shutil.which("pyright-langserver") is None, reason="pyright missing")
 def test_python_cli(tmp_path):
     dst = tmp_path / "python"
-    shutil.copytree(os.path.join(FIX, "python"), dst)
+    shutil.copytree(os.path.join(FIX, "python"), dst, ignore=shutil.ignore_patterns(".hx", "__pycache__", "obj_dir"))
     r = run(["extract", "hxfix/main.py:app_run", "--depth", "1", "-o", "out/g.json"], cwd=dst)
     assert r.returncode == 0, r.stderr
     g = json.load(open(dst / "out" / "g.json"))

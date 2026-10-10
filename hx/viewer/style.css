@@ -159,3 +159,14 @@ input.tags { width: 100%; background: var(--surface); border: 1px solid var(--ax
 .diffbox .new { color: var(--good-text); }
 .diffbox li { margin: 2px 0; }
 .status .d-add { color: var(--good-text); } .status .d-rm { color: var(--crit); } .status .d-chg { color: var(--warn-text); }
+
+.banner { border-bottom: 1px solid var(--warn); background: color-mix(in srgb, var(--warn) 12%, transparent); color: var(--warn-text); padding: 6px 12px; font-size: 12px; }
+.banner code { font-family: ui-monospace, Menlo, Consolas, monospace; }
+
+/* hide / show (eye) */
+.row .eye { flex: none; margin-left: auto; width: 16px; height: 16px; display: inline-flex; align-items: center; justify-content: center; color: var(--muted); opacity: 0; border-radius: 4px; }
+.row:hover .eye, .row.sel .eye, .row.hidden .eye { opacity: 1; }
+.row .eye:hover { color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, transparent); }
+.row .eye svg { width: 14px; height: 14px; }
+.row.hidden .nm, .row.hidden .badge { color: var(--muted); opacity: .6; }
+.nav .hide-btn { margin-left: auto; font-size: 12px; }

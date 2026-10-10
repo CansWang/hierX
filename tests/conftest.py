@@ -66,7 +66,7 @@ def write_compile_commands(proj: Path) -> Path:
 @pytest.fixture
 def cproj(tmp_path) -> Path:
     dst = tmp_path / "cproj"
-    shutil.copytree(FIXTURE_C, dst)
+    shutil.copytree(FIXTURE_C, dst, ignore=shutil.ignore_patterns(".hx", "__pycache__", "obj_dir"))
     write_compile_commands(dst)
     return dst
 

@@ -1,0 +1,34 @@
+{
+ "schema": "hx-ann/1",
+ "nodes": {
+  "sv:core/lane.sv::top.gen_lane__BRA__0__KET__.u_lane": {
+   "note": "lane note",
+   "tags": [
+    "gen"
+   ]
+  },
+  "sv:core/top.sv::top": {
+   "note": "top note"
+  }
+ },
+ "types": {
+  "sv:core/fp.sv::struct fp.fp_t": {
+   "note": "fp note"
+  },
+  "sv:core/top.sv::anon@L29": {
+   "note": "anon note"
+  }
+ },
+ "globals": {},
+ "view": {
+  "hidden": [
+   "sv:core/lane.sv::top.gen_lane__BRA__0__KET__.u_lane"
+  ],
+  "pinned_positions": {
+   "sv:core/lane.sv::top.gen_lane__BRA__0__KET__.u_lane": {
+    "x": 1,
+    "y": 2
+   }
+  }
+ }
+}

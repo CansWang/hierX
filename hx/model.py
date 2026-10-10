@@ -10,9 +10,12 @@ import datetime as _dt
 import json
 import typing
 from dataclasses import dataclass, field, fields as _dc_fields, is_dataclass
-from typing import Any, Optional
+from typing import Any, Optional, Union
 
-SCHEMA = "hx/1"          # "<name>/<major>": a different major is incompatible; fields may be ADDED within a major
+SCHEMA = "hx/2"          # "<name>/<major>": a different major is incompatible; fields may be ADDED within a major
+# hx/2 (2026-10): ids changed for module-scoped SV types (layout fingerprint), anonymous SV types (declaring
+# context) and Verilator generate-array spelling; values >= 2**53 are strings (see hx/values.py). hx/1 files are
+# upgraded in memory by hx/graphio.py.
 
 
 class SchemaError(ValueError):
@@ -71,7 +74,7 @@ class Field:
 @dataclass
 class Enumerator:
     name: str
-    value: int
+    value: Union[int, str, None]   # JSON number when |v| < 2**53, else canonical string (hx/values.py); x/z keep their pattern
 
 
 @dataclass
@@ -187,8 +190,8 @@ class Graph:
 
     @classmethod
     def load(cls, path: str) -> "Graph":
-        with open(path, encoding="utf-8") as fh:
-            return cls.from_dict(json.load(fh))
+        from .graphio import load_graph_dict   # the shared reader: wide values, hx/1 upgrade in memory
+        return cls.from_dict(load_graph_dict(path))
 
 
 # ---------------------------------------------------------------- (de)serialization

@@ -39,7 +39,7 @@ const S = {
   graph: null, ann: {nodes: {}, types: {}, globals: {}, view: {hidden: [], pinned_positions: {}}}, rev: 0,
   idx: null, sel: null, history: [],
   depthMax: 3, showFiles: true, showGhosts: true, showRefs: true, layout: "LR",
-  collapsed: new Set(), treeOpen: new Set(), search: "",
+  collapsed: new Set(), hidden: new Set(), treeOpen: new Set(), search: "",
   cy: null, queue: [], flushing: false, dirty: false, es: null, sourceCache: new Map(),
   graphName: "", graphs: [], diff: null, diffBase: "", history: [],
 };
@@ -87,7 +87,7 @@ function visibleSet() {
     for (const e of S.idx.out[id] || []) {
       if (e.kind === "ref" && !S.showRefs) continue;
       const t = e.to;
-      if (t == null || !g.nodes[t] || vis.has(t)) continue;
+      if (t == null || !g.nodes[t] || vis.has(t) || S.hidden.has(t)) continue;   // hidden: neither drawn nor walked through
       vis.add(t); q.push([t, d + 1]);
     }
   }
@@ -97,7 +97,7 @@ function visibleSet() {
     if (d >= S.depthMax) continue;
     for (const e of S.idx.inc[id] || []) {
       const n = g.nodes[e.from];
-      if (!n || n.depth >= 0 || vis.has(e.from)) continue;
+      if (!n || n.depth >= 0 || vis.has(e.from) || S.hidden.has(e.from)) continue;
       vis.add(e.from); q2.push([e.from, d + 1]);
     }
   }
@@ -210,6 +210,44 @@ async function applyDiff(base) {
   renderAll(); updateHash();
 }
 function renderAll() { renderTree(); if (S.cy) renderGraph({fit: false}); renderDetail(); }
+
+// ------------------------------------------------------------------ hide / show (eye)
+// A hidden node is removed from the drawing together with every edge touching it and everything that is only
+// reachable through it (its submodules, callees, ghosts); whatever another visible node still reaches stays.
+// Persisted in annotations.view.hidden (shared view state, like pinned positions); the entry cannot be hidden.
+const EYE_OPEN = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg>';
+const EYE_CLOSED = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.9 17.9A10.9 10.9 0 0 1 12 19c-7 0-11-7-11-7a18 18 0 0 1 5.1-5.9M9.9 4.2A10.9 10.9 0 0 1 12 5c7 0 11 7 11 7a18 18 0 0 1-2.2 3.2M14.1 14.1a3 3 0 1 1-4.2-4.2"/><path d="M1 1l22 22"/></svg>';
+function drawnCounts() {
+  const vis = visibleSet(); let edges = 0;
+  for (const id of vis) for (const e of S.idx.out[id] || []) if (e.to != null && vis.has(e.to) && (S.showRefs || e.kind !== "ref")) edges++;
+  return {nodes: vis.size, edges};
+}
+function toggleHidden(id) {
+  const g = S.graph; const n = g && g.nodes[id];
+  if (!n || id === g.entry) return false;
+  const before = drawnCounts();
+  if (S.hidden.has(id)) S.hidden.delete(id); else S.hidden.add(id);
+  applyPatch({view: {hidden: [...S.hidden]}});
+  const after = drawnCounts();
+  renderAll();
+  const dn = after.nodes - before.nodes, de = after.edges - before.edges;
+  setStatus((S.hidden.has(id) ? "hidden " : "shown ") + n.name + " (" + (dn >= 0 ? "+" : "") + dn + " nodes, " + (de >= 0 ? "+" : "") + de + " edges)");
+  return true;
+}
+function showAllHidden() {
+  if (!S.hidden.size) return;
+  S.hidden = new Set();
+  applyPatch({view: {hidden: []}});
+  renderAll();
+  setStatus("all modules shown");
+}
+function eyeButton(id) {
+  const hidden = S.hidden.has(id);
+  const sp = h("span", {class: "eye", role: "button", title: hidden ? "show this module and what it reaches (h)" : "hide this module and everything only reachable through it (h)",
+                        onclick: (ev) => { ev.stopPropagation(); toggleHidden(id); }});
+  sp.innerHTML = hidden ? EYE_CLOSED : EYE_OPEN;
+  return sp;
+}
 async function takeBaseline() {
   const r = await fetch(api("/api/snapshot"), {method: "POST"});
   if (!r.ok) { setStatus("baseline failed: " + r.statusText, true); return; }
@@ -296,12 +334,14 @@ function nodeBadges(n) {
   for (const t of annNode(n.id).tags || []) out.push(h("span", {class: "badge"}, t));
   return out;
 }
-function treeRow({id, label, depthLabel, cls, edge, children, open, onToggle, kind, n}) {
-  const selected = S.sel && S.sel.id === id;
+function treeRow({id, label, depthLabel, cls, edge, children, open, onToggle, kind, n, noSel = false}) {
+  const selected = !noSel && S.sel && S.sel.id === id;
+  const hidden = kind === "node" && S.hidden.has(id);
   const caret = h("span", {class: "caret" + (children ? "" : " empty"), onclick: (ev) => { ev.stopPropagation(); onToggle && onToggle(); }}, open ? "▾" : "▸");
-  const row = h("div", {class: "row " + (cls || "") + (selected ? " sel" : ""), title: id, onclick: () => select(kind, id)},
+  const row = h("div", {class: "row " + (cls || "") + (selected ? " sel" : "") + (hidden ? " hidden" : ""), title: id, onclick: () => select(kind, id)},
     caret, h("span", {class: "nm"}, label), kindBadge(edge),
-    depthLabel != null ? h("span", {class: "badge d"}, depthLabel) : null, n ? nodeBadges(n) : null);
+    depthLabel != null ? h("span", {class: "badge d"}, depthLabel) : null, n ? nodeBadges(n) : null,
+    kind === "node" && n && id !== S.graph.entry ? eyeButton(id) : null);
   return row;
 }
 function renderTree() {
@@ -336,9 +376,10 @@ function renderTree() {
   const walk = (id, lvl, path, viaEdge) => {
     const n = g.nodes[id];
     const kids = (S.idx.out[id] || []).filter((e) => S.showRefs || e.kind !== "ref");
-    const hasKids = kids.length > 0 && lvl < S.depthMax;
+    const hidden = S.hidden.has(id);
+    const hasKids = kids.length > 0 && lvl < S.depthMax && !hidden;
     const key = id + "@" + lvl;
-    const open = hasKids && !S.treeOpen.has("!" + key) && !S.collapsed.has(id) && lvl < 2 || S.treeOpen.has(key);
+    const open = hasKids && !S.treeOpen.has("!" + key) && !S.collapsed.has(id) && lvl < 2 || (S.treeOpen.has(key) && !hidden);
     const row = treeRow({id, label: n.name, depthLabel: n.depth, cls: id === g.entry ? "entry" : "", edge: viaEdge, kind: "node", n,
       children: hasKids, open, onToggle: () => toggleTree(key, open)});
     row.style.paddingLeft = (4 + lvl * 14) + "px";
@@ -364,6 +405,15 @@ function renderTree() {
     }
   };
   walk(g.entry, 0, new Set([g.entry]), null);
+  if (S.hidden.size) {
+    root.append(h("div", {class: "tree-h"}, "hidden (" + S.hidden.size + ")",
+      h("span", {class: "link small", style: "margin-left:8px; text-transform:none", title: "show every hidden module", onclick: showAllHidden}, "show all")));
+    for (const id of [...S.hidden].sort()) {
+      const n = g.nodes[id]; if (!n) continue;
+      const r = treeRow({id, label: n.qualname || n.name, depthLabel: n.depth, cls: "", kind: "node", n, noSel: true});
+      r.style.paddingLeft = "18px"; root.append(r);
+    }
+  }
   const unres = g.unresolved || [];
   if (unres.length) {
     const byReason = {};
@@ -432,8 +482,17 @@ function buildStyle() {
     {selector: "node.d-rm", style: {"border-color": cssVar("--crit"), "color": cssVar("--crit"), "border-style": "dashed"}},
     {selector: "edge.d-add", style: {"width": 3, "line-color": cssVar("--good"), "target-arrow-color": cssVar("--good")}},
     {selector: "edge.d-rm", style: {"width": 2, "line-style": "dashed", "line-color": cssVar("--crit"), "target-arrow-color": cssVar("--crit"), "opacity": 0.8}},
-    {selector: "edge", style: {"curve-style": "bezier", "width": 1.5, "line-color": "data(color)", "target-arrow-color": "data(color)",
+    // Orthogonal routing with rounded corners: edges leave along the layout's rank direction, turn 90° (radius 8px)
+    // and re-route live while a node is dragged. Parallel edges between the same pair turn at staggered distances
+    // (data.pi / data.pn) so they do not collapse into one line; self-loops keep the bezier loop shape.
+    {selector: "edge", style: {"curve-style": "round-taxi", "taxi-direction": S.layout === "TB" ? "downward" : "rightward",
+      // turn shortly after leaving the source: the cross run then lies in the gap between ranks instead of on the
+      // next rank's nodes (taxi edges do not avoid obstacles); parallel edges stagger by 10px
+      "taxi-turn": (ele) => `${22 + 10 * (ele.data("pi") || 0)}px`,
+      "taxi-turn-min-distance": 10, "taxi-radius": 8,
+      "width": 1.5, "line-color": "data(color)", "target-arrow-color": "data(color)",
       "target-arrow-shape": "triangle", "arrow-scale": 0.8, "line-style": "solid", "opacity": 0.9}},
+    {selector: "edge:loop", style: {"curve-style": "bezier", "loop-direction": S.layout === "TB" ? "-45deg" : "45deg", "loop-sweep": "-60deg"}},
     {selector: "edge[kind='macro']", style: {"line-style": "dashed", "line-dash-pattern": [6, 3]}},
     {selector: "edge[kind='fnptr']", style: {"line-style": "dotted"}},
     {selector: "edge[kind='ref']", style: {"line-style": "dashed", "line-dash-pattern": [8, 3, 2, 3], "target-arrow-shape": "circle"}},
@@ -450,11 +509,21 @@ const BIT_LANGS = new Set(["sv", "vhdl"]);
 const sizeUnit = (t) => BIT_LANGS.has(t.lang) ? "b" : "";
 function buildElements() {
   const g = S.graph, vis = visibleSet(), els = [], parents = new Set();
-  const parentFor = (file) => { if (!S.showFiles || !file) return undefined; const pid = "file:" + file; if (!parents.has(pid)) { parents.add(pid); els.push({data: {id: pid, label: file}, classes: "file", selectable: false}); } return pid; };
+  // In a hierarchy graph (HDL) a file's module instances and that module's own functions/tasks get SEPARATE groups.
+  // A group mixing an instance with its module's routine, joined by a call edge, is exactly what makes dagre's
+  // ranker throw on nested compounds (CVA6 at depth 3; tests/fixtures/viewer/layout-fail.json).
+  const hierarchical = Object.values(g.nodes).some((n) => n.kind === "module" || n.kind === "instance");
+  const parentFor = (file, kind) => {
+    if (!S.showFiles || !file) return undefined;
+    const routine = hierarchical && (kind === "function" || kind === "task");
+    const pid = "file:" + file + (routine ? "#functions" : "");
+    if (!parents.has(pid)) { parents.add(pid); els.push({data: {id: pid, label: file + (routine ? " · functions" : "")}, classes: "file", selectable: false}); }
+    return pid;
+  };
   for (const id of vis) {
     const n = g.nodes[id];
     const cls = [id === g.entry ? "entry" : "", S.collapsed.has(id) ? "collapsed" : "", verifyState(n) === "changed" ? "changed" : "", diffClass(id)].filter(Boolean).join(" ");
-    els.push({data: {id, label: n.name, w: labelWidth(n.name), color: depthColor(n), parent: parentFor(n.loc.file), kind: "node"}, classes: cls});
+    els.push({data: {id, label: n.name, w: labelWidth(n.name), color: depthColor(n), parent: parentFor(n.loc.file, n.kind), kind: "node"}, classes: cls});
   }
   const ghostAdded = new Set();
   for (const id of vis) {
@@ -473,6 +542,7 @@ function buildElements() {
       els.push({data: {id: "e" + e._i, source: id, target: t, kind: e.kind, color: edgeColor(e.kind), ei: e._i}, classes: isGhost ? "ghostedge" : ""});
     }
   }
+  tagParallelEdges(els);
   if (S.diff) {
     const info = S.diff.nodes.removed_info || {};
     for (const id of S.diff.nodes.removed) {
@@ -490,14 +560,59 @@ function buildElements() {
   }
   return els;
 }
+// Test hook (also handy in the console): HX_TEST.lastLayout tells a genuine dagre layout from a fallback;
+// HX_TEST.failLayouts = n makes the next n layout attempts throw so the fallback paths can be exercised.
+const HX_TEST = window.HX_TEST = Object.assign({failLayouts: 0, lastLayout: null, ranker: null, layoutErrors: []}, window.HX_TEST || {});
 function runLayout(fit = true) {
   const cy = S.cy;
-  const lay = cy.layout({name: "dagre", rankDir: S.layout, nodeSep: 18, rankSep: 60, edgeSep: 8, animate: false, fit: false, padding: 30, nodeDimensionsIncludeLabels: true});
-  lay.run();
+  const dagreOpts = {name: "dagre", rankDir: S.layout, nodeSep: 18, rankSep: 60, edgeSep: 8, animate: false, fit: false, padding: 30, nodeDimensionsIncludeLabels: true};
+  const flat = () => {   // dagre without compound (file) parents: lift children out, lay out, put them back
+    const moved = cy.nodes().children().map((n) => [n, n.data("parent")]);
+    moved.forEach(([n]) => n.move({parent: null}));
+    return () => moved.forEach(([n, par]) => n.move({parent: par}));
+  };
+  // dagre's default network-simplex ranker throws "Not possible to find intersection inside of the rectangle" on
+  // some nested-compound graphs (CVA6 at depth 3; reproduced with dagre 0.8.5 and 1.1.4 — tests/fixtures/viewer/
+  // layout-fail.json). The longest-path ranker lays out the same elements, file groups intact, so it is tried
+  // before any flattening. Both are "dagre" layouts; HX_TEST.ranker records which one ran.
+  const attempts = [["dagre", "network-simplex", dagreOpts, null], ["dagre", "longest-path", {...dagreOpts, ranker: "longest-path"}, null],
+                    ["dagre-flat", "network-simplex", dagreOpts, flat],
+                    ["breadthfirst", null, {name: "breadthfirst", directed: true, roots: cy.$id(S.graph.entry), spacingFactor: 1.1, animate: false, fit: false, padding: 30}, null]];
+  let done = false;
+  for (const [name, ranker, opts, prep] of attempts) {
+    let restore = null;
+    try {
+      if (HX_TEST.failLayouts > 0) { HX_TEST.failLayouts--; throw new Error("injected layout failure"); }
+      restore = prep ? prep() : null;
+      cy.layout(opts).run();
+      HX_TEST.lastLayout = name; HX_TEST.ranker = ranker;
+      if (name !== "dagre") notice("layout fallback: " + name + " (dagre failed: " + HX_TEST.layoutErrors[HX_TEST.layoutErrors.length - 1] + ")");
+      done = true;
+    } catch (err) {
+      HX_TEST.layoutErrors.push(String((err && err.message) || err));
+      console.warn("layout " + name + " failed:", err);
+    } finally {
+      if (restore) { try { restore(); } catch (e) { /* ignore */ } }
+    }
+    if (done) break;
+  }
+  if (!done) { HX_TEST.lastLayout = null; notice("layout failed: " + HX_TEST.layoutErrors.slice(-1)[0]); }
   const pins = (S.ann.view && S.ann.view.pinned_positions) || {};
   for (const [id, p] of Object.entries(pins)) { const ele = cy.$id(id); if (ele.length && !ele.isParent()) ele.position(p); }
   if (fit) cy.fit(undefined, 30);
 }
+function tagParallelEdges(els) {
+  // pi = index among edges that share (source, target) in either direction, pn = their count → staggered taxi turns
+  const groups = new Map();
+  for (const el of els) {
+    if (!el.data.source || el.data.source === el.data.target) continue;
+    const k = [el.data.source, el.data.target].sort().join("\u0000");
+    if (!groups.has(k)) groups.set(k, []);
+    groups.get(k).push(el);
+  }
+  for (const grp of groups.values()) grp.forEach((el, i) => { el.data.pi = i; el.data.pn = grp.length; });
+}
+
 function renderGraph({fit = true} = {}) {
   if (!S.cy) {
     S.cy = cytoscape({container: $("#cy"), style: buildStyle(), minZoom: 0.1, maxZoom: 4, boxSelectionEnabled: false});
@@ -570,15 +685,15 @@ function nodeLink(id, text) {
   return h("span", {class: "mono muted", title: id}, text || shortId(id));
 }
 function globalLink(id) { const v = S.graph.globals[id]; return h("span", {class: "mono link", title: id, onclick: () => select("global", id)}, v ? v.name : shortId(id)); }
-function navBar(extra) {
-  return h("div", {class: "nav"}, h("button", {onclick: back, disabled: !S.history.length, title: "back"}, "←"), extra);
+function navBar(...extra) {
+  return h("div", {class: "nav"}, h("button", {onclick: back, disabled: !S.history.length, title: "back"}, "←"), ...extra);
 }
 function noteBox(current, onChange) {
   return h("textarea", {class: "note", placeholder: "notes (markdown-ish, saved per symbol id)", onchange: (ev) => onChange(ev.target.value.trim() || null)}, current || "");
 }
 function renderDetail() {
   const d = $("#detail"); d.replaceChildren();
-  if (!S.sel) { d.append(h("p", {class: "muted"}, "Select a function in the tree or graph. Double-click a node to collapse its subtree; drag to pin.")); return; }
+  if (!S.sel) { d.append(h("p", {class: "muted"}, "Select a function in the tree or graph. Double-click a node to collapse its subtree; drag to pin; the eye on a tree row (or h) hides a module and everything only reachable through it.")); return; }
   const {kind, id} = S.sel;
   if (kind === "node") renderNode(d, S.graph.nodes[id]);
   else if (kind === "type") renderType(d, S.graph.types[id]);
@@ -592,7 +707,8 @@ function renderNode(d, n) {
   if (!n) return;
   const a = annNode(n.id);
   const vs = verifyState(n);
-  d.append(navBar(h("span", {class: "muted small"}, n.kind + (n.storage ? " · " + n.storage : "") + " · depth " + n.depth + " · " + n.precision)));
+  d.append(navBar(h("span", {class: "muted small"}, n.kind + (n.storage ? " · " + n.storage : "") + " · depth " + n.depth + " · " + n.precision),
+    n.id !== S.graph.entry ? h("button", {class: "hide-btn", title: "h", onclick: () => toggleHidden(n.id)}, S.hidden.has(n.id) ? "show module" : "hide module") : null));
   d.append(h("h2", null, n.qualname));
   d.append(h("div", {class: "meta"},
     h("span", {class: "link mono", title: "show source", onclick: () => showSource(n)}, n.loc.file + ":" + n.loc.line + (n.loc.end_line ? "–" + n.loc.end_line : "")),
@@ -649,6 +765,15 @@ function renderNode(d, n) {
   d.append(holder);
   if (SERVE) showSource(n); else holder.append(h("p", {class: "muted small"}, "source snippets are available in `hx serve` mode"));
 }
+// Wide values arrive as canonical strings (hx/values.py); show them compact, keep the lossless text in the tooltip.
+function fmtValue(v) {
+  if (v === null || v === undefined) return "?";
+  const s = String(v);
+  if (s.length <= 24) return s;
+  const m = /^(\d*'[sS]?[bodhBODH]|-?0[xX])(.*)$/.exec(s);
+  const short = m && m[2].length > 12 ? m[1] + m[2].slice(0, 8) + "…" + m[2].slice(-4) : s.slice(0, 23) + "…";
+  return h("span", {class: "mono", title: s + " (" + s.length + " chars)"}, short);
+}
 function attrsBlock(attrs) {
   const dl = h("dl", {class: "kv", style: "margin-top:8px"});
   for (const [k, v] of Object.entries(attrs)) {
@@ -656,7 +781,7 @@ function attrsBlock(attrs) {
     let val;
     if (k === "signals" && Array.isArray(v)) val = h("details", null, h("summary", {class: "link small"}, v.length + " internal signals"),
       h("ul", {class: "list"}, v.map((sg) => h("li", null, h("span", {class: "mono"}, sg.name), h("span", {class: "muted small"}, sg.type)))));
-    else if (typeof v === "object" && !Array.isArray(v)) val = Object.entries(v).map(([pk, pv]) => pk + "=" + pv).join(", ");
+    else if (typeof v === "object" && !Array.isArray(v)) val = Object.entries(v).flatMap(([pk, pv], i) => [i ? ", " : null, pk + "=", fmtValue(pv)]).filter((x) => x !== null);
     else if (Array.isArray(v)) val = v.map((x) => typeof x === "object" ? JSON.stringify(x) : String(x)).join(", ");
     else val = String(v);
     dl.append(h("dt", null, k), h("dd", null, val));
@@ -763,8 +888,9 @@ function renderEdge(d, e) {
 // ------------------------------------------------------------------ source
 async function showSource(n, hlLine) {
   const holder = $("#source-holder"); if (!holder || !SERVE) return;
-  const start = Math.max(1, n.loc.line), end = n.loc.end_line || n.loc.line + 30;
-  const span = Math.min(400, end - start + 1);
+  let start = Math.max(1, n.loc.line), end = n.loc.end_line || n.loc.line + 30;
+  let span = Math.min(400, end - start + 1);
+  if (hlLine && (hlLine < start || hlLine > start + span - 1 || end - start + 1 > 400)) { start = Math.max(1, hlLine - 60); span = 120; }   // navigate to a distant call site
   const key = n.loc.file + ":" + start + ":" + span;
   try {
     let data = S.sourceCache.get(key);
@@ -821,13 +947,32 @@ async function loadData() {
   }
   S.idx = buildIndex(S.graph);
   S.collapsed = new Set(Object.entries(S.ann.nodes).filter(([, v]) => v.collapsed).map(([k]) => k));
+  S.hidden = new Set(((S.ann.view && S.ann.view.hidden) || []).filter((id) => S.graph.nodes[id] && id !== S.graph.entry));
   const slider = $("#depth"); slider.max = Math.max(1, S.idx.maxDepth); if (S.depthMax > Number(slider.max)) S.depthMax = Number(slider.max); slider.value = S.depthMax; $("#depth-val").textContent = S.depthMax;
   $("#entry-label").textContent = S.graph.entry; $("#entry-label").title = S.graph.entry + " · generated " + S.graph.generated;
   document.title = "hx · " + shortId(S.graph.entry);
 }
+function notice(text) {   // persistent notice in the banner strip (the status line is overwritten by later events)
+  const b = $("#banner"); if (!b) { setStatus(text, true); return; }
+  const line = h("div", {class: "notice"}, text);
+  const old = [...b.querySelectorAll(".notice")].find((x) => x.textContent === text);
+  if (!old) b.append(line);
+  b.hidden = false;
+}
+function showMigrationBanner() {
+  const b = $("#banner"); if (!b) return;
+  const mig = (S.graph && S.graph.meta && S.graph.meta.migration) || null;
+  b.querySelectorAll(".migration").forEach((x) => x.remove());
+  if (mig && mig.needs_reextract_total) {
+    b.append(h("div", {class: "migration"}, h("span", null, "This graph was written by hx schema " + mig.from + " and upgraded in memory; " + mig.needs_reextract_total +
+      " type id(s) can only be settled by re-extraction. Run "), h("code", null, "hx migrate"), h("span", null, " in the project to re-extract tracked entries and carry annotations over.")));
+  }
+  b.hidden = !b.children.length;
+}
 async function reloadGraph() {
   const keep = S.sel;
   await loadData();
+  showMigrationBanner();
   renderTree(); renderGraph({fit: false});
   if (keep) select(keep.kind, keep.id, {push: false}); else renderDetail();
   S.sourceCache.clear();
@@ -835,7 +980,7 @@ async function reloadGraph() {
   else setStatus("graph reloaded " + fmtTime() + " · " + Object.keys(S.graph.nodes).length + " nodes");
 }
 async function switchGraph(name) {
-  S.graphName = name; S.diff = null; S.diffBase = ""; S.sel = null; S.history = []; S.collapsed = new Set();
+  S.graphName = name; S.diff = null; S.diffBase = ""; S.sel = null; S.history = []; S.collapsed = new Set(); S.hidden = new Set();
   await loadData();
   renderTree(); renderGraph(); renderDetail(); updateHash();
   setStatus("");
@@ -893,6 +1038,7 @@ function bindUI() {
     if (ev.target.matches("input, textarea, select")) return;
     if (ev.key === "/") { ev.preventDefault(); $("#search").focus(); }
     else if (ev.key === "f") S.cy && S.cy.fit(undefined, 30);
+    else if (ev.key === "h") { if (S.sel && S.sel.kind === "node") toggleHidden(S.sel.id); }
     else if (ev.key === "Escape") select(null, null);
     else if (ev.key === "Backspace") back();
   });
@@ -914,11 +1060,14 @@ async function init() {
   const initialSel = readHash();
   bindUI();
   try { await loadData(); } catch (err) { $("#detail").replaceChildren(h("div", {class: "errbox"}, "failed to load graph: " + err.message)); setStatus(String(err.message), true); return; }
-  renderTree(); renderGraph();
-  if (initialSel) select(initialSel.kind, initialSel.id, {push: false}); else renderDetail();
-  if (SERVE && S.diffBase) { $("#diff-base").value = S.diffBase; await applyDiff(S.diffBase); }
+  showMigrationBanner();
+  try { renderTree(); renderGraph(); } catch (err) { console.error(err); setStatus("render failed: " + err.message, true); }
+  try { if (initialSel) select(initialSel.kind, initialSel.id, {push: false}); else renderDetail(); } catch (err) { console.error(err); }
+  if (SERVE && S.diffBase) { try { $("#diff-base").value = S.diffBase; await applyDiff(S.diffBase); } catch (err) { console.error(err); } }
   connectEvents();
   if (!SERVE) setStatus("static export · generated " + S.graph.generated);
 }
+window.HX_DEBUG = {buildElements, visibleSet, buildStyle, buildIndex, toggleHidden, showAllHidden, hidden: () => S.hidden, state: () => S,   // hooks for tests and bisection
+  setGraph: (g) => { S.graph = g; S.idx = buildIndex(g); S.collapsed = new Set(); S.hidden = new Set(); S.depthMax = 99; S.diff = null; }};
 init();
 })();

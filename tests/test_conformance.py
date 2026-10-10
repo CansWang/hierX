@@ -21,7 +21,7 @@ def _c(tmp_path):
     from conftest import write_compile_commands
     from hx.frontends.clang_fe import ClangFrontend
     dst = tmp_path / "c"
-    shutil.copytree(os.path.join(FIX, "c"), dst)
+    shutil.copytree(os.path.join(FIX, "c"), dst, ignore=shutil.ignore_patterns(".hx", "__pycache__", "obj_dir"))
     write_compile_commands(dst)
     fe = ClangFrontend(str(dst), str(dst / "build"), jobs=1)
     fe.build_index()
@@ -32,7 +32,7 @@ def _sv(tmp_path):
     if not shutil.which("verilator"):
         pytest.skip("verilator missing")
     dst = tmp_path / "sv"
-    shutil.copytree(os.path.join(FIX, "sv"), dst)
+    shutil.copytree(os.path.join(FIX, "sv"), dst, ignore=shutil.ignore_patterns(".hx", "__pycache__", "obj_dir"))
     fe = VerilatorFrontend(str(dst), filelist=str(dst / "files.f"), top="top")
     fe.build_index()
     return fe, str(dst), "rtl/top.sv", "top", "sv:rtl/core.sv::top.u_core_a"
@@ -52,7 +52,7 @@ def _python(tmp_path):
     if not shutil.which("pyright-langserver"):
         pytest.skip("pyright-langserver missing")
     dst = tmp_path / "python"
-    shutil.copytree(os.path.join(FIX, "python"), dst)
+    shutil.copytree(os.path.join(FIX, "python"), dst, ignore=shutil.ignore_patterns(".hx", "__pycache__", "obj_dir"))
     fe = LspFrontend(str(dst), server="python", timeout=120)
     fe.build_index()
     return fe, str(dst), "hxfix/main.py", "app_run", "py:hxfix/dma.py::dma_start"

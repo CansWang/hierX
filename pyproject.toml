@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "hx"
-version = "0.2.0"
+dynamic = ["version"]
 description = "Function-scoped structure extractor: call graph + types + structs from an entry point, viewable and annotatable in a browser."
 requires-python = ">=3.10"
 dependencies = [
@@ -23,6 +23,9 @@ e2e = ["playwright>=1.40"]                         # optional browser workflow t
 
 [project.scripts]
 hx = "hx.cli:main"
+
+[tool.setuptools.dynamic]
+version = {attr = "hx.__version__"}
 
 [tool.setuptools.packages.find]
 include = ["hx", "hx.*"]

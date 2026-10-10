@@ -22,7 +22,7 @@ _lock = threading.Lock()
 
 
 def empty() -> dict:
-    return {"schema": SCHEMA, "nodes": {}, "types": {}, "globals": {}, "view": {"hidden": [], "pinned_positions": {}}}
+    return {"schema": SCHEMA, "nodes": {}, "types": {}, "globals": {}, "view": {"hidden": [], "pinned_positions": {}}, "meta": {}}
 
 
 def normalize(doc: Any) -> dict:
@@ -42,6 +42,11 @@ def normalize(doc: Any) -> dict:
         pos = view.get("pinned_positions")
         if isinstance(pos, dict):
             out["view"]["pinned_positions"] = {k: v for k, v in pos.items() if isinstance(v, dict)}
+    meta = doc.get("meta")
+    if isinstance(meta, dict):                       # e.g. {"migrated": {"from": "hx/1", "map_hash": …, "at": …}}
+        mig = meta.get("migrated")
+        if isinstance(mig, dict) and isinstance(mig.get("map_hash"), str):
+            out["meta"]["migrated"] = {"from": str(mig.get("from", "")), "map_hash": mig["map_hash"], "at": str(mig.get("at", ""))}
     return out
 
 
@@ -118,6 +123,70 @@ def replace_file(path: str, doc: dict) -> dict:
         doc = prune_empty(doc)
         save(path, doc)
         return doc
+
+
+def map_hash(id_map: dict) -> str:
+    import hashlib
+    h = hashlib.sha1()
+    for k in sorted(id_map):
+        h.update(k.encode("utf-8", "replace") + b"\0" + str(id_map[k]).encode("utf-8", "replace") + b"\n")
+    return h.hexdigest()[:16]
+
+
+def migrate_keys(doc: dict, id_map: dict) -> tuple[dict, dict]:
+    """Rewrite annotation keys old -> new (nodes/types/globals, view.hidden, pinned_positions). When both the old and
+    the new key hold data the new key's fields win, old-only fields fill in, and the clash is reported. Returns
+    (document, report{renamed, conflicts, untouched})."""
+    doc = normalize(doc)
+    report = {"renamed": 0, "conflicts": [], "untouched": 0}
+    for section in ("nodes", "types", "globals"):
+        sec = doc[section]
+        for old, new in id_map.items():
+            if old not in sec or old == new:
+                continue
+            val = sec.pop(old)
+            if new in sec:
+                merged = dict(val)
+                for k, v in sec[new].items():
+                    if k in merged and merged[k] != v:
+                        report["conflicts"].append({"section": section, "old": old, "new": new, "field": k})
+                    merged[k] = v
+                sec[new] = merged
+            else:
+                sec[new] = val
+            report["renamed"] += 1
+    view = doc["view"]
+    view["hidden"] = [id_map.get(x, x) for x in view["hidden"]]
+    pos = view["pinned_positions"]
+    for old, new in id_map.items():
+        if old in pos and old != new:
+            pos.setdefault(new, pos.pop(old))
+            if old in pos:
+                del pos[old]
+    for section in ("nodes", "types", "globals"):
+        report["untouched"] += sum(1 for k in doc[section] if k not in id_map.values())
+    return doc, report
+
+
+def migrate_file(path: str, id_map: dict, *, from_schema: str = "hx/1", backup_suffix: str = ".bak-hx1") -> dict:
+    """Persistent key migration: one locked, atomic rewrite; a backup written once and never overwritten; a
+    `meta.migrated` marker (kept by normalize/save) makes a repeat with the same map a no-op."""
+    import shutil
+    import time
+    mh = map_hash(id_map)
+    with _lock, file_lock(path):
+        doc = load(path)
+        done = doc["meta"].get("migrated") or {}
+        if done.get("map_hash") == mh:
+            return {"status": "noop", "map_hash": mh, "renamed": 0, "conflicts": [], "backup": path + backup_suffix}
+        backup = path + backup_suffix
+        if os.path.exists(path) and not os.path.exists(backup):
+            shutil.copyfile(path, backup)
+        doc, report = migrate_keys(doc, id_map)
+        doc["meta"]["migrated"] = {"from": from_schema, "map_hash": mh, "at": time.strftime("%Y-%m-%dT%H:%M:%S")}
+        save(path, prune_empty(doc))
+        report.update({"status": "migrated", "map_hash": mh, "backup": backup})
+        return report
 
 
 def effective_dir(node: dict, ann: dict, param_name: str) -> tuple[str, str]:
