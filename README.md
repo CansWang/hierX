@@ -16,7 +16,7 @@ survive; see [Boundaries](#boundaries) for what does and does not move them.
 Status: **Phase 4 + hardening (4.5, 4.6)** done — C/C++ (libclang), SystemVerilog/Verilog (verilator),
 Rust (rust-analyzer) and Python (pyright) frontends; browser viewer with
 editable annotations, live reload and diff mode; tracked entry points with
-history, `hx diff`, a watch loop, a Claude Code hook and an MCP server. The plan
+history, `hx diff`, a watch loop, an update hook and an MCP server. The plan
 lives in `dev/ssot/single-source-of-truth.md`.
 
 ## Install
@@ -194,8 +194,8 @@ hx update --quiet                             # one line per entry (used by the 
 hx diff --entry src/main.c:app_run            # current graph vs the last snapshot (or --since <ts>)
 hx diff old.json new.json --format json       # any two graphs
 hx watch                                      # poll sources; update after each quiet period
-hx hook install                               # Claude Code Stop hook: runs `hx update --quiet --hook` after every agent turn
-hx mcp --print-config                         # MCP server snippet for .mcp.json / `claude mcp add`
+hx hook install --settings-dir path/to/settings # install a hook that runs `hx update --quiet --hook`
+hx mcp --print-config                         # MCP server configuration snippet
 ```
 
 `hx update` writes one graph per entry under `.hx/graphs/`, keeps the previous
