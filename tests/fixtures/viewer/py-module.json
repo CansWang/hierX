@@ -1,0 +1,395 @@
+{
+ "schema": "hx/3",
+ "generated": "2026-10-12T00:00:00+00:00",
+ "root": "/fixture",
+ "lang": "py",
+ "entry": "py:hxfix/dma.py::dma_poll",
+ "meta": {
+  "entry_arg": "hxfix/dma.py:dma_poll",
+  "note": "Python graph with a module caller node (review finding H5), for the viewer test"
+ },
+ "nodes": {
+  "py:hxfix/dma.py::dma_poll": {
+   "id": "py:hxfix/dma.py::dma_poll",
+   "kind": "function",
+   "name": "dma_poll",
+   "qualname": "dma_poll",
+   "lang": "py",
+   "loc": {
+    "file": "hxfix/dma.py",
+    "line": 58,
+    "end_line": 65,
+    "col": 1
+   },
+   "signature": "(function) def dma_poll(ch: DmaChan) -> Status",
+   "storage": null,
+   "depth": 0,
+   "body_hash": "sha1:74037ba28945899287cc0a59537ec9845de01921",
+   "precision": "lsp",
+   "returns": {
+    "type": "Status",
+    "type_ref": null
+   },
+   "params": [
+    {
+     "name": "ch",
+     "type": "DmaChan",
+     "type_ref": "py:hxfix/dma.py::class DmaChan",
+     "dir": "in",
+     "dir_source": "explicit"
+    }
+   ],
+   "globals": {
+    "reads": [],
+    "writes": []
+   },
+   "calls": [
+    "py:hxfix/hal.py::read32"
+   ],
+   "attrs": {},
+   "runtime": null
+  },
+  "py:hxfix/hal.py::read32": {
+   "id": "py:hxfix/hal.py::read32",
+   "kind": "function",
+   "name": "read32",
+   "qualname": "read32",
+   "lang": "py",
+   "loc": {
+    "file": "hxfix/hal.py",
+    "line": 8,
+    "end_line": 9,
+    "col": 1
+   },
+   "signature": "(function) def read32(addr: int) -> int",
+   "storage": null,
+   "depth": 1,
+   "body_hash": "sha1:8e51f4d86882865e1c2b756338e7d999e641cec6",
+   "precision": "lsp",
+   "returns": {
+    "type": "int",
+    "type_ref": null
+   },
+   "params": [
+    {
+     "name": "addr",
+     "type": "int",
+     "type_ref": null,
+     "dir": "in",
+     "dir_source": "explicit"
+    }
+   ],
+   "globals": {
+    "reads": [],
+    "writes": []
+   },
+   "calls": [],
+   "attrs": {},
+   "runtime": null
+  },
+  "py:hxfix/main.py::app_run": {
+   "id": "py:hxfix/main.py::app_run",
+   "kind": "function",
+   "name": "app_run",
+   "qualname": "app_run",
+   "lang": "py",
+   "loc": {
+    "file": "hxfix/main.py",
+    "line": 8,
+    "end_line": 14,
+    "col": 1
+   },
+   "signature": "(function) def app_run(data: bytes, n: int) -> int",
+   "storage": null,
+   "depth": -1,
+   "body_hash": "sha1:4f5adc9e0e30b8e759828001b002ce96bf5d6c46",
+   "precision": "lsp",
+   "returns": {
+    "type": "int",
+    "type_ref": null
+   },
+   "params": [
+    {
+     "name": "data",
+     "type": "bytes",
+     "type_ref": null,
+     "dir": "in",
+     "dir_source": "explicit"
+    },
+    {
+     "name": "n",
+     "type": "int",
+     "type_ref": null,
+     "dir": "in",
+     "dir_source": "explicit"
+    }
+   ],
+   "globals": {
+    "reads": [],
+    "writes": []
+   },
+   "calls": [
+    "py:hxfix/dma.py::dma_poll"
+   ],
+   "attrs": {},
+   "runtime": null
+  },
+  "py:hxfix/script.py::(module) script.py": {
+   "id": "py:hxfix/script.py::(module) script.py",
+   "kind": "module",
+   "name": "(module) script.py",
+   "qualname": "(module) script.py",
+   "lang": "py",
+   "loc": {
+    "file": "hxfix/script.py",
+    "line": 1,
+    "end_line": 9,
+    "col": 1
+   },
+   "signature": "module script.py",
+   "storage": null,
+   "depth": -1,
+   "body_hash": "sha1:e74d1ae5a7502298ba661efb2d479f1e9a2698f1",
+   "precision": "lsp",
+   "returns": null,
+   "params": [],
+   "globals": {
+    "reads": [],
+    "writes": []
+   },
+   "calls": [
+    "py:hxfix/dma.py::dma_poll"
+   ],
+   "attrs": {},
+   "runtime": null
+  }
+ },
+ "types": {
+  "py:hxfix/dma.py::class DmaChan": {
+   "id": "py:hxfix/dma.py::class DmaChan",
+   "kind": "class",
+   "name": "DmaChan",
+   "lang": "py",
+   "loc": {
+    "file": "hxfix/dma.py",
+    "line": 26,
+    "end_line": 31,
+    "col": 1
+   },
+   "size": null,
+   "align": null,
+   "fields": [
+    {
+     "name": "base",
+     "type": "int",
+     "type_ref": null,
+     "offset": null,
+     "size": null,
+     "bit_offset": null,
+     "bit_width": null
+    },
+    {
+     "name": "desc",
+     "type": "Desc",
+     "type_ref": "py:hxfix/dma.py::class Desc",
+     "offset": null,
+     "size": null,
+     "bit_offset": null,
+     "bit_width": null
+    },
+    {
+     "name": "cb",
+     "type": "Optional[Callback]",
+     "type_ref": null,
+     "offset": null,
+     "size": null,
+     "bit_offset": null,
+     "bit_width": null
+    },
+    {
+     "name": "busy",
+     "type": "bool",
+     "type_ref": null,
+     "offset": null,
+     "size": null,
+     "bit_offset": null,
+     "bit_width": null
+    }
+   ],
+   "enumerators": [],
+   "underlying": null,
+   "underlying_ref": null,
+   "anonymous": false,
+   "system": false,
+   "used_by": [
+    "py:hxfix/dma.py::dma_poll"
+   ]
+  },
+  "py:hxfix/dma.py::class Desc": {
+   "id": "py:hxfix/dma.py::class Desc",
+   "kind": "class",
+   "name": "Desc",
+   "lang": "py",
+   "loc": {
+    "file": "hxfix/dma.py",
+    "line": 15,
+    "end_line": 20,
+    "col": 1
+   },
+   "size": null,
+   "align": null,
+   "fields": [
+    {
+     "name": "src",
+     "type": "int",
+     "type_ref": null,
+     "offset": null,
+     "size": null,
+     "bit_offset": null,
+     "bit_width": null
+    },
+    {
+     "name": "dst",
+     "type": "int",
+     "type_ref": null,
+     "offset": null,
+     "size": null,
+     "bit_offset": null,
+     "bit_width": null
+    },
+    {
+     "name": "length",
+     "type": "int",
+     "type_ref": null,
+     "offset": null,
+     "size": null,
+     "bit_offset": null,
+     "bit_width": null
+    },
+    {
+     "name": "flags",
+     "type": "int",
+     "type_ref": null,
+     "offset": null,
+     "size": null,
+     "bit_offset": null,
+     "bit_width": null
+    }
+   ],
+   "enumerators": [],
+   "underlying": null,
+   "underlying_ref": null,
+   "anonymous": false,
+   "system": false,
+   "used_by": []
+  }
+ },
+ "globals": {},
+ "edges": [
+  {
+   "from": "py:hxfix/dma.py::dma_poll",
+   "to": "py:hxfix/hal.py::read32",
+   "kind": "call",
+   "loc": {
+    "file": "hxfix/dma.py",
+    "line": 60,
+    "end_line": 60,
+    "col": 13
+   },
+   "args": [
+    "ch.base + 12"
+   ],
+   "name": "read32",
+   "macro": null,
+   "ptr_type": null
+  },
+  {
+   "from": "py:hxfix/hal.py::read32",
+   "to": "py:/home/canswang/miniconda3/envs/hx/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::dict.get",
+   "kind": "call",
+   "loc": {
+    "file": "hxfix/hal.py",
+    "line": 9,
+    "end_line": 9,
+    "col": 17
+   },
+   "args": [
+    "addr",
+    "0"
+   ],
+   "name": "get",
+   "macro": null,
+   "ptr_type": null
+  },
+  {
+   "from": "py:hxfix/main.py::app_run",
+   "to": "py:hxfix/dma.py::dma_poll",
+   "kind": "call",
+   "loc": {
+    "file": "hxfix/main.py",
+    "line": 12,
+    "end_line": 12,
+    "col": 11
+   },
+   "args": [
+    "ch"
+   ],
+   "name": "dma_poll",
+   "macro": null,
+   "ptr_type": null
+  },
+  {
+   "from": "py:hxfix/script.py::(module) script.py",
+   "to": "py:hxfix/dma.py::dma_poll",
+   "kind": "call",
+   "loc": {
+    "file": "hxfix/script.py",
+    "line": 7,
+    "end_line": 7,
+    "col": 10
+   },
+   "args": [
+    "CH"
+   ],
+   "name": "dma_poll",
+   "macro": null,
+   "ptr_type": null
+  },
+  {
+   "from": "py:hxfix/script.py::(module) script.py",
+   "to": "py:hxfix/dma.py::dma_poll",
+   "kind": "call",
+   "loc": {
+    "file": "hxfix/script.py",
+    "line": 9,
+    "end_line": 9,
+    "col": 14
+   },
+   "args": [
+    "CH"
+   ],
+   "name": "dma_poll",
+   "macro": null,
+   "ptr_type": null
+  }
+ ],
+ "unresolved": [
+  {
+   "name": "get",
+   "from": "py:hxfix/hal.py::read32",
+   "reason": "stub declaration (a .pyi has no body)",
+   "loc": {
+    "file": "hxfix/hal.py",
+    "line": 9,
+    "end_line": 9,
+    "col": 17
+   },
+   "id": "py:/home/canswang/miniconda3/envs/hx/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::dict.get",
+   "family": {
+    "size": 3,
+    "evidence": "@overload",
+    "scope": "dict"
+   }
+  }
+ ]
+}

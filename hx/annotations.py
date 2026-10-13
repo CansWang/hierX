@@ -13,7 +13,7 @@ from __future__ import annotations
 import json
 import os
 import threading
-from typing import Any
+from typing import Any, Optional
 
 from .fsutil import file_lock
 
@@ -168,12 +168,14 @@ def migrate_keys(doc: dict, id_map: dict) -> tuple[dict, dict]:
     return doc, report
 
 
-def migrate_file(path: str, id_map: dict, *, from_schema: str = "hx/1", backup_suffix: str = ".bak-hx1") -> dict:
+def migrate_file(path: str, id_map: dict, *, from_schema: str = "hx/1", backup_suffix: str = ".bak-hx1",
+                 invalidate: Optional[list[str]] = None) -> dict:
     """Persistent key migration: one locked, atomic rewrite; a backup written once and never overwritten; a
-    `meta.migrated` marker (kept by normalize/save) makes a repeat with the same map a no-op."""
+    `meta.migrated` marker (kept by normalize/save) makes a repeat with the same map a no-op. `invalidate` lists
+    (new) node ids whose `verified_body_hash` no longer means anything (hx/3 module nodes hash the whole file)."""
     import shutil
     import time
-    mh = map_hash(id_map)
+    mh = map_hash({**id_map, **{f"!{i}": "invalidate" for i in (invalidate or [])}})
     with _lock, file_lock(path):
         doc = load(path)
         done = doc["meta"].get("migrated") or {}
@@ -183,6 +185,11 @@ def migrate_file(path: str, id_map: dict, *, from_schema: str = "hx/1", backup_s
         if os.path.exists(path) and not os.path.exists(backup):
             shutil.copyfile(path, backup)
         doc, report = migrate_keys(doc, id_map)
+        report["invalidated"] = []
+        for nid in invalidate or []:
+            node = doc["nodes"].get(nid)
+            if isinstance(node, dict) and node.pop("verified_body_hash", None) is not None:
+                report["invalidated"].append(nid)
         doc["meta"]["migrated"] = {"from": from_schema, "map_hash": mh, "at": time.strftime("%Y-%m-%dT%H:%M:%S")}
         save(path, prune_empty(doc))
         report.update({"status": "migrated", "map_hash": mh, "backup": backup})

@@ -31,7 +31,7 @@ def test_legacy_fixture_has_the_hazards():
 
 def test_loader_upgrades_legacy_in_memory_and_reports():
     doc, rep = graphio.load_graph_with_report(LEGACY)
-    assert doc["schema"] == "hx/2" and rep is not None and rep.from_schema == "hx/1"
+    assert doc["schema"] == "hx/3" and rep is not None and rep.from_schema == "hx/1"
     assert rep.id_map == {LANE_OLD: LANE_NEW}
     assert LANE_NEW in doc["nodes"] and doc["nodes"][LANE_NEW]["qualname"] == "top.gen_lane[0].u_lane"
     assert doc["nodes"][TOP]["calls"][0] == LANE_NEW and doc["edges"][0]["to"] == LANE_NEW
@@ -42,9 +42,9 @@ def test_loader_upgrades_legacy_in_memory_and_reports():
     assert "module-scoped" in reasons["sv:core/fp.sv::struct fp.fp_t"] and rep.pending
     assert doc["meta"]["migration"]["needs_reextract_total"] == 2
     g = Graph.load(LEGACY)                                 # the dataclass boundary accepts the upgraded document
-    assert g.schema == "hx/2" and LANE_NEW in g.nodes
+    assert g.schema == "hx/3" and LANE_NEW in g.nodes
     with pytest.raises(graphio.SchemaError):
-        graphio.upgrade({"schema": "hx/3"})
+        graphio.upgrade({"schema": "hx/4"})
 
 
 def _project_with_legacy(tmp_path):
@@ -66,7 +66,7 @@ def test_every_reader_loads_the_legacy_document(tmp_path):
     from hx.mcp_server import GraphStore
     root, name = _project_with_legacy(tmp_path)
     gp = root / ".hx" / "graphs" / f"{name}.json"
-    assert project.load_graph(str(gp))["schema"] == "hx/2"
+    assert project.load_graph(str(gp))["schema"] == "hx/3"
     assert project.find_graphs(str(root))[0]["entry"] == TOP
     assert LANE_NEW in GraphStore(str(root)).load(name)[1]["nodes"]
     html = build_html(project.load_graph(str(gp)), {})
@@ -77,7 +77,7 @@ def test_every_reader_loads_the_legacy_document(tmp_path):
     app = create_app(str(gp), poll_interval=0.05)
     with TestClient(app) as c:
         g = c.get("/api/graph", params={"name": name}).json()
-        assert g["schema"] == "hx/2" and LANE_NEW in g["nodes"] and g["nodes"][TOP]["attrs"]["parameters"]["CFG"].startswith("0x")
+        assert g["schema"] == "hx/3" and LANE_NEW in g["nodes"] and g["nodes"][TOP]["attrs"]["parameters"]["CFG"].startswith("0x")
         st = c.get("/api/status", params={"name": name}).json()
         assert st["migration"] == "pending" and st["migration_detail"]["needs_reextract_total"] == 2
         assert [x["migration"] for x in c.get("/api/graphs").json()] == ["pending"]
@@ -217,7 +217,7 @@ def test_migrate_maps_unique_types_and_yields_an_empty_diff(tmp_path):
     assert ann["types"][new_fp]["note"] == "fp" and ann["types"][new_anon]["note"] == "cfg" and ann["nodes"]["sv:rtl/lane.sv::top_adv.gen_lane[0].u_lane"]["note"] == "lane0"
     assert (root / ".hx" / "annotations.json.bak-hx1").exists()
     # the committed graph is the fresh one; the legacy graph went to history; migrated legacy vs fresh is an empty diff
-    assert project.load_graph(gp)["schema"] == "hx/2" and len(project.list_history(str(root), "rtl/top_adv.sv:top_adv")) >= 1
+    assert project.load_graph(gp)["schema"] == "hx/3" and len(project.list_history(str(root), "rtl/top_adv.sv:top_adv")) >= 1
     legacy_doc = graphio.load_graph_text(legacy_txt)
     legacy_doc, _ = graphio.upgrade(legacy_doc)
     legacy_doc = json.loads(json.dumps(legacy_doc).replace(json.dumps(old_fp)[1:-1], json.dumps(new_fp)[1:-1]).replace(old_anon, new_anon))
@@ -269,4 +269,4 @@ def test_migrate_writes_nothing_when_an_entry_fails(tmp_path):
     lane.write_text(good)
     r = subprocess.run([sys.executable, "-m", "hx.cli", "migrate", "--root", str(root)], capture_output=True, text=True)
     assert r.returncode == 0 and "status      migrated" in r.stdout, r.stdout + r.stderr
-    assert project.load_graph(gp)["schema"] == "hx/2" and (root / ".hx" / "annotations.json.bak-hx1").exists()
+    assert project.load_graph(gp)["schema"] == "hx/3" and (root / ".hx" / "annotations.json.bak-hx1").exists()

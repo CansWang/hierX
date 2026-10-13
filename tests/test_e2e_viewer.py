@@ -280,3 +280,30 @@ def test_hiding_an_instance_hides_its_subtree_but_not_shared_routines(browser, t
         ctx.close()
     finally:
         srv.stop()
+
+
+PY_MODULE = os.path.join(HERE, "fixtures", "viewer", "py-module.json")
+
+
+@pytest.fixture
+def py_module_server(tmp_path):
+    proj = tmp_path / "pm"; (proj / ".hx").mkdir(parents=True)
+    shutil.copy(PY_MODULE, proj / ".hx" / "graph.json")
+    s = Served(proj / ".hx" / "graph.json")
+    yield s, proj
+    s.stop()
+
+
+def test_python_module_node_renders(browser, py_module_server):
+    """An hx/3 Python graph with a module caller node (review finding H5) lays out and shows a module detail pane."""
+    s, _ = py_module_server
+    mid = "py:hxfix/script.py::(module) script.py"
+    ctx, page, errors, _ = _open(browser, s.url + f"/#depth=3&kind=node&sel={mid}")
+    t = page.evaluate("() => window.HX_TEST")
+    assert errors == [] and t["lastLayout"] == "dagre", t
+    assert page.locator("#tree .row.sel").get_attribute("title") == mid
+    detail = page.locator("#detail").inner_text()
+    assert "module" in detail and "depth -1" in detail.replace("−", "-")
+    assert page.locator("#detail h3", has_text="returns").count() == 0
+    assert page.evaluate("() => window.HX_DEBUG.state().cy.nodes(':parent').length") >= 2
+    ctx.close()

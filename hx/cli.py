@@ -99,7 +99,7 @@ def _build_parser() -> argparse.ArgumentParser:
     mc.add_argument("--root", default=".")
     mc.add_argument("--print-config", action="store_true", help="print the .mcp.json / `claude mcp add` snippet")
 
-    mg = sub.add_parser("migrate", help="upgrade a project from schema hx/1: re-extract every tracked entry, then rewrite annotation keys once")
+    mg = sub.add_parser("migrate", help="upgrade a project from schema hx/1 or hx/2: re-extract every tracked entry, then rewrite annotation keys once (hx/3)")
     mg.add_argument("--root", default=".")
     mg.add_argument("--keep-history", type=int, default=None)
     mg.set_defaults(func=cmd_migrate)

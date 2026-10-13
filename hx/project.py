@@ -441,7 +441,7 @@ def install_hook(root: str, event: str = "Stop", command: str = "hx update --qui
     return path, True
 
 
-# ---------------------------------------------------------------- migration (hx/1 -> hx/2)
+# ---------------------------------------------------------------- migration (hx/1, hx/2 -> hx/3)
 
 _LAYOUT_SUFFIX = re.compile(r"@[0-9a-f]{8}$")
 
@@ -451,20 +451,177 @@ def _type_shape(t: dict) -> tuple:
                                                for f in t.get("fields") or []))
 
 
-def map_type_ids(old: dict, new: dict, report, lossless: dict) -> tuple[dict, list[dict]]:
-    """Old (hx/1) type ids that hx/1 could not settle -> new ids, established ONLY from the fresh graph: a module-scoped
-    type maps when exactly one new type shares its base id and its users; an anonymous `anon@L` type maps when exactly
-    one new anonymous type has the identical layout and users. Anything else stays unmapped and is listed."""
+def _split_id(i: str) -> tuple[str, str, str]:
+    """`lang:path::qualname[#hash]` -> (lang, path, qualname without the hash)."""
+    lang, _, rest = i.partition(":")
+    path, _, qual = rest.partition("::")
+    return lang, path, qual.split("#")[0]
+
+
+def _trailing(qual: str) -> str:
+    return re.split(r"\.|::", qual)[-1] if qual else qual
+
+
+def _scope_compatible(old_qual: str, new_qual: str) -> bool:
+    """GHOSTS: the new qualified name equals the old one, or the old one was bare and the new one adds a scope to it.
+    A ghost has no location anchor of its own, so any wider rule would be a guess (review round 10)."""
+    if new_qual == old_qual:
+        return True
+    bare = "." not in old_qual and "::" not in old_qual
+    return bare and (new_qual.endswith("." + old_qual) or new_qual.endswith("::" + old_qual))
+
+
+def _scope_compatible_node(old_qual: str, new_qual: str) -> bool:
+    """NODES, anchored by (file, kind, name, line): the qualified name only guards against a different symbol at the
+    same spot. Equal names, or the old leading scopes are a prefix of the new ones (`Device._interp_with` ->
+    `Device.evaluate._interp_with`, bare `x` -> `outer.x`); `A.x` -> `B.A.x` is refused (review round 9)."""
+    if new_qual == old_qual:
+        return True
+    op, np_ = re.split(r"\.|::", old_qual), re.split(r"\.|::", new_qual)
+    return len(np_) > len(op) and op[-1] == np_[-1] and np_[:len(op) - 1] == op[:-1]
+
+
+def _ghost_scope(qual: str) -> str:
+    """The scope label a family record carries for a target: its container path, or `<module>` for a bare name."""
+    sep = "::" if "::" in qual else "."
+    parts = qual.split(sep)
+    return sep.join(parts[:-1]) if len(parts) > 1 else "<module>"
+
+
+def _ghost_sites(doc: dict, ghost_ids: set, node_map: dict) -> dict:
+    """Every reference to each ghost id, keyed (mapped from, file, line, col): the unresolved records AND the edges
+    whose target is a ghost (the saved hx/2 graphs carry call sites in edges that no unresolved record repeats)."""
+    from collections import defaultdict
+    sites: dict = defaultdict(set)
+    for u in doc.get("unresolved") or []:
+        if u.get("id"):
+            loc = u.get("loc") or {}
+            sites[u["id"]].add((node_map.get(u.get("from"), u.get("from")), loc.get("file"), loc.get("line"), loc.get("col")))
+    for e in doc.get("edges") or []:
+        if e.get("to") in ghost_ids:
+            loc = e.get("loc") or {}
+            sites[e["to"]].add((node_map.get(e.get("from"), e.get("from")), loc.get("file"), loc.get("line"), loc.get("col")))
+    return sites
+
+
+def map_node_ids(old: dict, new: dict, root: str) -> tuple[dict, dict, list[dict]]:
+    """hx/2 -> hx/3 node and global ids, established from the fresh graph by LOCATION: an old node maps to the new node at
+    the same (file, kind, name, line), with old absolute (symlink-spelled) files made root-relative first, an old
+    `function` named `(module) …` matched against the new `module` node, and a nested LSP function (`x` or `x#hash`)
+    matched only when its old qualified name is a dotted suffix of the new one (`outer.x`). Exactly one candidate maps;
+    several are reported ambiguous and never applied; none is unmapped. Returns (mapped, ambiguous, unmapped)."""
+    from collections import defaultdict
+    from . import ids as _ids
+    mapped: dict = {}
+    ambiguous: dict = {}
+    unmapped: list[dict] = []
+    root_real = _ids.realpath(root)
+
+    def norm(path: str) -> str:
+        return _ids.rel(path, root_real) if path and os.path.isabs(path) else (path or "")
+
+    for section in ("nodes", "globals"):
+        new_sec = new.get(section) or {}
+        index: dict = defaultdict(list)
+        for nid, n in new_sec.items():
+            loc = n.get("loc") or {}
+            index[(norm(loc.get("file") or ""), n.get("kind"), n.get("name"), loc.get("line"))].append(nid)
+        for oid, o in (old.get(section) or {}).items():
+            if oid in new_sec:
+                mapped[oid] = oid
+                continue
+            loc = o.get("loc") or {}
+            kind, name = o.get("kind"), o.get("name")
+            if section == "nodes" and kind == "function" and str(name or "").startswith("(module) "):
+                kind = "module"
+            cands = list(index.get((norm(loc.get("file") or ""), kind, name, loc.get("line")), []))
+            if section == "nodes":
+                oq = _split_id(oid)[2] or (o.get("qualname") or name or "")
+                cands = [c for c in cands if _scope_compatible_node(oq, _split_id(c)[2])]
+            if len(cands) == 1:
+                mapped[oid] = cands[0]
+            elif cands:
+                ambiguous[oid] = sorted(cands)
+            else:
+                unmapped.append({"id": oid, "reason": f"no {section[:-1]} at the same file, kind, name and line in the new graph", "candidates": []})
+    return mapped, ambiguous, unmapped
+
+
+def map_ghost_ids(old: dict, new: dict, node_map: dict) -> tuple[dict, dict, list[dict]]:
+    """hx/2 -> hx/3 unresolved (ghost) ids by CALL SITE with old-target identity checks (review rounds 4-6, 9, 11). An
+    old ghost is identified by EVERY reference to it — unresolved records and edges — keyed (mapped from, file, line,
+    col); the new ghost referenced from the same call site is the candidate. Accepted only when (a) language and
+    declaring path agree, (b) the trailing name agrees and the new scope equals the old one or the old one was bare,
+    (c) a hashed old id, or several old ids landing on one new id, carry verified overload-family metadata on the
+    new record (`family.evidence == "@overload"`, scope equal to the target's, room for the distinct old ids), and
+    (d) every call site of the old id yields that same single candidate: a site without a compatible target leaves
+    the id unmapped, disagreeing sites make it ambiguous. There is no shortcut for an id that still exists: it goes
+    through the same per-site rule, so an unchanged id with a conflicting site is reported, never assumed; a site
+    that still references the id itself is an exact answer there, whatever scoped twins share the site."""
+    from collections import defaultdict
+    new_recs = {u["id"]: u for u in (new.get("unresolved") or []) if u.get("id")}
+    new_by_site: dict = defaultdict(set)
+    for nid, sites in _ghost_sites(new, set(new_recs), {}).items():
+        for site in sites:
+            new_by_site[site].add(nid)
+    old_ids = {u["id"] for u in old.get("unresolved") or [] if u.get("id")}
+    mapped: dict = {}
+    ambiguous: dict = {}
+    unmapped: list[dict] = []
+    for oid, sites in _ghost_sites(old, old_ids, node_map).items():
+        ol, op, oq = _split_id(oid)
+        per_site: list[set] = []
+        for site in sorted(sites, key=repr):
+            cands = set()
+            for cand in new_by_site.get(site, ()):
+                nl, np_, nq = _split_id(cand)
+                if nl == ol and np_ == op and _trailing(nq) == _trailing(oq) and _scope_compatible(oq, nq):
+                    cands.add(cand)
+            per_site.append({oid} if oid in cands else cands)        # the id itself at a site is an exact answer there
+        targets = set().union(*per_site) if per_site else set()
+        if not per_site or any(not c for c in per_site):
+            unmapped.append({"id": oid, "reason": "a call site has no unresolved target with a compatible identity in the new graph",
+                             "candidates": sorted(targets)})
+        elif len(targets) > 1:
+            ambiguous[oid] = sorted(targets)                       # (d) references disagree
+        else:
+            mapped[oid] = next(iter(targets))
+    by_new: dict = defaultdict(list)
+    for o, n in mapped.items():
+        by_new[n].append(o)                                          # identity mappings count as landing there too
+    for n, olds in by_new.items():
+        changed = [o for o in olds if o != n]
+        hashed = any("#" in o.split("::")[-1] for o in changed)
+        if changed and (len(olds) > 1 or hashed):                   # (c) needs independent family evidence
+            fam = (new_recs.get(n) or {}).get("family") or {}
+            ok = fam.get("evidence") == "@overload" and len(olds) <= int(fam.get("size") or 0) \
+                and fam.get("scope") == _ghost_scope(_split_id(n)[2])
+            if not ok:
+                for o in changed:
+                    mapped.pop(o, None)
+                    ambiguous[o] = [n]
+    return mapped, ambiguous, unmapped
+
+
+def map_type_ids(old: dict, new: dict, candidates: list[dict], user_map: dict) -> tuple[dict, list[dict]]:
+    """Old type ids that the old schema could not settle -> new ids, established ONLY from the fresh graph: a type whose
+    new id carries a `@<8hex>` suffix maps when exactly one new type shares its base id and its users (users compared
+    after `user_map`, the node-id map, so hx/3 node renames do not hide a match); an anonymous `anon@L` type maps when
+    exactly one new anonymous type has the identical layout and users. `candidates` are `{"id", "reason"}` items:
+    the upgrade report's `needs_reextract` plus every old type id absent from the new graph. Anything else stays
+    unmapped and is listed."""
     mapped: dict = {}
     unmapped: list[dict] = []
     nt = new.get("types") or {}
     ot = old.get("types") or {}
-    users_of = lambda t: frozenset(lossless.get(u, u) for u in (t.get("used_by") or []))
-    for item in (report.needs_reextract if report else []):
+    users_of = lambda t: frozenset(user_map.get(u, u) for u in (t.get("used_by") or []))
+    seen: set = set()
+    for item in candidates:
         oid = item["id"]
         t = ot.get(oid)
-        if t is None:
+        if t is None or oid in seen:
             continue
+        seen.add(oid)
         sym = oid.split("::", 1)[1] if "::" in oid else oid
         if sym.startswith("anon@L") or t.get("anonymous"):
             related = [nid for nid, n in nt.items() if n.get("anonymous") and _type_shape(n) == _type_shape(t)]
@@ -480,8 +637,25 @@ def map_type_ids(old: dict, new: dict, report, lossless: dict) -> tuple[dict, li
     return mapped, unmapped
 
 
+def _invalidated_ids(old: dict, new: dict, node_map: dict) -> list[str]:
+    """New node ids whose `verified_body_hash` cannot carry over: the old node was a module caller recorded as a
+    `function` (hx/2 hashed one line, hx/3 hashes the whole file) or the node's kind changed — whatever happened to
+    the id, which for a module node is usually unchanged (review round 9)."""
+    out: set[str] = set()
+    on, nn = old.get("nodes") or {}, new.get("nodes") or {}
+    for k, v in node_map.items():
+        o, n = on.get(k) or {}, nn.get(v) or {}
+        if not o or not n:
+            continue
+        module_caller = o.get("kind") == "function" and str(o.get("name") or "").startswith("(module) ")
+        if module_caller or o.get("kind") != n.get("kind"):
+            out.add(v)
+    return sorted(out)
+
+
 def migrate(root: str, *, keep_history: Optional[int] = None, progress: Optional[Callable[[str], None]] = None) -> dict:
-    """The one persistent hx/1 -> hx/2 operation. Every tracked entry is re-extracted into a staging directory; only
+    """The one persistent older-schema -> current-schema operation (hx/1 or hx/2 -> hx/3). Every tracked entry is
+    re-extracted into a staging directory; only
     when ALL succeed are the graphs committed (previous ones snapshotted), and annotations rewritten once under the
     file lock with a one-time backup. Any failure leaves graphs, history, annotations and backups byte-for-byte unchanged."""
     import shutil
@@ -492,8 +666,11 @@ def migrate(root: str, *, keep_history: Optional[int] = None, progress: Optional
     cfg = load_config(root)
     keep = keep_history if keep_history is not None else int(cfg["watch"].get("history", 20))
     staging = os.path.join(hx_dir(root), f"staging-{os.getpid()}")
-    out: dict = {"status": "noop", "entries": [], "failed": [], "id_map": {}, "ambiguous": {}, "unmapped": [], "annotations": None}
-    staged: list[tuple[str, str, str, dict, list]] = []
+    out: dict = {"status": "noop", "entries": [], "failed": [], "id_map": {}, "ambiguous": {}, "unmapped": [], "invalidated": [],
+                 "annotations": None}
+    staged: list[tuple[str, str, str, dict, list, dict]] = []
+    invalidate: list[str] = []
+    majors: set[str] = set()
     try:
         os.makedirs(staging, exist_ok=True)
         for table in cfg["entries"]:
@@ -518,39 +695,63 @@ def migrate(root: str, *, keep_history: Optional[int] = None, progress: Optional
             graph.save(sp)
             id_map: dict = {}
             unmapped: list = []
+            entry_ambiguous: dict = {}
             if old_doc is not None:
+                nd = graph.to_dict()
                 lossless = dict(rep.id_map) if rep else {}
                 id_map.update(lossless)
-                by_layout, unmapped = map_type_ids(old_doc, graph.to_dict(), rep, lossless) if rep else ({}, [])
-                id_map.update(by_layout)
-            staged.append((entry, gp, sp, id_map, unmapped))
-            out["entries"].append({"entry": entry, "renamed": len(id_map), "unmapped": len(unmapped),
+                node_map, amb_nodes, unm_nodes = map_node_ids(old_doc, nd, root)
+                id_map.update({k: v for k, v in node_map.items() if k != v})
+                ghost_map, amb_ghosts, unm_ghosts = map_ghost_ids(old_doc, nd, node_map)
+                id_map.update({k: v for k, v in ghost_map.items() if k != v})
+                listed = {x["id"] for x in (rep.needs_reextract if rep else [])}
+                candidates = list(rep.needs_reextract if rep else []) + \
+                    [{"id": t, "reason": "id absent after hx/3 rekeying"} for t in (old_doc.get("types") or {}) if t not in (nd.get("types") or {}) and t not in listed]
+                by_type, unm_types = map_type_ids(old_doc, nd, candidates, {**lossless, **node_map})
+                id_map.update(by_type)
+                unmapped = unm_nodes + unm_ghosts + unm_types
+                entry_ambiguous = {**amb_nodes, **amb_ghosts}
+                invalidate += _invalidated_ids(old_doc, nd, node_map)   # module callers: the whole-file hash means something new
+                if rep:
+                    majors.add(rep.from_schema)
+                elif old_doc.get("schema"):
+                    majors.add(str(old_doc["schema"]))
+            staged.append((entry, gp, sp, id_map, unmapped, entry_ambiguous))
+            out["entries"].append({"entry": entry, "renamed": len(id_map), "unmapped": len(unmapped), "ambiguous": len(entry_ambiguous),
                                    "was_schema": (rep.from_schema if rep else None) or (old_doc or {}).get("schema")})
         if out["failed"]:
             out["status"] = "failed"
             return out
         merged: dict = {}
         ambiguous: dict = {}
-        for entry, gp, sp, id_map, unmapped in staged:
+        for entry, gp, sp, id_map, unmapped, entry_ambiguous in staged:
             for k, v in id_map.items():
                 if k in merged and merged[k] != v:
                     ambiguous.setdefault(k, {merged[k]}).add(v)
                 else:
                     merged.setdefault(k, v)
+            for k, vs in entry_ambiguous.items():
+                ambiguous.setdefault(k, set()).update(vs)
             out["unmapped"] += [dict(u, entry=entry) for u in unmapped]
         for k in ambiguous:
             merged.pop(k, None)
         out["ambiguous"] = {k: sorted(v) for k, v in ambiguous.items()}
         # commit: snapshot previous graphs, move staged graphs into place, then annotations (backup first, inside)
-        for entry, gp, sp, _m, _u in staged:
+        for entry, gp, sp, _m, _u, _a in staged:
             if os.path.exists(gp):
                 snapshot(root, entry, gp, keep)
             os.makedirs(os.path.dirname(gp), exist_ok=True)
             os.replace(sp, gp)
         out["id_map"] = merged
+        out["invalidated"] = sorted(set(invalidate))
+        from_major = min((m.split("/")[-1].split(".")[0] for m in majors if "/" in m), default="2")
         ann_path = os.path.join(hx_dir(root), "annotations.json")
         if os.path.exists(ann_path):
-            out["annotations"] = ann_mod.migrate_file(ann_path, merged) if merged else {"status": "noop", "renamed": 0}
+            if merged or invalidate:
+                out["annotations"] = ann_mod.migrate_file(ann_path, merged, from_schema=f"hx/{from_major}",
+                                                          backup_suffix=f".bak-hx{from_major}", invalidate=sorted(set(invalidate)))
+            else:
+                out["annotations"] = {"status": "noop", "renamed": 0}
         out["status"] = "migrated" if staged else "noop"
         return out
     finally:

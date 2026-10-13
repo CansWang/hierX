@@ -7,7 +7,7 @@ resolved types behind them (structs with field offsets, typedef chains,
 enums), the globals it touches, and every call edge, including calls hidden
 behind macros and calls through function pointers.
 
-The output is a schema-versioned JSON graph (`hx/schema/hx-2.schema.json`). It
+The output is a schema-versioned JSON graph (`hx/schema/hx-3.schema.json`). It
 is designed to be regenerated after every AI-agent editing session and then
 **diffed and viewed** instead of reading the agent's narration. IDs are stable
 across regeneration for the same build configuration, so notes you attach later
@@ -242,9 +242,15 @@ Values: an integer below 2^53 is a JSON number; anything wider is a lossless
 string in canonical hex (`17270'h1000…` with its width, `0x…` without), x/z
 literals keep their bit pattern. The differ compares values numerically, so a
 decimal and a hex rendering of one value never register as a change. The
-schema is `hx/2`; `hx/1` files are read and upgraded in memory, and
+schema is `hx/3`; `hx/1` and `hx/2` files are read and upgraded in memory, and
 `hx migrate` re-extracts a project's tracked entries once and carries
 annotations over (see Boundaries).
+
+Call-site arguments and signatures are read with a literal-aware lexer:
+commas, brackets or `>` inside a string never split an argument, and the
+spaces inside a literal are kept (`"   "` stays three spaces). A call that a
+macro expands to carries the macro's own arguments, unless the macro produced
+the callee's name (`FUNC(x)(a, b)`), in which case it carries `a, b`.
 
 `body_hash` is a token hash: whitespace between tokens, blank lines and comments
 do not change it; string and character literals (verbatim), operator adjacency
@@ -268,6 +274,30 @@ What the tool promises, and where the promise stops:
   `meta.notes` says "compiled differently in N build variants". Switching
   `compile_commands.json` (another target, another config) is a different build
   and may legitimately change ids and bodies.
+- **C identity.** A `static` function or variable, and every struct, union,
+  enum or typedef, is identified by its defining file as well as its name, so
+  two `static get_category` in `libavcodec/options.c` and
+  `libavformat/options.c` are two functions (libclang alone gives them one
+  symbol). A type local to a function carries the function (`struct f::local`).
+  Forward declarations, definitions and every file that names a tag inside one
+  translation unit are linked, so `struct x;` in several headers and the
+  definition elsewhere are one type, and a typedef redeclared in two headers is
+  one typedef; nothing is linked by layout alone, and two declarations no
+  translation unit ever ties together stay two identities. A type that
+  different translation units see with different layouts or different field
+  targets gets one id per variant (`struct cfg@<8hex>`), a type only
+  forward-declared where the definition is never seen stays `incomplete`, and
+  a forward declaration shared by two different definitions is kept apart from
+  both; `meta.notes` reports each case, and the rare pair of distinct types
+  that would still share an id (the same tag in two blocks of one function)
+  keeps both under a `#hash`. Paths are resolved through symlinks, so a
+  build's `src -> ../source` link does not change ids.
+- **Python identity.** Nested functions carry their enclosing function
+  (`outer.helper`); module-level code that calls into the project is a `module`
+  node spanning the file, hashed over the whole file; a call into an
+  overloaded stub declaration (typeshed `getattr`, `str.join`, your own `.pyi`)
+  is one edge to one target whose `unresolved` record says how many overloads
+  it stands for.
 - **C++.** Overloads are distinguished by the spelled parameter type list in the
   id; changing a parameter's type therefore reads as a removed + added function.
   Template instantiations are not expanded; the primary template is recorded.
@@ -287,14 +317,20 @@ What the tool promises, and where the promise stops:
   cross-process file lock, so `hx serve`, `hx mcp` and the CLI can share one
   `annotations.json`; two servers on different machines sharing a network
   drive are not supported.
-- **Schema.** Readers must ignore unknown fields; `hx/2.x` only adds fields.
-  `hx/1` files are upgraded in memory by every reader (lossless renames only);
-  module-scoped and anonymous SystemVerilog type ids cannot be settled from an
-  old file because hx/1 kept no record of merged specializations, so they are
+- **Schema.** Readers must ignore unknown fields; `hx/3.x` only adds fields.
+  `hx/1` and `hx/2` files are upgraded in memory by every reader (relabelling
+  and a report only): ids that the new rules derive differently (nested Python
+  functions, module callers, C statics and types keyed by file, symlinked
+  paths, collapsed overload targets, SystemVerilog layout-identified types) are
   mapped only by `hx migrate`, which re-extracts every tracked entry into a
   staging area, commits only when all succeed, then rewrites `annotations.json`
-  once (backup `annotations.json.bak-hx1`, never overwritten; ambiguous or
-  unmatched keys are listed, never guessed). Other majors are refused.
+  once (backup `annotations.json.bak-hx1` or `.bak-hx2`, never overwritten).
+  Nodes map by file, kind, name and line; ghost targets by call site with the
+  overload-family evidence of the new graph; types by base id and users.
+  Ambiguous or unmatched keys are listed, never guessed; a `verified` mark on
+  a node that became a module node is dropped because its hash now covers the
+  file. History snapshots keep their old ids, so the first `hx update` after a
+  migration shows a one-time removed/added churn. Newer majors are refused.
 - **Layout-identified types.** Editing a module-scoped struct changes its id;
   the diff pairs the old and new id through their users and reports one changed
   type, and notes attached to the old id are listed as orphaned by `hx migrate`.

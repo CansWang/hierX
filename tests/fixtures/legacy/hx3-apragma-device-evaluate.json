@@ -1,0 +1,4730 @@
+{
+  "schema": "hx/3",
+  "generated": "2026-10-12T23:28:01+00:00",
+  "root": "/home/canswang/hx-review-artifacts/apragma-replay-fixed/apragma-workspace-snapshot",
+  "lang": "py",
+  "entry": "py:src/apragma/circuit_model/device.py::Device.evaluate",
+  "meta": {
+    "truncated": false,
+    "options": {
+      "depth": 3,
+      "type_depth": 2,
+      "include_callers": false,
+      "include_system": false,
+      "exclude": [],
+      "max_nodes": 500
+    },
+    "entry_arg": "src/apragma/circuit_model/device.py:Device.evaluate",
+    "server": "/home/canswang/hierX/.venv/bin/python -m pyright.langserver --stdio",
+    "extract_args": {
+      "entry": "src/apragma/circuit_model/device.py:Device.evaluate",
+      "root": "/home/canswang/hx-review-artifacts/apragma-replay-fixed/apragma-workspace-snapshot",
+      "compile_commands": null,
+      "depth": 3,
+      "type_depth": 2,
+      "include_callers": false,
+      "include_system": false,
+      "exclude": [],
+      "max_nodes": 500,
+      "extra_args": [],
+      "resource_dir": null,
+      "lang": "python",
+      "sv_files": [],
+      "filelist": null,
+      "top": null,
+      "verilator": "verilator",
+      "lsp_cmd": [
+        "/home/canswang/hierX/.venv/bin/python",
+        "-m",
+        "pyright.langserver",
+        "--stdio"
+      ],
+      "lsp_timeout": 120.0
+    },
+    "index": {
+      "server": "/home/canswang/hierX/.venv/bin/python -m pyright.langserver --stdio",
+      "ready_seconds": 1.67,
+      "tus": 0,
+      "parsed": 0,
+      "cached": 0,
+      "tu_errors": 0,
+      "diagnostics": 0,
+      "index_seconds": 1.67
+    }
+  },
+  "nodes": {
+    "py:src/apragma/circuit_model/device.py::Device.evaluate": {
+      "id": "py:src/apragma/circuit_model/device.py::Device.evaluate",
+      "kind": "method",
+      "name": "evaluate",
+      "qualname": "Device.evaluate",
+      "lang": "py",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 340,
+        "end_line": 756,
+        "col": 5
+      },
+      "signature": "(method) def evaluate(self: Self@Device, interp_method: str = \"pchip_numba\", bounding_box: bool = True, extrapolate: bool = False, vsb_interp_method: str | None = None, **operating_points: float | Unknown) -> Device",
+      "storage": null,
+      "depth": 0,
+      "body_hash": "sha1:904f399eead87a3208e662c7b19226bee3fb77d1",
+      "precision": "lsp",
+      "returns": {
+        "type": "Device",
+        "type_ref": null
+      },
+      "params": [
+        {
+          "name": "self",
+          "type": "Self@Device",
+          "type_ref": null,
+          "dir": "in",
+          "dir_source": "explicit"
+        },
+        {
+          "name": "interp_method",
+          "type": "str",
+          "type_ref": null,
+          "dir": "in",
+          "dir_source": "explicit"
+        },
+        {
+          "name": "bounding_box",
+          "type": "bool",
+          "type_ref": null,
+          "dir": "in",
+          "dir_source": "explicit"
+        },
+        {
+          "name": "extrapolate",
+          "type": "bool",
+          "type_ref": null,
+          "dir": "in",
+          "dir_source": "explicit"
+        },
+        {
+          "name": "vsb_interp_method",
+          "type": "str | None",
+          "type_ref": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::class str",
+          "dir": "in",
+          "dir_source": "explicit"
+        },
+        {
+          "name": "operating_points",
+          "type": "dict[str, float | Unknown]",
+          "type_ref": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::class dict",
+          "dir": "in",
+          "dir_source": "explicit"
+        }
+      ],
+      "globals": {
+        "reads": [],
+        "writes": []
+      },
+      "calls": [
+        "py:src/apragma/circuit_model/device.py::_resolve_key_case_insensitive",
+        "py:src/apragma/circuit_model/device.py::Device._interp_map_coordinates",
+        "py:src/apragma/circuit_model/device.py::Device._interp_pchip_direct",
+        "py:src/apragma/circuit_model/device.py::Device._interp_pchip_numba",
+        "py:src/apragma/circuit_model/device.py::Device.evaluate._interp_with"
+      ],
+      "attrs": {},
+      "runtime": null
+    },
+    "py:src/apragma/circuit_model/device.py::_resolve_key_case_insensitive": {
+      "id": "py:src/apragma/circuit_model/device.py::_resolve_key_case_insensitive",
+      "kind": "function",
+      "name": "_resolve_key_case_insensitive",
+      "qualname": "_resolve_key_case_insensitive",
+      "lang": "py",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 35,
+        "end_line": 47,
+        "col": 1
+      },
+      "signature": "(function) def _resolve_key_case_insensitive(key: str, data_vars: dict[Unknown, Unknown], coords: dict[Unknown, Unknown]) -> (str | None)",
+      "storage": null,
+      "depth": 1,
+      "body_hash": "sha1:fb723736e53b1607acc941dce8dc12e3bda60add",
+      "precision": "lsp",
+      "returns": {
+        "type": "(str | None)",
+        "type_ref": null
+      },
+      "params": [
+        {
+          "name": "key",
+          "type": "str",
+          "type_ref": null,
+          "dir": "in",
+          "dir_source": "explicit"
+        },
+        {
+          "name": "data_vars",
+          "type": "dict[Unknown, Unknown]",
+          "type_ref": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::class dict",
+          "dir": "in",
+          "dir_source": "explicit"
+        },
+        {
+          "name": "coords",
+          "type": "dict[Unknown, Unknown]",
+          "type_ref": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::class dict",
+          "dir": "in",
+          "dir_source": "explicit"
+        }
+      ],
+      "globals": {
+        "reads": [],
+        "writes": []
+      },
+      "calls": [],
+      "attrs": {},
+      "runtime": null
+    },
+    "py:src/apragma/circuit_model/device.py::Device._interp_map_coordinates": {
+      "id": "py:src/apragma/circuit_model/device.py::Device._interp_map_coordinates",
+      "kind": "method",
+      "name": "_interp_map_coordinates",
+      "qualname": "Device._interp_map_coordinates",
+      "lang": "py",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 758,
+        "end_line": 808,
+        "col": 5
+      },
+      "signature": "(method) def _interp_map_coordinates(self: Self@Device, subset: Unknown, targets: dict[Unknown, Unknown]) -> Unknown",
+      "storage": null,
+      "depth": 1,
+      "body_hash": "sha1:94ad20631811012a5f3dec30b7ff0f32c645b802",
+      "precision": "lsp",
+      "returns": {
+        "type": "Unknown",
+        "type_ref": null
+      },
+      "params": [
+        {
+          "name": "self",
+          "type": "Self@Device",
+          "type_ref": null,
+          "dir": "in",
+          "dir_source": "explicit"
+        },
+        {
+          "name": "subset",
+          "type": "Unknown",
+          "type_ref": null,
+          "dir": "in",
+          "dir_source": "explicit"
+        },
+        {
+          "name": "targets",
+          "type": "dict[Unknown, Unknown]",
+          "type_ref": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::class dict",
+          "dir": "in",
+          "dir_source": "explicit"
+        }
+      ],
+      "globals": {
+        "reads": [],
+        "writes": []
+      },
+      "calls": [],
+      "attrs": {},
+      "runtime": null
+    },
+    "py:src/apragma/circuit_model/device.py::Device._interp_pchip_direct": {
+      "id": "py:src/apragma/circuit_model/device.py::Device._interp_pchip_direct",
+      "kind": "method",
+      "name": "_interp_pchip_direct",
+      "qualname": "Device._interp_pchip_direct",
+      "lang": "py",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 810,
+        "end_line": 918,
+        "col": 5
+      },
+      "signature": "(method) def _interp_pchip_direct(self: Self@Device, subset: Unknown, targets: dict[Unknown, Unknown]) -> Unknown",
+      "storage": null,
+      "depth": 1,
+      "body_hash": "sha1:56b1d3319523b5f5def68b3a99f5829d80f8e7bb",
+      "precision": "lsp",
+      "returns": {
+        "type": "Unknown",
+        "type_ref": null
+      },
+      "params": [
+        {
+          "name": "self",
+          "type": "Self@Device",
+          "type_ref": null,
+          "dir": "in",
+          "dir_source": "explicit"
+        },
+        {
+          "name": "subset",
+          "type": "Unknown",
+          "type_ref": null,
+          "dir": "in",
+          "dir_source": "explicit"
+        },
+        {
+          "name": "targets",
+          "type": "dict[Unknown, Unknown]",
+          "type_ref": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::class dict",
+          "dir": "in",
+          "dir_source": "explicit"
+        }
+      ],
+      "globals": {
+        "reads": [],
+        "writes": []
+      },
+      "calls": [
+        "py:src/apragma/circuit_model/device.py::Device._interp_map_coordinates",
+        "py:src/apragma/circuit_model/device.py::_linear_interp_axis"
+      ],
+      "attrs": {},
+      "runtime": null
+    },
+    "py:src/apragma/circuit_model/device.py::Device._interp_pchip_numba": {
+      "id": "py:src/apragma/circuit_model/device.py::Device._interp_pchip_numba",
+      "kind": "method",
+      "name": "_interp_pchip_numba",
+      "qualname": "Device._interp_pchip_numba",
+      "lang": "py",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 920,
+        "end_line": 1022,
+        "col": 5
+      },
+      "signature": "(method) def _interp_pchip_numba(self: Self@Device, subset: Unknown, targets: dict[Unknown, Unknown]) -> Unknown",
+      "storage": null,
+      "depth": 1,
+      "body_hash": "sha1:12a5d0cc17b7f7dfe64e1c30ee1f8ecc2ad2fd15",
+      "precision": "lsp",
+      "returns": {
+        "type": "Unknown",
+        "type_ref": null
+      },
+      "params": [
+        {
+          "name": "self",
+          "type": "Self@Device",
+          "type_ref": null,
+          "dir": "in",
+          "dir_source": "explicit"
+        },
+        {
+          "name": "subset",
+          "type": "Unknown",
+          "type_ref": null,
+          "dir": "in",
+          "dir_source": "explicit"
+        },
+        {
+          "name": "targets",
+          "type": "dict[Unknown, Unknown]",
+          "type_ref": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::class dict",
+          "dir": "in",
+          "dir_source": "explicit"
+        }
+      ],
+      "globals": {
+        "reads": [],
+        "writes": []
+      },
+      "calls": [
+        "py:src/apragma/circuit_model/device.py::Device._interp_pchip_numba._is_rgi_axis",
+        "py:src/apragma/circuit_model/device.py::Device._interp_pchip_direct"
+      ],
+      "attrs": {},
+      "runtime": null
+    },
+    "py:src/apragma/circuit_model/device.py::Device.evaluate._interp_with": {
+      "id": "py:src/apragma/circuit_model/device.py::Device.evaluate._interp_with",
+      "kind": "function",
+      "name": "_interp_with",
+      "qualname": "Device.evaluate._interp_with",
+      "lang": "py",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 690,
+        "end_line": 697,
+        "col": 21
+      },
+      "signature": "(function) def _interp_with(method: str, ds: Unknown, targets: dict[Unknown, Unknown]) -> Unknown",
+      "storage": null,
+      "depth": 1,
+      "body_hash": "sha1:d999d14c6873ce761b223453c2b8463823051706",
+      "precision": "lsp",
+      "returns": {
+        "type": "Unknown",
+        "type_ref": null
+      },
+      "params": [
+        {
+          "name": "method",
+          "type": "str",
+          "type_ref": null,
+          "dir": "in",
+          "dir_source": "explicit"
+        },
+        {
+          "name": "ds",
+          "type": "Unknown",
+          "type_ref": null,
+          "dir": "in",
+          "dir_source": "explicit"
+        },
+        {
+          "name": "targets",
+          "type": "dict[Unknown, Unknown]",
+          "type_ref": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::class dict",
+          "dir": "in",
+          "dir_source": "explicit"
+        }
+      ],
+      "globals": {
+        "reads": [],
+        "writes": []
+      },
+      "calls": [
+        "py:src/apragma/circuit_model/device.py::Device._interp_map_coordinates",
+        "py:src/apragma/circuit_model/device.py::Device._interp_pchip_direct",
+        "py:src/apragma/circuit_model/device.py::Device._interp_pchip_numba"
+      ],
+      "attrs": {},
+      "runtime": null
+    },
+    "py:src/apragma/circuit_model/device.py::_linear_interp_axis": {
+      "id": "py:src/apragma/circuit_model/device.py::_linear_interp_axis",
+      "kind": "function",
+      "name": "_linear_interp_axis",
+      "qualname": "_linear_interp_axis",
+      "lang": "py",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 50,
+        "end_line": 59,
+        "col": 1
+      },
+      "signature": "(function) def _linear_interp_axis(arr: Unknown, grid: Unknown, targets: Unknown, axis: Unknown) -> Unknown",
+      "storage": null,
+      "depth": 2,
+      "body_hash": "sha1:12be1f8b078bb4d49547ba5b31ed7482a6ffc531",
+      "precision": "lsp",
+      "returns": {
+        "type": "Unknown",
+        "type_ref": null
+      },
+      "params": [
+        {
+          "name": "arr",
+          "type": "Unknown",
+          "type_ref": null,
+          "dir": "in",
+          "dir_source": "explicit"
+        },
+        {
+          "name": "grid",
+          "type": "Unknown",
+          "type_ref": null,
+          "dir": "in",
+          "dir_source": "explicit"
+        },
+        {
+          "name": "targets",
+          "type": "Unknown",
+          "type_ref": null,
+          "dir": "in",
+          "dir_source": "explicit"
+        },
+        {
+          "name": "axis",
+          "type": "Unknown",
+          "type_ref": null,
+          "dir": "in",
+          "dir_source": "explicit"
+        }
+      ],
+      "globals": {
+        "reads": [],
+        "writes": []
+      },
+      "calls": [],
+      "attrs": {},
+      "runtime": null
+    },
+    "py:src/apragma/circuit_model/device.py::Device._interp_pchip_numba._is_rgi_axis": {
+      "id": "py:src/apragma/circuit_model/device.py::Device._interp_pchip_numba._is_rgi_axis",
+      "kind": "function",
+      "name": "_is_rgi_axis",
+      "qualname": "Device._interp_pchip_numba._is_rgi_axis",
+      "lang": "py",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 950,
+        "end_line": 955,
+        "col": 9
+      },
+      "signature": "(function) def _is_rgi_axis(d: str) -> bool",
+      "storage": null,
+      "depth": 2,
+      "body_hash": "sha1:9e1c1494c56c0214e3a2639095d16e05f62b68d1",
+      "precision": "lsp",
+      "returns": {
+        "type": "bool",
+        "type_ref": null
+      },
+      "params": [
+        {
+          "name": "d",
+          "type": "str",
+          "type_ref": null,
+          "dir": "in",
+          "dir_source": "explicit"
+        }
+      ],
+      "globals": {
+        "reads": [],
+        "writes": []
+      },
+      "calls": [],
+      "attrs": {},
+      "runtime": null
+    }
+  },
+  "types": {
+    "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::class str": {
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::class str",
+      "kind": "class",
+      "name": "str",
+      "lang": "py",
+      "loc": {
+        "file": "/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi",
+        "line": 486,
+        "end_line": 726,
+        "col": 1
+      },
+      "size": null,
+      "align": null,
+      "fields": [],
+      "enumerators": [],
+      "underlying": null,
+      "underlying_ref": null,
+      "anonymous": false,
+      "system": true,
+      "used_by": [
+        "py:src/apragma/circuit_model/device.py::Device.evaluate"
+      ]
+    },
+    "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::class dict": {
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::class dict",
+      "kind": "class",
+      "name": "dict",
+      "lang": "py",
+      "loc": {
+        "file": "/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi",
+        "line": 1281,
+        "end_line": 1370,
+        "col": 1
+      },
+      "size": null,
+      "align": null,
+      "fields": [],
+      "enumerators": [],
+      "underlying": null,
+      "underlying_ref": null,
+      "anonymous": false,
+      "system": true,
+      "used_by": [
+        "py:src/apragma/circuit_model/device.py::Device.evaluate",
+        "py:src/apragma/circuit_model/device.py::_resolve_key_case_insensitive",
+        "py:src/apragma/circuit_model/device.py::Device._interp_map_coordinates",
+        "py:src/apragma/circuit_model/device.py::Device._interp_pchip_direct",
+        "py:src/apragma/circuit_model/device.py::Device._interp_pchip_numba",
+        "py:src/apragma/circuit_model/device.py::Device.evaluate._interp_with"
+      ]
+    }
+  },
+  "globals": {},
+  "edges": [
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device.evaluate",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::RuntimeError.RuntimeError",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 406,
+        "end_line": 406,
+        "col": 19
+      },
+      "args": [
+        "f\"Device '{self.name}' has been closed. Cannot evaluate a closed Device.\""
+      ],
+      "name": "RuntimeError",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device.evaluate",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::dict.dict",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 409,
+        "end_line": 409,
+        "col": 33
+      },
+      "args": [
+        "operating_points"
+      ],
+      "name": "dict",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device.evaluate",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::dict.dict",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 618,
+        "end_line": 618,
+        "col": 26
+      },
+      "args": [
+        "subset.data_vars"
+      ],
+      "name": "dict",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device.evaluate",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::dict.dict",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 619,
+        "end_line": 619,
+        "col": 23
+      },
+      "args": [
+        "subset.coords"
+      ],
+      "name": "dict",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device.evaluate",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::dict.dict",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 737,
+        "end_line": 737,
+        "col": 25
+      },
+      "args": [
+        "self.pdk_source.data_vars"
+      ],
+      "name": "dict",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device.evaluate",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::dict.dict",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 738,
+        "end_line": 738,
+        "col": 22
+      },
+      "args": [
+        "self.pdk_source.coords"
+      ],
+      "name": "dict",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device.evaluate",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/typing.pyi::MutableMapping.clear",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 410,
+        "end_line": 410,
+        "col": 26
+      },
+      "args": [],
+      "name": "clear",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device.evaluate",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::set.set",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 417,
+        "end_line": 417,
+        "col": 22
+      },
+      "args": [
+        "subset.dims"
+      ],
+      "name": "set",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device.evaluate",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::set.set",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 435,
+        "end_line": 435,
+        "col": 32
+      },
+      "args": [
+        "subset.coords"
+      ],
+      "name": "set",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device.evaluate",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::set.set",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 620,
+        "end_line": 620,
+        "col": 20
+      },
+      "args": [
+        "out_name for out_name",
+        "_",
+        "_ in self._pre_derived_specs"
+      ],
+      "name": "set",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device.evaluate",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::dict.items",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 420,
+        "end_line": 420,
+        "col": 38
+      },
+      "args": [],
+      "name": "items",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device.evaluate",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::dict.items",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 503,
+        "end_line": 503,
+        "col": 39
+      },
+      "args": [],
+      "name": "items",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device.evaluate",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::dict.items",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 687,
+        "end_line": 687,
+        "col": 60
+      },
+      "args": [],
+      "name": "items",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device.evaluate",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::dict.items",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 703,
+        "end_line": 703,
+        "col": 72
+      },
+      "args": [],
+      "name": "items",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device.evaluate",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::ValueError.ValueError",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 437,
+        "end_line": 437,
+        "col": 23
+      },
+      "args": [
+        "f\"Device '{self.name}': operating point coordinate '{k}' is not in \" f\"the PDK dataset. Available coordinates/dims: {known_str}. \" f\"Valid operating-point keys are: CORNER, L, VGS, VDS, VSB, TEMP, W, NFING.\""
+      ],
+      "name": "ValueError",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device.evaluate",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::ValueError.ValueError",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 697,
+        "end_line": 697,
+        "col": 31
+      },
+      "args": [
+        "f\"unknown interp_method: {method!r}\""
+      ],
+      "name": "ValueError",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device.evaluate",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::isinstance",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 446,
+        "end_line": 446,
+        "col": 18
+      },
+      "args": [
+        "v",
+        "str"
+      ],
+      "name": "isinstance",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device.evaluate",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::isinstance",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 469,
+        "end_line": 469,
+        "col": 16
+      },
+      "args": [
+        "v",
+        "xr.DataArray"
+      ],
+      "name": "isinstance",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device.evaluate",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::isinstance",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 486,
+        "end_line": 486,
+        "col": 35
+      },
+      "args": [
+        "v",
+        "(int, float)"
+      ],
+      "name": "isinstance",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device.evaluate",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::isinstance",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 499,
+        "end_line": 499,
+        "col": 22
+      },
+      "args": [
+        "v",
+        "xr.DataArray"
+      ],
+      "name": "isinstance",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device.evaluate",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::isinstance",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 500,
+        "end_line": 500,
+        "col": 53
+      },
+      "args": [
+        "v",
+        "(list, tuple, np.ndarray)"
+      ],
+      "name": "isinstance",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device.evaluate",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::isinstance",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 522,
+        "end_line": 522,
+        "col": 24
+      },
+      "args": [
+        "v",
+        "xr.DataArray"
+      ],
+      "name": "isinstance",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device.evaluate",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::list.list",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 458,
+        "end_line": 458,
+        "col": 18
+      },
+      "args": [
+        "interp_kwargs"
+      ],
+      "name": "list",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device.evaluate",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::list.list",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 517,
+        "end_line": 517,
+        "col": 20
+      },
+      "args": [
+        "interp_kwargs"
+      ],
+      "name": "list",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device.evaluate",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::int.int",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 477,
+        "end_line": 477,
+        "col": 23
+      },
+      "args": [
+        "np.argmin(diffs)"
+      ],
+      "name": "int",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device.evaluate",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::int.int",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 559,
+        "end_line": 559,
+        "col": 28
+      },
+      "args": [
+        "np.searchsorted(coord_rev, target_lo, side=\"left\")"
+      ],
+      "name": "int",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device.evaluate",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::int.int",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 560,
+        "end_line": 560,
+        "col": 28
+      },
+      "args": [
+        "np.searchsorted(coord_rev, target_hi, side=\"right\")"
+      ],
+      "name": "int",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device.evaluate",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::int.int",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 568,
+        "end_line": 568,
+        "col": 28
+      },
+      "args": [
+        "np.searchsorted(coord, target_lo, side=\"left\")"
+      ],
+      "name": "int",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device.evaluate",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::int.int",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 569,
+        "end_line": 569,
+        "col": 28
+      },
+      "args": [
+        "np.searchsorted(coord, target_hi, side=\"right\")"
+      ],
+      "name": "int",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device.evaluate",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::abs",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 478,
+        "end_line": 478,
+        "col": 46
+      },
+      "args": [
+        "t"
+      ],
+      "name": "abs",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device.evaluate",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::list.append",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 479,
+        "end_line": 479,
+        "col": 29
+      },
+      "args": [
+        "coord[idx]"
+      ],
+      "name": "append",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device.evaluate",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::list.append",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 673,
+        "end_line": 673,
+        "col": 23
+      },
+      "args": [
+        "var_name"
+      ],
+      "name": "append",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device.evaluate",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::float.float",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 501,
+        "end_line": 501,
+        "col": 35
+      },
+      "args": [
+        "v"
+      ],
+      "name": "float",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device.evaluate",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::float.float",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 526,
+        "end_line": 526,
+        "col": 28
+      },
+      "args": [
+        "np.nanmin(grid)"
+      ],
+      "name": "float",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device.evaluate",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::float.float",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 526,
+        "end_line": 526,
+        "col": 52
+      },
+      "args": [
+        "np.nanmax(grid)"
+      ],
+      "name": "float",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device.evaluate",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::float.float",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 530,
+        "end_line": 530,
+        "col": 23
+      },
+      "args": [
+        "np.nanmedian(grid)"
+      ],
+      "name": "float",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device.evaluate",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::float.float",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 548,
+        "end_line": 548,
+        "col": 45
+      },
+      "args": [
+        "v"
+      ],
+      "name": "float",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device.evaluate",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::float.float",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 554,
+        "end_line": 554,
+        "col": 44
+      },
+      "args": [
+        "finite.min()"
+      ],
+      "name": "float",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device.evaluate",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::float.float",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 554,
+        "end_line": 554,
+        "col": 65
+      },
+      "args": [
+        "finite.max()"
+      ],
+      "name": "float",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device.evaluate",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::float.float",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 647,
+        "end_line": 647,
+        "col": 24
+      },
+      "args": [
+        "np.max(np.abs(finite_values))"
+      ],
+      "name": "float",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device.evaluate",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::bool.bool",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 529,
+        "end_line": 529,
+        "col": 16
+      },
+      "args": [
+        "isnan.any()"
+      ],
+      "name": "bool",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device.evaluate",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::bool.bool",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 533,
+        "end_line": 533,
+        "col": 36
+      },
+      "args": [
+        "bad.any()"
+      ],
+      "name": "bool",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device.evaluate",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::bool.bool",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 750,
+        "end_line": 750,
+        "col": 37
+      },
+      "args": [
+        "oob_mask.any()"
+      ],
+      "name": "bool",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device.evaluate",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::slice.slice",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 584,
+        "end_line": 584,
+        "col": 36
+      },
+      "args": [
+        "i_start",
+        "i_stop"
+      ],
+      "name": "slice",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device.evaluate",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::set.update",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 621,
+        "end_line": 621,
+        "col": 18
+      },
+      "args": [
+        "num_key for _",
+        "num_key",
+        "_",
+        "_ in self._post_derived_specs"
+      ],
+      "name": "update",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device.evaluate",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::any",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 623,
+        "end_line": 623,
+        "col": 16
+      },
+      "args": [
+        "s[0] == p for s in self._derived_specs"
+      ],
+      "name": "any",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device.evaluate",
+      "to": "py:src/apragma/circuit_model/device.py::_resolve_key_case_insensitive",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 625,
+        "end_line": 625,
+        "col": 24
+      },
+      "args": [
+        "p",
+        "data_vars_dict",
+        "coords_dict"
+      ],
+      "name": "_resolve_key_case_insensitive",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device.evaluate",
+      "to": "py:src/apragma/circuit_model/device.py::_resolve_key_case_insensitive",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 743,
+        "end_line": 743,
+        "col": 24
+      },
+      "args": [
+        "p",
+        "data_vars_ref",
+        "coords_ref"
+      ],
+      "name": "_resolve_key_case_insensitive",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device.evaluate",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::set.add",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 627,
+        "end_line": 627,
+        "col": 26
+      },
+      "args": [
+        "resolved"
+      ],
+      "name": "add",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device.evaluate",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::set.add",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 658,
+        "end_line": 658,
+        "col": 51
+      },
+      "args": [
+        "var_name"
+      ],
+      "name": "add",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device.evaluate",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::str.str",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 635,
+        "end_line": 635,
+        "col": 27
+      },
+      "args": [
+        "param"
+      ],
+      "name": "str",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device.evaluate",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::object.__class__",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 644,
+        "end_line": 644,
+        "col": 26
+      },
+      "args": [],
+      "name": "__class__",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device.evaluate",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::object.__class__",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 646,
+        "end_line": 646,
+        "col": 41
+      },
+      "args": [],
+      "name": "__class__",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device.evaluate",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::object.__class__#0957e56b",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 644,
+        "end_line": 644,
+        "col": 26
+      },
+      "args": [],
+      "name": "__class__",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device.evaluate",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::object.__class__#0957e56b",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 646,
+        "end_line": 646,
+        "col": 41
+      },
+      "args": [],
+      "name": "__class__",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device.evaluate",
+      "to": "py:src/apragma/circuit_model/device.py::Device._interp_map_coordinates",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 692,
+        "end_line": 692,
+        "col": 41
+      },
+      "args": [
+        "ds",
+        "targets"
+      ],
+      "name": "_interp_map_coordinates",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device.evaluate",
+      "to": "py:src/apragma/circuit_model/device.py::Device._interp_pchip_direct",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 694,
+        "end_line": 694,
+        "col": 41
+      },
+      "args": [
+        "ds",
+        "targets"
+      ],
+      "name": "_interp_pchip_direct",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device.evaluate",
+      "to": "py:src/apragma/circuit_model/device.py::Device._interp_pchip_numba",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 696,
+        "end_line": 696,
+        "col": 41
+      },
+      "args": [
+        "ds",
+        "targets"
+      ],
+      "name": "_interp_pchip_numba",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device.evaluate",
+      "to": "py:src/apragma/circuit_model/device.py::Device.evaluate._interp_with",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 704,
+        "end_line": 704,
+        "col": 34
+      },
+      "args": [
+        "vsb_method",
+        "subset",
+        "vsb_targets"
+      ],
+      "name": "_interp_with",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device.evaluate",
+      "to": "py:src/apragma/circuit_model/device.py::Device.evaluate._interp_with",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 708,
+        "end_line": 708,
+        "col": 34
+      },
+      "args": [
+        "interp_method",
+        "subset",
+        "multi_interp"
+      ],
+      "name": "_interp_with",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device.evaluate",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::str.lower",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 419,
+        "end_line": 419,
+        "col": 36
+      },
+      "args": [],
+      "name": "lower",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device.evaluate",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::str.lower",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 423,
+        "end_line": 423,
+        "col": 22
+      },
+      "args": [],
+      "name": "lower",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device.evaluate",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::str.lower",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 427,
+        "end_line": 427,
+        "col": 22
+      },
+      "args": [],
+      "name": "lower",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device.evaluate",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::str.lower",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 429,
+        "end_line": 429,
+        "col": 22
+      },
+      "args": [],
+      "name": "lower",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device.evaluate",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::str.upper",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 432,
+        "end_line": 432,
+        "col": 22
+      },
+      "args": [],
+      "name": "upper",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device.evaluate",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::str.upper",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 635,
+        "end_line": 635,
+        "col": 38
+      },
+      "args": [],
+      "name": "upper",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device.evaluate",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::sorted",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 435,
+        "end_line": 435,
+        "col": 25
+      },
+      "args": [
+        "set(subset.coords) | valid_dims"
+      ],
+      "name": "sorted",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device.evaluate",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::str.join",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 436,
+        "end_line": 436,
+        "col": 34
+      },
+      "args": [
+        "known"
+      ],
+      "name": "join",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device.evaluate",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::getattr",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 442,
+        "end_line": 442,
+        "col": 27
+      },
+      "args": [
+        "subset.coords.get(k)",
+        "\"dtype\"",
+        "None"
+      ],
+      "name": "getattr",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device.evaluate",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::getattr",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 445,
+        "end_line": 445,
+        "col": 21
+      },
+      "args": [
+        "coord_dtype",
+        "\"kind\"",
+        "None"
+      ],
+      "name": "getattr",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device.evaluate",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::getattr",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 486,
+        "end_line": 486,
+        "col": 67
+      },
+      "args": [
+        "v",
+        "'ndim'",
+        "1"
+      ],
+      "name": "getattr",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device.evaluate",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::getattr",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 547,
+        "end_line": 547,
+        "col": 39
+      },
+      "args": [
+        "v",
+        "\"ndim\"",
+        "None"
+      ],
+      "name": "getattr",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device.evaluate",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::max",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 561,
+        "end_line": 561,
+        "col": 28
+      },
+      "args": [
+        "0",
+        "min(j_lo, L_dim - 1)"
+      ],
+      "name": "max",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device.evaluate",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::max",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 562,
+        "end_line": 562,
+        "col": 28
+      },
+      "args": [
+        "0",
+        "min(j_hi, L_dim - 1)"
+      ],
+      "name": "max",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device.evaluate",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::max",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 570,
+        "end_line": 570,
+        "col": 28
+      },
+      "args": [
+        "0",
+        "min(i_lo, L_dim - 1)"
+      ],
+      "name": "max",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device.evaluate",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::max",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 571,
+        "end_line": 571,
+        "col": 28
+      },
+      "args": [
+        "0",
+        "min(i_hi, L_dim - 1)"
+      ],
+      "name": "max",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device.evaluate",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::max",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 575,
+        "end_line": 575,
+        "col": 27
+      },
+      "args": [
+        "0",
+        "i_lo - 2"
+      ],
+      "name": "max",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device.evaluate",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::max",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 579,
+        "end_line": 579,
+        "col": 35
+      },
+      "args": [
+        "4",
+        "slice_len"
+      ],
+      "name": "max",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device.evaluate",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::max",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 581,
+        "end_line": 581,
+        "col": 27
+      },
+      "args": [
+        "0",
+        "i_stop - desired_len"
+      ],
+      "name": "max",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device.evaluate",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::max",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 648,
+        "end_line": 648,
+        "col": 40
+      },
+      "args": [
+        "floor",
+        "peak * 1e-15"
+      ],
+      "name": "max",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device.evaluate",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::min",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 561,
+        "end_line": 561,
+        "col": 35
+      },
+      "args": [
+        "j_lo",
+        "L_dim - 1"
+      ],
+      "name": "min",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device.evaluate",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::min",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 562,
+        "end_line": 562,
+        "col": 35
+      },
+      "args": [
+        "j_hi",
+        "L_dim - 1"
+      ],
+      "name": "min",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device.evaluate",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::min",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 570,
+        "end_line": 570,
+        "col": 35
+      },
+      "args": [
+        "i_lo",
+        "L_dim - 1"
+      ],
+      "name": "min",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device.evaluate",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::min",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 571,
+        "end_line": 571,
+        "col": 35
+      },
+      "args": [
+        "i_hi",
+        "L_dim - 1"
+      ],
+      "name": "min",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device.evaluate",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::min",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 576,
+        "end_line": 576,
+        "col": 26
+      },
+      "args": [
+        "L_dim",
+        "i_hi + 3"
+      ],
+      "name": "min",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device.evaluate",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::min",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 579,
+        "end_line": 579,
+        "col": 31
+      },
+      "args": [
+        "max(4, slice_len)",
+        "L_dim"
+      ],
+      "name": "min",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device.evaluate",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::min",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 580,
+        "end_line": 580,
+        "col": 26
+      },
+      "args": [
+        "L_dim",
+        "i_start + desired_len"
+      ],
+      "name": "min",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device.evaluate",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::dict.get",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 644,
+        "end_line": 644,
+        "col": 47
+      },
+      "args": [
+        "var_name.upper()",
+        "1e-18"
+      ],
+      "name": "get",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device.evaluate",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/_warnings.pyi::warn",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 651,
+        "end_line": 651,
+        "col": 34
+      },
+      "args": [
+        "f\"Device '{self.name}': LUT variable '{var_name}' contains \" \"materially negative values; using direct-domain \" \"interpolation for this variable.\"",
+        "RuntimeWarning",
+        "stacklevel=2"
+      ],
+      "name": "warn",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::_resolve_key_case_insensitive",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::str.upper",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 40,
+        "end_line": 40,
+        "col": 21
+      },
+      "args": [],
+      "name": "upper",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device._interp_map_coordinates",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::isinstance",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 761,
+        "end_line": 761,
+        "col": 32
+      },
+      "args": [
+        "v",
+        "xr.DataArray"
+      ],
+      "name": "isinstance",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device._interp_map_coordinates",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::dict.items",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 762,
+        "end_line": 762,
+        "col": 43
+      },
+      "args": [],
+      "name": "items",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device._interp_map_coordinates",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::len",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 763,
+        "end_line": 763,
+        "col": 12
+      },
+      "args": [
+        "target_das"
+      ],
+      "name": "len",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device._interp_map_coordinates",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::len",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 783,
+        "end_line": 783,
+        "col": 39
+      },
+      "args": [
+        "grid"
+      ],
+      "name": "len",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device._interp_map_coordinates",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::len",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 787,
+        "end_line": 787,
+        "col": 74
+      },
+      "args": [
+        "batch_dims"
+      ],
+      "name": "len",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device._interp_map_coordinates",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::len",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 792,
+        "end_line": 792,
+        "col": 35
+      },
+      "args": [
+        "final_dims"
+      ],
+      "name": "len",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device._interp_map_coordinates",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::dict.values",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 764,
+        "end_line": 764,
+        "col": 51
+      },
+      "args": [],
+      "name": "values",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device._interp_map_coordinates",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::dict.values",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 766,
+        "end_line": 766,
+        "col": 43
+      },
+      "args": [],
+      "name": "values",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device._interp_map_coordinates",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::tuple.tuple",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 766,
+        "end_line": 766,
+        "col": 26
+      },
+      "args": [
+        "target_das.values()"
+      ],
+      "name": "tuple",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device._interp_map_coordinates",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::tuple.tuple",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 787,
+        "end_line": 787,
+        "col": 62
+      },
+      "args": [
+        "range(len(batch_dims))"
+      ],
+      "name": "tuple",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device._interp_map_coordinates",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::dict.dict",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 767,
+        "end_line": 767,
+        "col": 26
+      },
+      "args": [
+        "zip(target_das.keys(), bc_targets)"
+      ],
+      "name": "dict",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device._interp_map_coordinates",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::zip.zip",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 767,
+        "end_line": 767,
+        "col": 31
+      },
+      "args": [
+        "target_das.keys()",
+        "bc_targets"
+      ],
+      "name": "zip",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device._interp_map_coordinates",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::dict.keys",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 767,
+        "end_line": 767,
+        "col": 46
+      },
+      "args": [],
+      "name": "keys",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device._interp_map_coordinates",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::list.list",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 773,
+        "end_line": 773,
+        "col": 23
+      },
+      "args": [
+        "bc_targets[0].dims"
+      ],
+      "name": "list",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device._interp_map_coordinates",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::range.range",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 787,
+        "end_line": 787,
+        "col": 68
+      },
+      "args": [
+        "len(batch_dims)"
+      ],
+      "name": "range",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device._interp_map_coordinates",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::list.append",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 788,
+        "end_line": 788,
+        "col": 35
+      },
+      "args": [
+        "frac_coord"
+      ],
+      "name": "append",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device._interp_map_coordinates",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::list.append",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 794,
+        "end_line": 794,
+        "col": 35
+      },
+      "args": [
+        "np.arange(subset.sizes[dim]).reshape(new_shape)"
+      ],
+      "name": "append",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device._interp_map_coordinates",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::list.index",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 791,
+        "end_line": 791,
+        "col": 37
+      },
+      "args": [
+        "dim"
+      ],
+      "name": "index",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device._interp_map_coordinates",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::next",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 770,
+        "end_line": 770,
+        "col": 21
+      },
+      "args": [
+        "iter(subset.data_vars.values())"
+      ],
+      "name": "next",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device._interp_map_coordinates",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::iter",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 770,
+        "end_line": 770,
+        "col": 26
+      },
+      "args": [
+        "subset.data_vars.values()"
+      ],
+      "name": "iter",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device._interp_pchip_direct",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::isinstance",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 821,
+        "end_line": 821,
+        "col": 22
+      },
+      "args": [
+        "v",
+        "xr.DataArray"
+      ],
+      "name": "isinstance",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device._interp_pchip_direct",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::dict.items",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 822,
+        "end_line": 822,
+        "col": 33
+      },
+      "args": [],
+      "name": "items",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device._interp_pchip_direct",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::len",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 824,
+        "end_line": 824,
+        "col": 12
+      },
+      "args": [
+        "target_das"
+      ],
+      "name": "len",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device._interp_pchip_direct",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::len",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 853,
+        "end_line": 853,
+        "col": 59
+      },
+      "args": [
+        "dim_unique[d]"
+      ],
+      "name": "len",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device._interp_pchip_direct",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::len",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 862,
+        "end_line": 862,
+        "col": 63
+      },
+      "args": [
+        "unique_tgt"
+      ],
+      "name": "len",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device._interp_pchip_direct",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::len",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 877,
+        "end_line": 877,
+        "col": 16
+      },
+      "args": [
+        "grid"
+      ],
+      "name": "len",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device._interp_pchip_direct",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::len",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 881,
+        "end_line": 881,
+        "col": 16
+      },
+      "args": [
+        "grid"
+      ],
+      "name": "len",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device._interp_pchip_direct",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::len",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 890,
+        "end_line": 890,
+        "col": 19
+      },
+      "args": [
+        "batch_dims"
+      ],
+      "name": "len",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device._interp_pchip_direct",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::len",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 891,
+        "end_line": 891,
+        "col": 32
+      },
+      "args": [
+        "target_dims"
+      ],
+      "name": "len",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device._interp_pchip_direct",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::dict.values",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 825,
+        "end_line": 825,
+        "col": 51
+      },
+      "args": [],
+      "name": "values",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device._interp_pchip_direct",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::dict.values",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 827,
+        "end_line": 827,
+        "col": 43
+      },
+      "args": [],
+      "name": "values",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device._interp_pchip_direct",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::tuple.tuple",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 827,
+        "end_line": 827,
+        "col": 26
+      },
+      "args": [
+        "target_das.values()"
+      ],
+      "name": "tuple",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device._interp_pchip_direct",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::tuple.tuple",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 902,
+        "end_line": 902,
+        "col": 52
+      },
+      "args": [
+        "range(n_batch)"
+      ],
+      "name": "tuple",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device._interp_pchip_direct",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::tuple.tuple",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 905,
+        "end_line": 905,
+        "col": 26
+      },
+      "args": [
+        "idx"
+      ],
+      "name": "tuple",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device._interp_pchip_direct",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::dict.dict",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 828,
+        "end_line": 828,
+        "col": 26
+      },
+      "args": [
+        "zip(target_das.keys(), bc_targets)"
+      ],
+      "name": "dict",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device._interp_pchip_direct",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::zip.zip",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 828,
+        "end_line": 828,
+        "col": 31
+      },
+      "args": [
+        "target_das.keys()",
+        "bc_targets"
+      ],
+      "name": "zip",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device._interp_pchip_direct",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::dict.keys",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 828,
+        "end_line": 828,
+        "col": 46
+      },
+      "args": [],
+      "name": "keys",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device._interp_pchip_direct",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::list.list",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 832,
+        "end_line": 832,
+        "col": 21
+      },
+      "args": [
+        "sample_da.dims"
+      ],
+      "name": "list",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device._interp_pchip_direct",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::list.list",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 834,
+        "end_line": 834,
+        "col": 23
+      },
+      "args": [
+        "bc_targets[0].dims"
+      ],
+      "name": "list",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device._interp_pchip_direct",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::list.list",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 849,
+        "end_line": 849,
+        "col": 21
+      },
+      "args": [
+        "subset.data_vars"
+      ],
+      "name": "list",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device._interp_pchip_direct",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::enumerate.enumerate",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 856,
+        "end_line": 856,
+        "col": 23
+      },
+      "args": [
+        "sorted_interp"
+      ],
+      "name": "enumerate",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device._interp_pchip_direct",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::enumerate.enumerate",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 893,
+        "end_line": 893,
+        "col": 27
+      },
+      "args": [
+        "data_dims"
+      ],
+      "name": "enumerate",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device._interp_pchip_direct",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::enumerate.enumerate",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 910,
+        "end_line": 910,
+        "col": 28
+      },
+      "args": [
+        "var_names"
+      ],
+      "name": "enumerate",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device._interp_pchip_direct",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::list.index",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 857,
+        "end_line": 857,
+        "col": 28
+      },
+      "args": [
+        "d"
+      ],
+      "name": "index",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device._interp_pchip_direct",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::list.index",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 895,
+        "end_line": 895,
+        "col": 32
+      },
+      "args": [
+        "d"
+      ],
+      "name": "index",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device._interp_pchip_direct",
+      "to": "py:src/apragma/circuit_model/device.py::Device._interp_map_coordinates",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 874,
+        "end_line": 874,
+        "col": 29
+      },
+      "args": [
+        "subset",
+        "targets"
+      ],
+      "name": "_interp_map_coordinates",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device._interp_pchip_direct",
+      "to": "py:src/apragma/circuit_model/device.py::_linear_interp_axis",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 885,
+        "end_line": 885,
+        "col": 27
+      },
+      "args": [
+        "stacked",
+        "grid",
+        "unique_tgt",
+        "ax"
+      ],
+      "name": "_linear_interp_axis",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device._interp_pchip_direct",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::list.append",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 887,
+        "end_line": 887,
+        "col": 23
+      },
+      "args": [
+        "d"
+      ],
+      "name": "append",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device._interp_pchip_direct",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::list.append",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 898,
+        "end_line": 898,
+        "col": 21
+      },
+      "args": [
+        "np.arange(stacked.shape[dim_pos]).reshape(shape)"
+      ],
+      "name": "append",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device._interp_pchip_direct",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::list.append",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 903,
+        "end_line": 903,
+        "col": 21
+      },
+      "args": [
+        "inv"
+      ],
+      "name": "append",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device._interp_pchip_direct",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::range.range",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 902,
+        "end_line": 902,
+        "col": 58
+      },
+      "args": [
+        "n_batch"
+      ],
+      "name": "range",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device._interp_pchip_direct",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::next",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 831,
+        "end_line": 831,
+        "col": 21
+      },
+      "args": [
+        "iter(subset.data_vars.values())"
+      ],
+      "name": "next",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device._interp_pchip_direct",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::iter",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 831,
+        "end_line": 831,
+        "col": 26
+      },
+      "args": [
+        "subset.data_vars.values()"
+      ],
+      "name": "iter",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device._interp_pchip_direct",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::sorted",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 853,
+        "end_line": 853,
+        "col": 25
+      },
+      "args": [
+        "interp_dims",
+        "key=lambda d: len(dim_unique[d])"
+      ],
+      "name": "sorted",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device._interp_pchip_direct",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/_warnings.pyi::warn",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 867,
+        "end_line": 867,
+        "col": 30
+      },
+      "args": [
+        "\"Device.evaluate: the pchip interpolation intermediate would exceed \" f\"{_PCHIP_ELEM_LIMIT:,} elements; falling back to LINEAR interpolation \" \"for this dense evaluation.\"",
+        "RuntimeWarning",
+        "stacklevel=2"
+      ],
+      "name": "warn",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device._interp_pchip_numba",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::list.list",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 947,
+        "end_line": 947,
+        "col": 21
+      },
+      "args": [
+        "sample_da.dims"
+      ],
+      "name": "list",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device._interp_pchip_numba",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::list.list",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 978,
+        "end_line": 978,
+        "col": 23
+      },
+      "args": [
+        "bc_targets[0].dims"
+      ],
+      "name": "list",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device._interp_pchip_numba",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::list.list",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 981,
+        "end_line": 981,
+        "col": 21
+      },
+      "args": [
+        "subset.data_vars"
+      ],
+      "name": "list",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device._interp_pchip_numba",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::bool.bool",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 955,
+        "end_line": 955,
+        "col": 20
+      },
+      "args": [
+        "np.all(dg > 0)"
+      ],
+      "name": "bool",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device._interp_pchip_numba",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::bool.bool",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 955,
+        "end_line": 955,
+        "col": 44
+      },
+      "args": [
+        "np.all(dg < 0)"
+      ],
+      "name": "bool",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device._interp_pchip_numba",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::len",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 959,
+        "end_line": 959,
+        "col": 17
+      },
+      "args": [
+        "data_dims"
+      ],
+      "name": "len",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device._interp_pchip_numba",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::len",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 972,
+        "end_line": 972,
+        "col": 12
+      },
+      "args": [
+        "target_das"
+      ],
+      "name": "len",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device._interp_pchip_numba",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::len",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 987,
+        "end_line": 987,
+        "col": 16
+      },
+      "args": [
+        "grid"
+      ],
+      "name": "len",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device._interp_pchip_numba",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::len",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 1005,
+        "end_line": 1005,
+        "col": 46
+      },
+      "args": [
+        "var_names"
+      ],
+      "name": "len",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device._interp_pchip_numba",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::all",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 959,
+        "end_line": 959,
+        "col": 41
+      },
+      "args": [
+        "_is_rgi_axis(d) for d in data_dims"
+      ],
+      "name": "all",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device._interp_pchip_numba",
+      "to": "py:src/apragma/circuit_model/device.py::Device._interp_pchip_numba._is_rgi_axis",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 959,
+        "end_line": 959,
+        "col": 45
+      },
+      "args": [
+        "d"
+      ],
+      "name": "_is_rgi_axis",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device._interp_pchip_numba",
+      "to": "py:src/apragma/circuit_model/device.py::Device._interp_pchip_direct",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 960,
+        "end_line": 960,
+        "col": 25
+      },
+      "args": [
+        "subset",
+        "targets"
+      ],
+      "name": "_interp_pchip_direct",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device._interp_pchip_numba",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::dict.dict",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 964,
+        "end_line": 964,
+        "col": 24
+      },
+      "args": [
+        "targets"
+      ],
+      "name": "dict",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device._interp_pchip_numba",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::dict.dict",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 976,
+        "end_line": 976,
+        "col": 26
+      },
+      "args": [
+        "zip(target_das.keys(), bc_targets)"
+      ],
+      "name": "dict",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device._interp_pchip_numba",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::isinstance",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 969,
+        "end_line": 969,
+        "col": 22
+      },
+      "args": [
+        "v",
+        "xr.DataArray"
+      ],
+      "name": "isinstance",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device._interp_pchip_numba",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::dict.items",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 970,
+        "end_line": 970,
+        "col": 38
+      },
+      "args": [],
+      "name": "items",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device._interp_pchip_numba",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::dict.values",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 973,
+        "end_line": 973,
+        "col": 51
+      },
+      "args": [],
+      "name": "values",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device._interp_pchip_numba",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::dict.values",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 975,
+        "end_line": 975,
+        "col": 43
+      },
+      "args": [],
+      "name": "values",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device._interp_pchip_numba",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::tuple.tuple",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 975,
+        "end_line": 975,
+        "col": 26
+      },
+      "args": [
+        "target_das.values()"
+      ],
+      "name": "tuple",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device._interp_pchip_numba",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::tuple.tuple",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 998,
+        "end_line": 998,
+        "col": 13
+      },
+      "args": [
+        "grids"
+      ],
+      "name": "tuple",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device._interp_pchip_numba",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::zip.zip",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 976,
+        "end_line": 976,
+        "col": 31
+      },
+      "args": [
+        "target_das.keys()",
+        "bc_targets"
+      ],
+      "name": "zip",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device._interp_pchip_numba",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::dict.keys",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 976,
+        "end_line": 976,
+        "col": 46
+      },
+      "args": [],
+      "name": "keys",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device._interp_pchip_numba",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::enumerate.enumerate",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 985,
+        "end_line": 985,
+        "col": 22
+      },
+      "args": [
+        "data_dims"
+      ],
+      "name": "enumerate",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device._interp_pchip_numba",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::enumerate.enumerate",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 1013,
+        "end_line": 1013,
+        "col": 28
+      },
+      "args": [
+        "var_names"
+      ],
+      "name": "enumerate",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device._interp_pchip_numba",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::list.append",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 990,
+        "end_line": 990,
+        "col": 19
+      },
+      "args": [
+        "np.ascontiguousarray(grid, dtype=np.float64)"
+      ],
+      "name": "append",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device._interp_pchip_numba",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::next",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 946,
+        "end_line": 946,
+        "col": 21
+      },
+      "args": [
+        "iter(subset.data_vars.values())"
+      ],
+      "name": "next",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device._interp_pchip_numba",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::iter",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 946,
+        "end_line": 946,
+        "col": 26
+      },
+      "args": [
+        "subset.data_vars.values()"
+      ],
+      "name": "iter",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device.evaluate._interp_with",
+      "to": "py:src/apragma/circuit_model/device.py::Device._interp_map_coordinates",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 692,
+        "end_line": 692,
+        "col": 41
+      },
+      "args": [
+        "ds",
+        "targets"
+      ],
+      "name": "_interp_map_coordinates",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device.evaluate._interp_with",
+      "to": "py:src/apragma/circuit_model/device.py::Device._interp_pchip_direct",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 694,
+        "end_line": 694,
+        "col": 41
+      },
+      "args": [
+        "ds",
+        "targets"
+      ],
+      "name": "_interp_pchip_direct",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device.evaluate._interp_with",
+      "to": "py:src/apragma/circuit_model/device.py::Device._interp_pchip_numba",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 696,
+        "end_line": 696,
+        "col": 41
+      },
+      "args": [
+        "ds",
+        "targets"
+      ],
+      "name": "_interp_pchip_numba",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device.evaluate._interp_with",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::ValueError.ValueError",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 697,
+        "end_line": 697,
+        "col": 31
+      },
+      "args": [
+        "f\"unknown interp_method: {method!r}\""
+      ],
+      "name": "ValueError",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::_linear_interp_axis",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::len",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 52,
+        "end_line": 52,
+        "col": 72
+      },
+      "args": [
+        "grid"
+      ],
+      "name": "len",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::_linear_interp_axis",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::len",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 57,
+        "end_line": 57,
+        "col": 19
+      },
+      "args": [
+        "targets"
+      ],
+      "name": "len",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device._interp_pchip_numba._is_rgi_axis",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::bool.bool",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 955,
+        "end_line": 955,
+        "col": 20
+      },
+      "args": [
+        "np.all(dg > 0)"
+      ],
+      "name": "bool",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/circuit_model/device.py::Device._interp_pchip_numba._is_rgi_axis",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::bool.bool",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 955,
+        "end_line": 955,
+        "col": 44
+      },
+      "args": [
+        "np.all(dg < 0)"
+      ],
+      "name": "bool",
+      "macro": null,
+      "ptr_type": null
+    }
+  ],
+  "unresolved": [
+    {
+      "name": "RuntimeError",
+      "from": "py:src/apragma/circuit_model/device.py::Device.evaluate",
+      "reason": "not a function (class constructor/variant)",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 406,
+        "end_line": 406,
+        "col": 19
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::RuntimeError.RuntimeError",
+      "family": null
+    },
+    {
+      "name": "dict",
+      "from": "py:src/apragma/circuit_model/device.py::Device.evaluate",
+      "reason": "not a function (class constructor/variant)",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 409,
+        "end_line": 409,
+        "col": 33
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::dict.dict",
+      "family": null
+    },
+    {
+      "name": "clear",
+      "from": "py:src/apragma/circuit_model/device.py::Device.evaluate",
+      "reason": "outside project root (library)",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 410,
+        "end_line": 410,
+        "col": 26
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/typing.pyi::MutableMapping.clear",
+      "family": null
+    },
+    {
+      "name": "set",
+      "from": "py:src/apragma/circuit_model/device.py::Device.evaluate",
+      "reason": "not a function (class constructor/variant)",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 417,
+        "end_line": 417,
+        "col": 22
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::set.set",
+      "family": null
+    },
+    {
+      "name": "items",
+      "from": "py:src/apragma/circuit_model/device.py::Device.evaluate",
+      "reason": "outside project root (library)",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 420,
+        "end_line": 420,
+        "col": 38
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::dict.items",
+      "family": null
+    },
+    {
+      "name": "ValueError",
+      "from": "py:src/apragma/circuit_model/device.py::Device.evaluate",
+      "reason": "not a function (class constructor/variant)",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 437,
+        "end_line": 437,
+        "col": 23
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::ValueError.ValueError",
+      "family": null
+    },
+    {
+      "name": "isinstance",
+      "from": "py:src/apragma/circuit_model/device.py::Device.evaluate",
+      "reason": "outside project root (library)",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 446,
+        "end_line": 446,
+        "col": 18
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::isinstance",
+      "family": null
+    },
+    {
+      "name": "list",
+      "from": "py:src/apragma/circuit_model/device.py::Device.evaluate",
+      "reason": "not a function (class constructor/variant)",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 458,
+        "end_line": 458,
+        "col": 18
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::list.list",
+      "family": null
+    },
+    {
+      "name": "int",
+      "from": "py:src/apragma/circuit_model/device.py::Device.evaluate",
+      "reason": "not a function (class constructor/variant)",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 477,
+        "end_line": 477,
+        "col": 23
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::int.int",
+      "family": null
+    },
+    {
+      "name": "abs",
+      "from": "py:src/apragma/circuit_model/device.py::Device.evaluate",
+      "reason": "outside project root (library)",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 478,
+        "end_line": 478,
+        "col": 46
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::abs",
+      "family": null
+    },
+    {
+      "name": "append",
+      "from": "py:src/apragma/circuit_model/device.py::Device.evaluate",
+      "reason": "outside project root (library)",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 479,
+        "end_line": 479,
+        "col": 29
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::list.append",
+      "family": null
+    },
+    {
+      "name": "float",
+      "from": "py:src/apragma/circuit_model/device.py::Device.evaluate",
+      "reason": "not a function (class constructor/variant)",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 501,
+        "end_line": 501,
+        "col": 35
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::float.float",
+      "family": null
+    },
+    {
+      "name": "bool",
+      "from": "py:src/apragma/circuit_model/device.py::Device.evaluate",
+      "reason": "not a function (class constructor/variant)",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 529,
+        "end_line": 529,
+        "col": 16
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::bool.bool",
+      "family": null
+    },
+    {
+      "name": "slice",
+      "from": "py:src/apragma/circuit_model/device.py::Device.evaluate",
+      "reason": "not a function (class constructor/variant)",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 584,
+        "end_line": 584,
+        "col": 36
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::slice.slice",
+      "family": null
+    },
+    {
+      "name": "update",
+      "from": "py:src/apragma/circuit_model/device.py::Device.evaluate",
+      "reason": "outside project root (library)",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 621,
+        "end_line": 621,
+        "col": 18
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::set.update",
+      "family": null
+    },
+    {
+      "name": "any",
+      "from": "py:src/apragma/circuit_model/device.py::Device.evaluate",
+      "reason": "outside project root (library)",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 623,
+        "end_line": 623,
+        "col": 16
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::any",
+      "family": null
+    },
+    {
+      "name": "add",
+      "from": "py:src/apragma/circuit_model/device.py::Device.evaluate",
+      "reason": "outside project root (library)",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 627,
+        "end_line": 627,
+        "col": 26
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::set.add",
+      "family": null
+    },
+    {
+      "name": "str",
+      "from": "py:src/apragma/circuit_model/device.py::Device.evaluate",
+      "reason": "not a function (class constructor/variant)",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 635,
+        "end_line": 635,
+        "col": 27
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::str.str",
+      "family": null
+    },
+    {
+      "name": "__class__",
+      "from": "py:src/apragma/circuit_model/device.py::Device.evaluate",
+      "reason": "not a function (property constructor/variant)",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 644,
+        "end_line": 644,
+        "col": 26
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::object.__class__",
+      "family": null
+    },
+    {
+      "name": "__class__",
+      "from": "py:src/apragma/circuit_model/device.py::Device.evaluate",
+      "reason": "not a function (property constructor/variant)",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 644,
+        "end_line": 644,
+        "col": 26
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::object.__class__#0957e56b",
+      "family": null
+    },
+    {
+      "name": "lower",
+      "from": "py:src/apragma/circuit_model/device.py::Device.evaluate",
+      "reason": "outside project root (library)",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 419,
+        "end_line": 419,
+        "col": 36
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::str.lower",
+      "family": {
+        "size": 2,
+        "evidence": "@overload",
+        "scope": "str"
+      }
+    },
+    {
+      "name": "upper",
+      "from": "py:src/apragma/circuit_model/device.py::Device.evaluate",
+      "reason": "outside project root (library)",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 432,
+        "end_line": 432,
+        "col": 22
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::str.upper",
+      "family": {
+        "size": 2,
+        "evidence": "@overload",
+        "scope": "str"
+      }
+    },
+    {
+      "name": "sorted",
+      "from": "py:src/apragma/circuit_model/device.py::Device.evaluate",
+      "reason": "outside project root (library)",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 435,
+        "end_line": 435,
+        "col": 25
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::sorted",
+      "family": {
+        "size": 2,
+        "evidence": "@overload",
+        "scope": "<module>"
+      }
+    },
+    {
+      "name": "join",
+      "from": "py:src/apragma/circuit_model/device.py::Device.evaluate",
+      "reason": "outside project root (library)",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 436,
+        "end_line": 436,
+        "col": 34
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::str.join",
+      "family": {
+        "size": 2,
+        "evidence": "@overload",
+        "scope": "str"
+      }
+    },
+    {
+      "name": "getattr",
+      "from": "py:src/apragma/circuit_model/device.py::Device.evaluate",
+      "reason": "outside project root (library)",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 442,
+        "end_line": 442,
+        "col": 27
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::getattr",
+      "family": {
+        "size": 6,
+        "evidence": "@overload",
+        "scope": "<module>"
+      }
+    },
+    {
+      "name": "max",
+      "from": "py:src/apragma/circuit_model/device.py::Device.evaluate",
+      "reason": "outside project root (library)",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 561,
+        "end_line": 561,
+        "col": 28
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::max",
+      "family": {
+        "size": 6,
+        "evidence": "@overload",
+        "scope": "<module>"
+      }
+    },
+    {
+      "name": "min",
+      "from": "py:src/apragma/circuit_model/device.py::Device.evaluate",
+      "reason": "outside project root (library)",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 561,
+        "end_line": 561,
+        "col": 35
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::min",
+      "family": {
+        "size": 6,
+        "evidence": "@overload",
+        "scope": "<module>"
+      }
+    },
+    {
+      "name": "get",
+      "from": "py:src/apragma/circuit_model/device.py::Device.evaluate",
+      "reason": "outside project root (library)",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 644,
+        "end_line": 644,
+        "col": 47
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::dict.get",
+      "family": {
+        "size": 3,
+        "evidence": "@overload",
+        "scope": "dict"
+      }
+    },
+    {
+      "name": "warn",
+      "from": "py:src/apragma/circuit_model/device.py::Device.evaluate",
+      "reason": "outside project root (library)",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 651,
+        "end_line": 651,
+        "col": 34
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/_warnings.pyi::warn",
+      "family": {
+        "size": 1,
+        "evidence": "@overload",
+        "scope": "<module>"
+      }
+    },
+    {
+      "name": "upper",
+      "from": "py:src/apragma/circuit_model/device.py::_resolve_key_case_insensitive",
+      "reason": "outside project root (library)",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 40,
+        "end_line": 40,
+        "col": 21
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::str.upper",
+      "family": {
+        "size": 2,
+        "evidence": "@overload",
+        "scope": "str"
+      }
+    },
+    {
+      "name": "isinstance",
+      "from": "py:src/apragma/circuit_model/device.py::Device._interp_map_coordinates",
+      "reason": "outside project root (library)",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 761,
+        "end_line": 761,
+        "col": 32
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::isinstance",
+      "family": null
+    },
+    {
+      "name": "items",
+      "from": "py:src/apragma/circuit_model/device.py::Device._interp_map_coordinates",
+      "reason": "outside project root (library)",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 762,
+        "end_line": 762,
+        "col": 43
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::dict.items",
+      "family": null
+    },
+    {
+      "name": "len",
+      "from": "py:src/apragma/circuit_model/device.py::Device._interp_map_coordinates",
+      "reason": "outside project root (library)",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 763,
+        "end_line": 763,
+        "col": 12
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::len",
+      "family": null
+    },
+    {
+      "name": "values",
+      "from": "py:src/apragma/circuit_model/device.py::Device._interp_map_coordinates",
+      "reason": "outside project root (library)",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 764,
+        "end_line": 764,
+        "col": 51
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::dict.values",
+      "family": null
+    },
+    {
+      "name": "tuple",
+      "from": "py:src/apragma/circuit_model/device.py::Device._interp_map_coordinates",
+      "reason": "not a function (class constructor/variant)",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 766,
+        "end_line": 766,
+        "col": 26
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::tuple.tuple",
+      "family": null
+    },
+    {
+      "name": "dict",
+      "from": "py:src/apragma/circuit_model/device.py::Device._interp_map_coordinates",
+      "reason": "not a function (class constructor/variant)",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 767,
+        "end_line": 767,
+        "col": 26
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::dict.dict",
+      "family": null
+    },
+    {
+      "name": "zip",
+      "from": "py:src/apragma/circuit_model/device.py::Device._interp_map_coordinates",
+      "reason": "not a function (class constructor/variant)",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 767,
+        "end_line": 767,
+        "col": 31
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::zip.zip",
+      "family": null
+    },
+    {
+      "name": "keys",
+      "from": "py:src/apragma/circuit_model/device.py::Device._interp_map_coordinates",
+      "reason": "outside project root (library)",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 767,
+        "end_line": 767,
+        "col": 46
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::dict.keys",
+      "family": null
+    },
+    {
+      "name": "list",
+      "from": "py:src/apragma/circuit_model/device.py::Device._interp_map_coordinates",
+      "reason": "not a function (class constructor/variant)",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 773,
+        "end_line": 773,
+        "col": 23
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::list.list",
+      "family": null
+    },
+    {
+      "name": "range",
+      "from": "py:src/apragma/circuit_model/device.py::Device._interp_map_coordinates",
+      "reason": "not a function (class constructor/variant)",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 787,
+        "end_line": 787,
+        "col": 68
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::range.range",
+      "family": null
+    },
+    {
+      "name": "append",
+      "from": "py:src/apragma/circuit_model/device.py::Device._interp_map_coordinates",
+      "reason": "outside project root (library)",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 788,
+        "end_line": 788,
+        "col": 35
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::list.append",
+      "family": null
+    },
+    {
+      "name": "index",
+      "from": "py:src/apragma/circuit_model/device.py::Device._interp_map_coordinates",
+      "reason": "outside project root (library)",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 791,
+        "end_line": 791,
+        "col": 37
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::list.index",
+      "family": null
+    },
+    {
+      "name": "next",
+      "from": "py:src/apragma/circuit_model/device.py::Device._interp_map_coordinates",
+      "reason": "outside project root (library)",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 770,
+        "end_line": 770,
+        "col": 21
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::next",
+      "family": {
+        "size": 2,
+        "evidence": "@overload",
+        "scope": "<module>"
+      }
+    },
+    {
+      "name": "iter",
+      "from": "py:src/apragma/circuit_model/device.py::Device._interp_map_coordinates",
+      "reason": "outside project root (library)",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 770,
+        "end_line": 770,
+        "col": 26
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::iter",
+      "family": {
+        "size": 4,
+        "evidence": "@overload",
+        "scope": "<module>"
+      }
+    },
+    {
+      "name": "isinstance",
+      "from": "py:src/apragma/circuit_model/device.py::Device._interp_pchip_direct",
+      "reason": "outside project root (library)",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 821,
+        "end_line": 821,
+        "col": 22
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::isinstance",
+      "family": null
+    },
+    {
+      "name": "items",
+      "from": "py:src/apragma/circuit_model/device.py::Device._interp_pchip_direct",
+      "reason": "outside project root (library)",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 822,
+        "end_line": 822,
+        "col": 33
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::dict.items",
+      "family": null
+    },
+    {
+      "name": "len",
+      "from": "py:src/apragma/circuit_model/device.py::Device._interp_pchip_direct",
+      "reason": "outside project root (library)",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 824,
+        "end_line": 824,
+        "col": 12
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::len",
+      "family": null
+    },
+    {
+      "name": "values",
+      "from": "py:src/apragma/circuit_model/device.py::Device._interp_pchip_direct",
+      "reason": "outside project root (library)",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 825,
+        "end_line": 825,
+        "col": 51
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::dict.values",
+      "family": null
+    },
+    {
+      "name": "tuple",
+      "from": "py:src/apragma/circuit_model/device.py::Device._interp_pchip_direct",
+      "reason": "not a function (class constructor/variant)",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 827,
+        "end_line": 827,
+        "col": 26
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::tuple.tuple",
+      "family": null
+    },
+    {
+      "name": "dict",
+      "from": "py:src/apragma/circuit_model/device.py::Device._interp_pchip_direct",
+      "reason": "not a function (class constructor/variant)",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 828,
+        "end_line": 828,
+        "col": 26
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::dict.dict",
+      "family": null
+    },
+    {
+      "name": "zip",
+      "from": "py:src/apragma/circuit_model/device.py::Device._interp_pchip_direct",
+      "reason": "not a function (class constructor/variant)",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 828,
+        "end_line": 828,
+        "col": 31
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::zip.zip",
+      "family": null
+    },
+    {
+      "name": "keys",
+      "from": "py:src/apragma/circuit_model/device.py::Device._interp_pchip_direct",
+      "reason": "outside project root (library)",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 828,
+        "end_line": 828,
+        "col": 46
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::dict.keys",
+      "family": null
+    },
+    {
+      "name": "list",
+      "from": "py:src/apragma/circuit_model/device.py::Device._interp_pchip_direct",
+      "reason": "not a function (class constructor/variant)",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 832,
+        "end_line": 832,
+        "col": 21
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::list.list",
+      "family": null
+    },
+    {
+      "name": "enumerate",
+      "from": "py:src/apragma/circuit_model/device.py::Device._interp_pchip_direct",
+      "reason": "not a function (class constructor/variant)",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 856,
+        "end_line": 856,
+        "col": 23
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::enumerate.enumerate",
+      "family": null
+    },
+    {
+      "name": "index",
+      "from": "py:src/apragma/circuit_model/device.py::Device._interp_pchip_direct",
+      "reason": "outside project root (library)",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 857,
+        "end_line": 857,
+        "col": 28
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::list.index",
+      "family": null
+    },
+    {
+      "name": "append",
+      "from": "py:src/apragma/circuit_model/device.py::Device._interp_pchip_direct",
+      "reason": "outside project root (library)",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 887,
+        "end_line": 887,
+        "col": 23
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::list.append",
+      "family": null
+    },
+    {
+      "name": "range",
+      "from": "py:src/apragma/circuit_model/device.py::Device._interp_pchip_direct",
+      "reason": "not a function (class constructor/variant)",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 902,
+        "end_line": 902,
+        "col": 58
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::range.range",
+      "family": null
+    },
+    {
+      "name": "next",
+      "from": "py:src/apragma/circuit_model/device.py::Device._interp_pchip_direct",
+      "reason": "outside project root (library)",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 831,
+        "end_line": 831,
+        "col": 21
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::next",
+      "family": {
+        "size": 2,
+        "evidence": "@overload",
+        "scope": "<module>"
+      }
+    },
+    {
+      "name": "iter",
+      "from": "py:src/apragma/circuit_model/device.py::Device._interp_pchip_direct",
+      "reason": "outside project root (library)",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 831,
+        "end_line": 831,
+        "col": 26
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::iter",
+      "family": {
+        "size": 4,
+        "evidence": "@overload",
+        "scope": "<module>"
+      }
+    },
+    {
+      "name": "sorted",
+      "from": "py:src/apragma/circuit_model/device.py::Device._interp_pchip_direct",
+      "reason": "outside project root (library)",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 853,
+        "end_line": 853,
+        "col": 25
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::sorted",
+      "family": {
+        "size": 2,
+        "evidence": "@overload",
+        "scope": "<module>"
+      }
+    },
+    {
+      "name": "warn",
+      "from": "py:src/apragma/circuit_model/device.py::Device._interp_pchip_direct",
+      "reason": "outside project root (library)",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 867,
+        "end_line": 867,
+        "col": 30
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/_warnings.pyi::warn",
+      "family": {
+        "size": 1,
+        "evidence": "@overload",
+        "scope": "<module>"
+      }
+    },
+    {
+      "name": "list",
+      "from": "py:src/apragma/circuit_model/device.py::Device._interp_pchip_numba",
+      "reason": "not a function (class constructor/variant)",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 947,
+        "end_line": 947,
+        "col": 21
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::list.list",
+      "family": null
+    },
+    {
+      "name": "bool",
+      "from": "py:src/apragma/circuit_model/device.py::Device._interp_pchip_numba",
+      "reason": "not a function (class constructor/variant)",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 955,
+        "end_line": 955,
+        "col": 20
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::bool.bool",
+      "family": null
+    },
+    {
+      "name": "len",
+      "from": "py:src/apragma/circuit_model/device.py::Device._interp_pchip_numba",
+      "reason": "outside project root (library)",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 959,
+        "end_line": 959,
+        "col": 17
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::len",
+      "family": null
+    },
+    {
+      "name": "all",
+      "from": "py:src/apragma/circuit_model/device.py::Device._interp_pchip_numba",
+      "reason": "outside project root (library)",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 959,
+        "end_line": 959,
+        "col": 41
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::all",
+      "family": null
+    },
+    {
+      "name": "dict",
+      "from": "py:src/apragma/circuit_model/device.py::Device._interp_pchip_numba",
+      "reason": "not a function (class constructor/variant)",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 964,
+        "end_line": 964,
+        "col": 24
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::dict.dict",
+      "family": null
+    },
+    {
+      "name": "isinstance",
+      "from": "py:src/apragma/circuit_model/device.py::Device._interp_pchip_numba",
+      "reason": "outside project root (library)",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 969,
+        "end_line": 969,
+        "col": 22
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::isinstance",
+      "family": null
+    },
+    {
+      "name": "items",
+      "from": "py:src/apragma/circuit_model/device.py::Device._interp_pchip_numba",
+      "reason": "outside project root (library)",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 970,
+        "end_line": 970,
+        "col": 38
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::dict.items",
+      "family": null
+    },
+    {
+      "name": "values",
+      "from": "py:src/apragma/circuit_model/device.py::Device._interp_pchip_numba",
+      "reason": "outside project root (library)",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 973,
+        "end_line": 973,
+        "col": 51
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::dict.values",
+      "family": null
+    },
+    {
+      "name": "tuple",
+      "from": "py:src/apragma/circuit_model/device.py::Device._interp_pchip_numba",
+      "reason": "not a function (class constructor/variant)",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 975,
+        "end_line": 975,
+        "col": 26
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::tuple.tuple",
+      "family": null
+    },
+    {
+      "name": "zip",
+      "from": "py:src/apragma/circuit_model/device.py::Device._interp_pchip_numba",
+      "reason": "not a function (class constructor/variant)",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 976,
+        "end_line": 976,
+        "col": 31
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::zip.zip",
+      "family": null
+    },
+    {
+      "name": "keys",
+      "from": "py:src/apragma/circuit_model/device.py::Device._interp_pchip_numba",
+      "reason": "outside project root (library)",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 976,
+        "end_line": 976,
+        "col": 46
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::dict.keys",
+      "family": null
+    },
+    {
+      "name": "enumerate",
+      "from": "py:src/apragma/circuit_model/device.py::Device._interp_pchip_numba",
+      "reason": "not a function (class constructor/variant)",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 985,
+        "end_line": 985,
+        "col": 22
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::enumerate.enumerate",
+      "family": null
+    },
+    {
+      "name": "append",
+      "from": "py:src/apragma/circuit_model/device.py::Device._interp_pchip_numba",
+      "reason": "outside project root (library)",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 990,
+        "end_line": 990,
+        "col": 19
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::list.append",
+      "family": null
+    },
+    {
+      "name": "next",
+      "from": "py:src/apragma/circuit_model/device.py::Device._interp_pchip_numba",
+      "reason": "outside project root (library)",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 946,
+        "end_line": 946,
+        "col": 21
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::next",
+      "family": {
+        "size": 2,
+        "evidence": "@overload",
+        "scope": "<module>"
+      }
+    },
+    {
+      "name": "iter",
+      "from": "py:src/apragma/circuit_model/device.py::Device._interp_pchip_numba",
+      "reason": "outside project root (library)",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 946,
+        "end_line": 946,
+        "col": 26
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::iter",
+      "family": {
+        "size": 4,
+        "evidence": "@overload",
+        "scope": "<module>"
+      }
+    },
+    {
+      "name": "ValueError",
+      "from": "py:src/apragma/circuit_model/device.py::Device.evaluate._interp_with",
+      "reason": "not a function (class constructor/variant)",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 697,
+        "end_line": 697,
+        "col": 31
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::ValueError.ValueError",
+      "family": null
+    },
+    {
+      "name": "len",
+      "from": "py:src/apragma/circuit_model/device.py::_linear_interp_axis",
+      "reason": "outside project root (library)",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 52,
+        "end_line": 52,
+        "col": 72
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::len",
+      "family": null
+    },
+    {
+      "name": "bool",
+      "from": "py:src/apragma/circuit_model/device.py::Device._interp_pchip_numba._is_rgi_axis",
+      "reason": "not a function (class constructor/variant)",
+      "loc": {
+        "file": "src/apragma/circuit_model/device.py",
+        "line": 955,
+        "end_line": 955,
+        "col": 20
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::bool.bool",
+      "family": null
+    }
+  ]
+}

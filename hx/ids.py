@@ -11,10 +11,12 @@ The 8-hex suffix is added only when two symbols would otherwise collide
 """
 from __future__ import annotations
 
+import functools
 import hashlib
 import os
 import re
 from collections import defaultdict
+from typing import NamedTuple
 
 RECORD_KINDS = ("struct", "union", "class", "enum")
 
@@ -44,14 +46,26 @@ def _lang_mode(lang: str | None) -> str:
     return "c"
 
 
-def tokenize(text: str, lang: str | None = "c") -> list[str]:
-    """Split a function body into tokens for hashing. What is kept and what is dropped:
+class Tok(NamedTuple):
+    """One lexed token with its source span: `text == source[start:end]` for every kind except `indent`.
+    Python `indent` tokens (`\\n<n>`) are synthetic: `start == end`, at the first character of the logical line."""
+    kind: str      # ident | number | string | char | op | indent
+    text: str
+    start: int
+    end: int
+
+
+def lex(text: str, lang: str | None = "c") -> list[Tok]:
+    """Split source text into tokens, keeping spans. What is kept and what is dropped:
     kept   identifiers, numbers, operators (maximal munch), string/char literals VERBATIM (their inner whitespace counts),
            and for Python the indentation of every logical line (relative to the first line; tabs count as 8)
-    dropped comments (//, /* */, Python #), all other whitespace, blank lines, Python line continuations."""
+    dropped comments (//, /* */, Python #), all other whitespace, blank lines, Python line continuations.
+    Language rules: Python strings take '/\"/triple quotes and r/b/u/f prefixes, `#` comments; C takes string/char
+    literals, `R\"d(...)d\"` raw strings and both comment forms; Rust distinguishes lifetimes (`'a`) from chars and lexes
+    `r#\"...\"#`; SystemVerilog lexes based numbers (`8'hFF`). `<` and `>` are plain operators in every language."""
     mode = _lang_mode(lang)
     py, rs, sv = mode == "py", mode == "rs", mode == "sv"
-    out: list[str] = []
+    out: list[Tok] = []
     i, n = 0, len(text)
     depth = 0                # bracket depth: Python suppresses indentation tokens inside brackets
     last_end = -1            # end offset of the previous token (adjacency test for prefixed literals)
@@ -113,7 +127,7 @@ def tokenize(text: str, lang: str | None = "c") -> list[str]:
                     continue
                 break
             if k < n and out:                      # no indentation token before the first real token
-                out.append(f"\\n{max(0, ind - (base_indent or 0))}")
+                out.append(Tok("indent", f"\\n{max(0, ind - (base_indent or 0))}", k, k))
             i = k
             continue
         if ch in " \t\r\f\v":
@@ -142,9 +156,10 @@ def tokenize(text: str, lang: str | None = "c") -> list[str]:
                 i = scan_triple(i + 3, ch)
             else:
                 i = scan_quoted(i + 1, ch, multiline=rs)
-            tok = text[start:i]
-            if out and last_end == start and (py and _PY_STR_PREFIX.match(out[-1])):
-                tok = out.pop() + tok
+            tok = Tok("string", text[start:i], start, i)
+            if out and last_end == start and (py and _PY_STR_PREFIX.match(out[-1].text)):
+                prev = out.pop()
+                tok = Tok("string", prev.text + tok.text, prev.start, i)
             out.append(tok)
             last_end = i
             continue
@@ -157,9 +172,10 @@ def tokenize(text: str, lang: str | None = "c") -> list[str]:
                     j += 1
                 while j < n and (text[j].isalnum() or text[j] in "_?"):
                     j += 1
-                tok = text[i:j]
-                if out and last_end == start and out[-1][0].isdigit():
-                    tok = out.pop() + tok
+                tok = Tok("number", text[i:j], i, j)
+                if out and last_end == start and out[-1].text[0].isdigit():
+                    prev = out.pop()
+                    tok = Tok("number", prev.text + tok.text, prev.start, j)
                 out.append(tok)
                 i = last_end = j
                 continue
@@ -167,13 +183,15 @@ def tokenize(text: str, lang: str | None = "c") -> list[str]:
                 j = i + 1   # lifetime 'a
                 while j < n and (text[j].isalnum() or text[j] == "_"):
                     j += 1
-                out.append(text[i:j])
+                out.append(Tok("ident", text[i:j], i, j))
                 i = last_end = j
                 continue
             i = scan_quoted(i + 1, "'", multiline=False)
             if i - start > 24:        # not a char literal after all (e.g. an unbalanced quote in a macro): plain operator
                 i = start + 1
-            out.append(text[start:i])
+                out.append(Tok("op", text[start:i], start, i))
+            else:
+                out.append(Tok("char", text[start:i], start, i))
             last_end = i
             continue
         # ---- words (identifiers, keywords) incl. prefixed/raw string literals
@@ -182,12 +200,13 @@ def tokenize(text: str, lang: str | None = "c") -> list[str]:
             while j < n and (text[j].isalnum() or text[j] in "_$"):
                 j += 1
             word = text[i:j]
+            kind = "ident"
             if j < n and text[j] == '"' and mode == "c" and word in _C_RAW_PREFIX:          # R"delim( ... )delim"
                 lp = text.find("(", j)
                 delim = text[j + 1:lp] if lp > 0 else ""
                 close = text.find(")" + delim + '"', lp if lp > 0 else j)
                 j = n if close < 0 else close + len(delim) + 2
-                word = text[i:j]
+                word, kind = text[i:j], "string"
             elif rs and word in ("r", "br") and j < n and text[j] in '#"':                 # r#"..."#
                 k = j
                 while k < n and text[k] == "#":
@@ -196,8 +215,8 @@ def tokenize(text: str, lang: str | None = "c") -> list[str]:
                 if k < n and text[k] == '"':
                     close = text.find('"' + "#" * hashes, k + 1)
                     j = n if close < 0 else close + 1 + hashes
-                    word = text[i:j]
-            out.append(word)
+                    word, kind = text[i:j], "string"
+            out.append(Tok(kind, word, i, j))
             i = last_end = j
             continue
         # ---- numbers (pp-number style: digits, letters, '.', exponent signs)
@@ -211,7 +230,7 @@ def tokenize(text: str, lang: str | None = "c") -> list[str]:
                     j += 1
                 else:
                     break
-            out.append(text[i:j])
+            out.append(Tok("number", text[i:j], i, j))
             i = last_end = j
             continue
         # ---- operators / punctuation
@@ -221,14 +240,129 @@ def tokenize(text: str, lang: str | None = "c") -> list[str]:
             depth = max(0, depth - 1)
         for op in _MULTI_OPS:
             if text.startswith(op, i):
-                out.append(op)
+                out.append(Tok("op", op, i, i + len(op)))
                 i += len(op)
                 break
         else:
-            out.append(ch)
+            out.append(Tok("op", ch, i, i + 1))
             i += 1
         last_end = i
     return out
+
+
+def tokenize(text: str, lang: str | None = "c") -> list[str]:
+    """Token texts of `lex(text, lang)` (what `body_hash` hashes)."""
+    return [t.text for t in lex(text, lang)]
+
+
+# ---------------------------------------------------------------- expression text helpers built on `lex`
+
+_NO_SPACE_AFTER = {"(", "[", "{"}
+_NO_SPACE_BEFORE = {")", "]", "}", ",", ";"}
+
+
+def _join(toks: list[Tok]) -> str:
+    """Tokens back to text: tokens adjacent in the source stay glued; any gap (whitespace, a removed comment, a
+    line break) becomes exactly one space, except that no space is written after an opening bracket or before a
+    closing bracket, comma or semicolon (`f( a , b )` -> `f(a, b)`). Literal interiors are untouched because a
+    literal is one token, and operator adjacency is preserved (`a - -b` never becomes `a--b`)."""
+    if not toks:
+        return ""
+    parts = [toks[0].text]
+    for a, b in zip(toks, toks[1:]):
+        glue = a.end == b.start or (a.kind == "op" and a.text in _NO_SPACE_AFTER) or (b.kind == "op" and b.text in _NO_SPACE_BEFORE)
+        parts.append(("" if glue else " ") + b.text)
+    return "".join(parts)
+
+
+def _code_tokens(text: str, lang: str | None) -> list[Tok]:
+    return [t for t in lex(text, lang) if t.kind != "indent"]
+
+
+_ANGLE_STEP = {"<": 1, "<<": 2, ">": -1, ">>": -2}
+
+
+def _depth_step(t: Tok, angle: bool) -> int:
+    """Bracket depth change of one token: `([{` / `)]}` always; `<`/`>` (and `<<`/`>>`) only when `angle`,
+    which is meant for Rust generics in signatures — never `->`, `<=`, `>=`, `=>`, `<-`, which are their own tokens."""
+    if t.kind != "op":
+        return 0
+    if t.text in ("(", "[", "{"):
+        return 1
+    if t.text in (")", "]", "}"):
+        return -1
+    return _ANGLE_STEP.get(t.text, 0) if angle else 0
+
+
+def _split_tokens(toks: list[Tok], sep: str, angle: bool) -> list[list[Tok]]:
+    out: list[list[Tok]] = []
+    cur: list[Tok] = []
+    depth = 0
+    for t in toks:
+        if t.kind == "op" and t.text == sep and depth == 0:
+            out.append(cur)
+            cur = []
+            continue
+        depth = max(0, depth + _depth_step(t, angle))
+        cur.append(t)
+    out.append(cur)
+    return out
+
+
+def squash_ws(text: str, lang: str | None = "c") -> str:
+    """Expression/signature text with formatting removed but meaning kept: comments dropped, every run of
+    whitespace (or a removed comment, or a line break) between tokens becomes one space, adjacent tokens stay
+    glued (`pc->x`), string/char literals are preserved byte for byte (`"   "` stays three spaces)."""
+    return _join(_code_tokens(text, lang))
+
+
+def split_top(text: str, lang: str | None = "c", *, sep: str = ",", angle: bool = False) -> list[str]:
+    """Split `text` at top-level `sep` tokens, honouring brackets and never splitting inside a literal or a
+    comment. `angle=True` (Rust signatures) also treats `<`/`>` as brackets so `d<x, y>` stays whole.
+    Parts are squashed like `squash_ws`; empty parts are dropped."""
+    parts = (_join(p) for p in _split_tokens(_code_tokens(text, lang), sep, angle))
+    return [p for p in parts if p]
+
+
+def paren_span(text: str, lang: str | None = "c") -> tuple[int, int] | None:
+    """Character offsets `(open, close)` of the first `(` token in `text` and its matching `)`, matched over
+    `([{` / `)]}` tokens only (never inside a literal or comment); None when the list is not complete."""
+    toks = _code_tokens(text, lang)
+    o = next((i for i, t in enumerate(toks) if t.kind == "op" and t.text == "("), None)
+    if o is None:
+        return None
+    depth = 0
+    for j in range(o, len(toks)):
+        depth += _depth_step(toks[j], False)
+        if depth == 0:
+            return toks[o].start, toks[j].start
+    return None
+
+
+def paren_args(text: str, lang: str | None = "c", *, angle: bool = False, keep_empty: bool = False) -> list[str]:
+    """Arguments of the first parenthesised list in `text`: `'MAC(a, f(b, c), "x, y")'` -> `['a', 'f(b, c)', '"x, y"']`.
+    Anything after the matching `)` is ignored; `[]` when there is no complete list. With `keep_empty` (C macro
+    invocations, where an empty argument is positional) `MAC(a, , b)` -> `['a', '', 'b']`; `()` is still `[]`."""
+    span = paren_span(text, lang)
+    if span is None:
+        return []
+    inner = text[span[0] + 1:span[1]]
+    if not keep_empty:
+        return split_top(inner, lang, angle=angle)
+    parts = [_join(p) for p in _split_tokens(_code_tokens(inner, lang), ",", angle)]
+    return parts if any(parts) else []
+
+
+def partition_top(text: str, lang: str | None = "c", op: str = "=", *, angle: bool = False) -> tuple[str, str | None]:
+    """Split at the first top-level `op` token: `('sep: str = ","', "=")` -> `('sep: str', '","')`. The second
+    part is None when `op` does not occur at depth 0 (an `=` inside a default literal or brackets does not count)."""
+    toks = _code_tokens(text, lang)
+    depth = 0
+    for i, t in enumerate(toks):
+        if t.kind == "op" and t.text == op and depth == 0:
+            return _join(toks[:i]), _join(toks[i + 1:])
+        depth = max(0, depth + _depth_step(t, angle))
+    return _join(toks), None
 
 
 def body_hash(text: bytes | str, lang: str | None = "c") -> str:
@@ -240,10 +374,18 @@ def body_hash(text: bytes | str, lang: str | None = "c") -> str:
     return "sha1:" + hashlib.sha1(norm.encode("utf-8", "replace")).hexdigest()
 
 
+@functools.lru_cache(maxsize=65536)
+def realpath(path: str) -> str:
+    """`os.path.realpath` with a cache: identity must not depend on how a path was spelled (review finding C4:
+    a build's `src -> ../source` symlink gave the same file an absolute id)."""
+    return os.path.realpath(path)
+
+
 def rel(path: str, root: str) -> str:
-    """Path relative to root when inside it, else the absolute path (external/system files)."""
-    path = os.path.abspath(path)
-    root = os.path.abspath(root)
+    """Path relative to root when inside it (symlinks resolved on both sides), else the absolute real path
+    (external/system files)."""
+    path = realpath(path)
+    root = realpath(root)
     try:
         r = os.path.relpath(path, root)
     except ValueError:  # different drive (Windows)
@@ -251,6 +393,81 @@ def rel(path: str, root: str) -> str:
     if r.startswith(".."):
         return path
     return r.replace(os.sep, "/")
+
+
+def fingerprint_types(records: dict[str, dict]) -> dict[str, str]:
+    """Deterministic 8-hex fingerprints for a graph of type records (review round 7):
+    `records[key] = {"identity": tuple, "local": JSON-able, "edges": [(label, target_key), …]}`.
+    Strongly connected components (Tarjan) are processed dependencies first; a component is serialised once with
+    its members in canonical `identity` order, internal edges written as member indexes and external edges as the
+    target's fingerprint; every member's fingerprint derives from that one digest plus its index. So a fingerprint
+    depends only on what is reachable from the type and on root-relative identities: self- and mutual recursion,
+    unrelated types and declaration order cannot change it, and the same structure gets the same value in every TU."""
+    import json as _json
+    keys = list(records)
+    index: dict[str, int] = {}
+    low: dict[str, int] = {}
+    on_stack: set[str] = set()
+    stack: list[str] = []
+    sccs: list[list[str]] = []
+    counter = 0
+    for root_key in keys:
+        if root_key in index:
+            continue
+        work = [(root_key, iter(records[root_key].get("edges") or []))]
+        index[root_key] = low[root_key] = counter
+        counter += 1
+        stack.append(root_key)
+        on_stack.add(root_key)
+        while work:
+            v, it = work[-1]
+            advanced = False
+            for _label, w in it:
+                if w not in records:
+                    continue
+                if w not in index:
+                    index[w] = low[w] = counter
+                    counter += 1
+                    stack.append(w)
+                    on_stack.add(w)
+                    work.append((w, iter(records[w].get("edges") or [])))
+                    advanced = True
+                    break
+                if w in on_stack:
+                    low[v] = min(low[v], index[w])
+            if advanced:
+                continue
+            work.pop()
+            if work:
+                u = work[-1][0]
+                low[u] = min(low[u], low[v])
+            if low[v] == index[v]:
+                comp = []
+                while True:
+                    w = stack.pop()
+                    on_stack.discard(w)
+                    comp.append(w)
+                    if w == v:
+                        break
+                sccs.append(comp)
+    fp: dict[str, str] = {}
+    for comp in sccs:                                   # Tarjan emits a component after everything it reaches
+        members = sorted(comp, key=lambda k: _json.dumps(records[k].get("identity"), sort_keys=True, default=str))
+        pos = {k: i for i, k in enumerate(members)}
+        ser = []
+        for k in members:
+            r = records[k]
+            edges = []
+            for label, target in r.get("edges") or []:
+                if target in pos:
+                    edges.append([label, "internal", pos[target]])
+                else:
+                    edges.append([label, "external", fp.get(target, "missing")])
+            ser.append([r.get("identity"), r.get("local"), edges])
+        digest = hashlib.sha1(_json.dumps(ser, sort_keys=True, default=str).encode("utf-8", "replace")).hexdigest()
+        for k in members:
+            fp[k] = short_hash(f"{digest}:{pos[k]}")
+    return fp
 
 
 def node_id(lang: str, relpath: str, qualname: str, disambiguator: str | None = None) -> str:

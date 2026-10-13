@@ -177,3 +177,62 @@ def test_recursion_at_depth_limit_is_not_reported_as_beyond_depth():
     self_edges = [e for e in g.edges if e.src == e.dst]
     assert len(self_edges) == 1 and self_edges[0].src == "fake:b.c::b"
     assert "fake:a.c::a" in g.nodes["fake:b.c::b"].calls
+
+
+class CountingFE(FakeFE):
+    """Records every `function()` fetch: the expensive call for an LSP frontend (review finding H4)."""
+    def __init__(self, *a, **kw):
+        super().__init__(*a, **kw)
+        self.function_calls = []
+
+    def function(self, key):
+        self.function_calls.append(key)
+        return super().function(key)
+
+
+class MemoFE(FakeFE):
+    """Hands out copies of memoised records, like the LSP frontend does after H4."""
+    def __init__(self, *a, **kw):
+        super().__init__(*a, **kw)
+        self.cache = {}
+
+    def function(self, key):
+        import copy
+        if key not in self.cache:
+            r = super().function(key)
+            if r is None:
+                return None
+            self.cache[key] = r
+        r = self.cache[key]
+        return FunctionRecord(node=copy.deepcopy(r.node), callsites=[copy.copy(c) for c in r.callsites],
+                              type_keys=list(r.type_keys), global_keys=list(r.global_keys))
+
+
+def test_callers_fetch_function_records_only_for_admitted_callers():
+    fe = CountingFE({"top": ["leaf"], "other": ["leaf"], "sysc": ["leaf"], "leaf": []}, system={"sysc"})
+    g = extract_graph(fe, "leaf.c", "leaf", TraverseOptions(depth=1, include_callers=True, exclude=["other*"]), "/r")
+    assert sorted(fe.function_calls) == ["leaf", "top"]                 # excluded and system callers never cost a fetch
+    assert names(g) == {"leaf": 0, "top": -1}
+    fe2 = CountingFE({"top": ["leaf"], "two": ["leaf"], "leaf": []})
+    g2 = extract_graph(fe2, "leaf.c", "leaf", TraverseOptions(depth=1, include_callers=True, max_nodes=1), "/r")
+    assert fe2.function_calls == ["leaf"] and g2.meta["truncated"]       # capped callers are recorded, not fetched
+    assert {u.reason for u in g2.unresolved} == {"caller truncated by --max-nodes"} and len(g2.unresolved) == 2
+
+
+def test_caller_already_in_graph_gets_calls_appended():
+    fe = FakeFE({"a": ["b"], "b": ["a"]})
+    g = extract_graph(fe, "b.c", "b", TraverseOptions(depth=1, include_callers=True), "/r")
+    assert g.nodes["fake:a.c::a"].calls == ["fake:b.c::b"]              # appended on the GRAPH node, exactly once
+    assert g.nodes["fake:b.c::b"].calls == ["fake:a.c::a"]
+
+
+def test_repeated_extraction_on_one_frontend_is_equal():
+    fe = MemoFE({"a": ["b", "c"], "b": ["c"], "c": ["a"]})
+    g1 = extract_graph(fe, "a.c", "a", TraverseOptions(depth=3, include_callers=True), "/r")
+    g2 = extract_graph(fe, "a.c", "a", TraverseOptions(depth=3, include_callers=True), "/r")
+    d1, d2 = g1.to_dict(), g2.to_dict()
+    d1.pop("generated"), d2.pop("generated")
+    assert d1 == d2
+    assert fe.cache["a"].node.calls == [] and fe.cache["c"].node.depth == 0   # the memoised records were never mutated
+    g3 = extract_graph(fe, "c.c", "c", TraverseOptions(depth=1), "/r")
+    assert g3.nodes["fake:c.c::c"].depth == 0 and g3.nodes["fake:a.c::a"].depth == 1   # no depth leaked between graphs

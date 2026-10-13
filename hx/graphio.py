@@ -3,8 +3,9 @@
 Every reader (CLI, server, differ, MCP, exporter, `Graph.load`) goes through `load_graph_dict`, which
   * parses JSON with `values.parse_int_token`, so integers wider than JavaScript's 2**53 become canonical
     strings and a 5,000-digit legacy number never hits CPython's int<->str digit limit;
-  * accepts the previous schema major (hx/1) and upgrades it IN MEMORY with `migrate_1_to_2`, attaching a
-    `MigrationReport` under `meta.migration`; nothing on disk is touched;
+  * accepts older schema majors (hx/1, hx/2) and upgrades them IN MEMORY through the `MIGRATIONS` chain
+    (`migrate_1_to_2`, `migrate_2_to_3`), attaching one composed `MigrationReport` under `meta.migration`; nothing
+    on disk is touched;
   * refuses any other major.
 """
 from __future__ import annotations
@@ -130,9 +131,70 @@ def migrate_1_to_2(doc: dict) -> tuple[dict, MigrationReport]:
         rep.notes.append(f"{len(rep.id_map)} ids decoded from Verilator spelling")
     if rep.needs_reextract:
         rep.notes.append(f"{len(rep.needs_reextract)} ids need re-extraction (run `hx migrate`)")
-    doc["schema"] = SCHEMA
+    doc["schema"] = "hx/2"                       # each step stamps ITS destination; `upgrade` chains the steps
     doc.setdefault("meta", {})["migration"] = rep.as_dict()
     return doc, rep
+
+
+_SYSTEM_PREFIXES = ("/usr/include", "/usr/lib", "/usr/local/include", "/opt/")
+
+
+def _id_path(i: str) -> str:
+    head = i.split("::", 1)[0]
+    return head.split(":", 1)[1] if ":" in head else head
+
+
+def migrate_2_to_3(doc: dict) -> tuple[dict, MigrationReport]:
+    """hx/2 -> hx/3 in memory. Nothing is renamed (the hx/3 ids need symbol information the file does not hold);
+    the report lists what `hx migrate` must re-extract: position-hashed LSP ids, module callers recorded as
+    functions, hash-less nested LSP functions (found by extent containment, e.g. `Device._interp_with` inside
+    `Device.evaluate`), C/C++ ids with non-system absolute paths (symlink spelling). Because a nested function whose
+    parent is not in the graph cannot be detected, every LSP graph is flagged conservatively as a whole."""
+    rep = MigrationReport(from_schema=str(doc.get("schema")))
+    doc = _values.json_safe(doc)
+    nodes = doc.get("nodes") or {}
+    flagged: set[str] = set()
+
+    def flag(i: str, reason: str) -> None:
+        if i not in flagged:
+            flagged.add(i)
+            rep.needs_reextract.append({"id": i, "reason": reason})
+
+    by_file: dict[str, list[tuple[int, int, str]]] = {}
+    for nid, n in nodes.items():
+        if n.get("precision") == "lsp" and isinstance(n.get("loc"), dict):
+            loc = n["loc"]
+            by_file.setdefault(loc.get("file") or "", []).append((loc.get("line") or 0, loc.get("end_line") or loc.get("line") or 0, nid))
+    lsp_graph = False
+    for nid, n in nodes.items():
+        sym = nid.split("::", 1)[1] if "::" in nid else nid
+        loc = n.get("loc") if isinstance(n.get("loc"), dict) else {}
+        if n.get("precision") == "lsp":
+            lsp_graph = True
+            if "#" in sym:
+                flag(nid, "position-hashed id: hx/3 identifies nested functions by their enclosing scope")
+            elif n.get("kind") == "function" and str(n.get("name") or "").startswith("(module) "):
+                flag(nid, "module caller recorded as a function: hx/3 makes it a `module` node spanning the file")
+            else:
+                line = loc.get("line") or 0
+                for s, e, other in by_file.get(loc.get("file") or "", []):
+                    if other != nid and s < line <= e:
+                        flag(nid, f"nested in {other}: hx/3 includes the enclosing function in the id")
+                        break
+        elif n.get("lang") in ("c", "cpp"):
+            p = _id_path(nid)
+            if p.startswith("/") and not p.startswith(_SYSTEM_PREFIXES):
+                flag(nid, "absolute path in id: hx/3 resolves symlinks to the project root")
+    if lsp_graph:
+        flag(str(doc.get("entry") or ""), "lsp graph: ids may change under hx/3 (nested scopes, module nodes, overload families): re-extract")
+    if rep.needs_reextract:
+        rep.notes.append(f"{len(rep.needs_reextract)} ids need re-extraction (run `hx migrate`)")
+    doc["schema"] = "hx/3"
+    doc.setdefault("meta", {})["migration"] = rep.as_dict()
+    return doc, rep
+
+
+MIGRATIONS = {"1": migrate_1_to_2, "2": migrate_2_to_3}   # major -> the step that produces the next major
 
 
 def _major(s: Any) -> tuple[str, str]:
@@ -148,7 +210,8 @@ def load_graph_text(text: str) -> dict:
 
 
 def upgrade(doc: dict) -> tuple[dict, Optional[MigrationReport]]:
-    """Accept the current major as is, the previous one via in-memory migration, refuse the rest."""
+    """Accept the current major as is; walk older majors through the migration chain (1 -> 2 -> 3) in memory,
+    composing one report whose `from_schema` is the original; refuse anything else (a newer major included)."""
     s = doc.get("schema")
     if s is None:
         raise SchemaError(f"graph has no 'schema' field (expected {SCHEMA!r})")
@@ -156,9 +219,27 @@ def upgrade(doc: dict) -> tuple[dict, Optional[MigrationReport]]:
     want_name, want_major = _major(SCHEMA)
     if name == want_name and major == want_major:
         return _values.json_safe(doc), None
-    if name == want_name and major == "1":
-        return migrate_1_to_2(doc)
-    raise SchemaError(f"unsupported graph schema {s!r}: this hx reads {SCHEMA!r} (and upgrades hx/1 in memory)")
+    if name != want_name or major not in MIGRATIONS:
+        raise SchemaError(f"unsupported graph schema {s!r}: this hx reads {SCHEMA!r} (and upgrades {', '.join('hx/' + m for m in MIGRATIONS)} in memory)")
+    rep: Optional[MigrationReport] = None
+    guard = 0
+    while major != want_major:
+        step = MIGRATIONS.get(major)
+        if step is None or guard > len(MIGRATIONS):
+            raise SchemaError(f"no migration from hx/{major} to {SCHEMA!r}")
+        doc, r = step(doc)
+        if rep is None:
+            rep = r
+        else:
+            composed = {k: r.id_map.get(v, v) for k, v in rep.id_map.items()}
+            composed.update({k: v for k, v in r.id_map.items() if k not in rep.id_map and k not in composed.values()})
+            rep.id_map = composed
+            rep.needs_reextract.extend(x for x in r.needs_reextract if x not in rep.needs_reextract)
+            rep.notes.extend(r.notes)
+        _, major = _major(doc.get("schema"))
+        guard += 1
+    doc.setdefault("meta", {})["migration"] = rep.as_dict()
+    return doc, rep
 
 
 def load_graph_dict(path: str) -> dict:

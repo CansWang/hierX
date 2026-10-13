@@ -27,7 +27,7 @@ class TUCache:
     @staticmethod
     def key(file: str, args: list[str], extra: tuple = ()) -> str:
         h = hashlib.sha1()
-        h.update(os.path.abspath(file).encode())
+        h.update(os.path.realpath(file).encode())        # the same file through a symlink is the same entry
         for a in args:
             h.update(b"\0")
             h.update(a.encode("utf-8", "replace"))

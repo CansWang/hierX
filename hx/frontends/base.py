@@ -51,6 +51,7 @@ class DeclRecord:
     system: bool
     relpath: Optional[str]         # for --exclude matching
     reason: Optional[str] = None   # frontend-specific wording for why it cannot be expanded
+    family: Optional[dict] = None  # verified stub overload family this target stands for: {size, evidence, scope}
 
 
 @dataclass

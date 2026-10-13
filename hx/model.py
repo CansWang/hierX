@@ -12,10 +12,14 @@ import typing
 from dataclasses import dataclass, field, fields as _dc_fields, is_dataclass
 from typing import Any, Optional, Union
 
-SCHEMA = "hx/2"          # "<name>/<major>": a different major is incompatible; fields may be ADDED within a major
+SCHEMA = "hx/3"          # "<name>/<major>": a different major is incompatible; fields may be ADDED within a major
+# hx/3 (2026-10, 0.4.0): ids changed for nested LSP functions (enclosing functions are part of the qualified name),
+# Python module callers (`module` nodes), C/C++ non-external symbols and all C/C++ types (keyed by defining file,
+# `@<8hex>` fingerprint when translation units disagree) and symlinked paths (resolved); Python stub overload
+# families collapse to one target with `family` metadata on the unresolved record.
 # hx/2 (2026-10): ids changed for module-scoped SV types (layout fingerprint), anonymous SV types (declaring
-# context) and Verilator generate-array spelling; values >= 2**53 are strings (see hx/values.py). hx/1 files are
-# upgraded in memory by hx/graphio.py.
+# context) and Verilator generate-array spelling; values >= 2**53 are strings (see hx/values.py). hx/1 and hx/2
+# files are upgraded in memory by hx/graphio.py (relabel + report; `hx migrate` re-extracts).
 
 
 class SchemaError(ValueError):
@@ -153,6 +157,7 @@ class Unresolved:
     reason: str
     loc: Optional[Loc] = None
     id: Optional[str] = None           # declared-but-not-expanded id, if known
+    family: Optional[dict] = None      # hx/3: {size, evidence, scope} when the target is a collapsed stub overload family
 
 
 @dataclass

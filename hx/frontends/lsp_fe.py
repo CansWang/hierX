@@ -7,6 +7,7 @@ costs a round trip.
 """
 from __future__ import annotations
 
+import copy
 import json
 import os
 import queue
@@ -36,7 +37,9 @@ SK = {5: "class", 6: "method", 9: "constructor", 10: "enum", 11: "interface", 12
       8: "field", 22: "enum_member", 23: "struct", 2: "module", 3: "namespace", 19: "object", 26: "type_parameter"}
 FUNC_KINDS = {6, 9, 12}
 TYPE_KINDS = {5, 10, 11, 23, 26}
-CONTAINER_KINDS = {2, 3, 5, 10, 11, 19, 23}
+# Module, Namespace, Class, Method, Enum, Interface, Function, Object, Struct: enclosing FUNCTIONS are part of a
+# qualified name too (review finding H2: two `_emit_global` helpers under different outer functions are distinct).
+CONTAINER_KINDS = {2, 3, 5, 6, 10, 11, 12, 19, 23}
 FIELD_KINDS = {7, 8, 13, 22}
 
 
@@ -238,68 +241,54 @@ def _code_blocks(hover: Any) -> list[str]:
     return blocks
 
 
-def split_top(text: str, sep: str = ",") -> list[str]:
-    out, depth, cur = [], 0, []
-    for ch in text:
-        if ch in "([{<":
-            depth += 1
-        elif ch in ")]}>":
-            depth = max(0, depth - 1)
-        if ch == sep and depth == 0:
-            out.append("".join(cur).strip())
-            cur = []
-        else:
-            cur.append(ch)
-    tail = "".join(cur).strip()
-    if tail or out:
-        out.append(tail)
-    return [x for x in out if x]
+def split_top(text: str, sep: str = ",", lang: str = "py") -> list[str]:
+    """Top-level split that never cuts inside a string literal (review findings H1/H3). `<`/`>` count as
+    brackets only for Rust generics; in Python they are comparison operators."""
+    return _ids.split_top(text, lang, sep=sep, angle=(lang == "rs"))
 
 
 def parse_signature(sig: str, lang: str) -> tuple[list[dict], Optional[str]]:
-    """'pub fn f(a: &mut T, b: &[u8]) -> R' / '(function) def f(a: int, *, b: str = "x") -> None' -> params, return."""
-    sig = re.sub(r"\s+", " ", sig).strip()
+    """'pub fn f(a: &mut T, b: &[u8]) -> R' / '(function) def f(a: int, *, b: str = "x") -> None' -> params, return.
+    Token based (review finding H3): whitespace is squashed only BETWEEN tokens, the parameter list is matched over
+    brackets, and `,` `=` `:` split only at the top level, so a default such as `","` cannot create a parameter."""
+    sig = _ids.squash_ws(sig, lang)
     m = re.search(r"\b(?:fn|def|func)\b\s*[^(]*?\(", sig)
     start = m.end() if m else sig.find("(") + 1
     if start <= 0:
         return [], None
-    depth, i = 1, start
-    while i < len(sig) and depth:
-        if sig[i] in "([{<":
-            depth += 1
-        elif sig[i] in ")]}>":
-            depth -= 1
-        i += 1
-    inner = sig[start:i - 1]
-    rest = sig[i:]
+    span = _ids.paren_span(sig[start - 1:], lang)
+    if span is None:
+        inner, rest = sig[start:], ""
+    else:
+        close = start - 1 + span[1]
+        inner, rest = sig[start:close], sig[close + 1:]
     ret = None
     rm = re.search(r"->\s*(.+?)(?:\s+where\b.*)?$", rest)
     if rm:
         ret = rm.group(1).strip().rstrip(":").strip()
+    rs = lang == "rs"
     params = []
-    for raw in split_top(inner):
+    for raw in _ids.split_top(inner, lang, angle=rs):
         if raw in ("*", "/", "..."):
             continue
-        p = raw
-        default = None
-        if lang == "py" and "=" in p:
-            p, _, default = p.partition("=")
-            p, default = p.strip(), default.strip()
-        if lang == "rs":
+        p, default = raw, None
+        if lang == "py":
+            p, default = _ids.partition_top(raw, lang, "=")
+        if rs:
             mm = re.match(r"^(&\s*(?:'\w+\s+)?(?:mut\s+)?)?(self)\s*(?::\s*(.+))?$", p)
             if mm:
                 typ = mm.group(3) or (re.sub(r"\s+", " ", (mm.group(1) or "")).strip() + " Self").strip()
                 params.append({"name": "self", "type": typ, "dir": "inout" if "mut" in (mm.group(1) or "") or (mm.group(3) and "mut" in mm.group(3)) else "in"})
                 continue
-            name, _, typ = p.partition(":")
+            name, typ = _ids.partition_top(p, lang, ":", angle=True)
             name = re.sub(r"^(mut|ref)\s+", "", name.strip())
-            typ = typ.strip() or "?"
+            typ = (typ or "").strip() or "?"
             d = "inout" if re.match(r"^&\s*(?:'\w+\s+)?mut\b", typ) or typ.startswith("*mut") else "in"
             params.append({"name": name, "type": typ, "dir": d})
         else:
-            name, _, typ = p.partition(":")
+            name, typ = _ids.partition_top(p, lang, ":")
             name = name.strip()
-            typ = typ.strip() or "?"
+            typ = (typ or "").strip() or "?"
             if name.startswith("**"):
                 typ = f"dict[str, {typ}]" if typ != "?" else "dict"
             elif name.startswith("*"):
@@ -318,7 +307,7 @@ class LspFrontend(Frontend):
                  verbose: bool = False, log_path: Optional[str] = None):
         if server not in SERVERS:
             raise FrontendError(f"unknown LSP server profile {server!r}; choose from {sorted(SERVERS)}")
-        self.root = os.path.abspath(root)
+        self.root = _ids.realpath(root)
         self.profile = SERVERS[server]
         self.server = server
         self.cmd = cmd or self.profile["cmd"]
@@ -334,6 +323,9 @@ class LspFrontend(Frontend):
         self.symbols_cache: dict[str, list] = {}  # uri -> flattened symbols
         self.types: dict[str, dict] = {}          # type key -> summary
         self.ids: dict[str, str] = {}
+        self._used_ids: set[str] = set()         # ids handed out so far (O(1) collision check in _register)
+        self._fn_cache: dict[str, FunctionRecord] = {}   # key -> record (review finding H4); handed out as copies
+        self._families: dict[str, dict] = {}     # key of a collapsed stub overload family -> {size, evidence, scope}
         self.type_ids: dict[str, str] = {}
         self.stats: dict = {}
         self.notes: list[str] = []
@@ -401,9 +393,12 @@ class LspFrontend(Frontend):
         structural scan (indentation for Python, brace matching otherwise)."""
         rng = item["range"]
         sel = item.get("selectionRange") or rng
+        uri = item["uri"]
+        if item.get("kind") == 2:                 # a module caller (review finding H5): its extent is the whole file
+            lines = self._lines(uri)
+            return {"start": {"line": 0, "character": 0}, "end": {"line": max(len(lines) - 1, 0), "character": len(lines[-1]) if lines else 0}}
         if rng["end"]["line"] > rng["start"]["line"]:
             return rng
-        uri = item["uri"]
         for sym in self._symbols(uri):
             if sym["selectionRange"]["start"] == sel["start"] and sym["range"]["end"]["line"] > sym["range"]["start"]["line"]:
                 return sym["range"]
@@ -436,7 +431,7 @@ class LspFrontend(Frontend):
         return _ids.rel(uri_to_path(uri), self.root)
 
     def _in_root(self, uri: str) -> bool:
-        p = os.path.abspath(uri_to_path(uri))
+        p = _ids.realpath(uri_to_path(uri))
         return os.path.commonpath([self.root, p]) == self.root and "/site-packages/" not in p and "/target/" not in p
 
     def _mkloc(self, uri: str, rng: dict) -> Loc:
@@ -509,17 +504,29 @@ class LspFrontend(Frontend):
         p = item["selectionRange"]["start"]
         return f"{item['uri']}#{p['line']}:{p['character']}"
 
-    def _qualname(self, item: dict) -> str:
+    def _scope_path(self, item: dict) -> list[tuple[str, int]]:
+        """Containers of an item (classes, modules, enclosing functions), in this order of evidence: the documentSymbol
+        path of the function symbol at the item's position; else the class named in the item's `detail`
+        (`class X (file)`: Pyright lists only the last `@overload` of a name as a symbol, so earlier overloads match no
+        function symbol); else the nearest container symbol enclosing the position."""
         uri = item["uri"]
         pos = item["selectionRange"]["start"]
         sym = self._symbol_at(uri, pos, FUNC_KINDS)
+        if sym is not None:
+            return list(sym["path"])
+        m = re.match(r"^class (\S+) \(", item.get("detail") or "")
+        if m:
+            return [(m.group(1), 5)]
+        cont = self._symbol_at(uri, pos, CONTAINER_KINDS)
+        return (list(cont["path"]) + [(cont["name"], cont["kind"])]) if cont else []
+
+    def _qualname(self, item: dict) -> str:
         parts = []
-        if sym:
-            for name, kind in sym["path"]:
-                if kind in CONTAINER_KINDS:
-                    n = re.sub(r"^impl\s+(?:<[^>]*>\s*)?(?:.*\bfor\s+)?", "", name).strip()
-                    n = re.sub(r"<.*>$", "", n)
-                    parts.append(n)
+        for name, kind in self._scope_path(item):
+            if kind in CONTAINER_KINDS:
+                n = re.sub(r"^impl\s+(?:<[^>]*>\s*)?(?:.*\bfor\s+)?", "", name).strip()
+                n = re.sub(r"<.*>$", "", n)
+                parts.append(n)
         parts.append(item["name"])
         return self.sep.join(parts)
 
@@ -528,9 +535,10 @@ class LspFrontend(Frontend):
         if key not in self.items:
             self.items[key] = item
             cand = _ids.node_id(self.lang, self._rel(item["uri"]), self._qualname(item))
-            if cand in self.ids.values():
-                cand = f"{cand}#{_ids.short_hash(key)}"
+            if cand in self._used_ids:
+                cand = f"{cand}#{_ids.short_hash(key)}"      # residual collision only; position-dependent by design
             self.ids[key] = cand
+            self._used_ids.add(cand)
         return key
 
     # ---------------------------------------------------------------- Frontend API
@@ -568,7 +576,7 @@ class LspFrontend(Frontend):
         path_block = next((b for b in blocks if b is not sig and re.match(r"^[\w:.]+$", b.strip())), None)
         if sig is None:
             sig = item.get("detail") or self._text(uri, {"start": item["range"]["start"], "end": item["selectionRange"]["end"]}).strip() + "(...)"
-        return re.sub(r"\s+", " ", sig).strip(), path_block
+        return _ids.squash_ws(sig, self.lang), path_block
 
     def _param_positions(self, item: dict, params: list[dict]) -> dict[str, dict]:
         """Position of each parameter name inside the function header (for typeDefinition)."""
@@ -672,13 +680,145 @@ class LspFrontend(Frontend):
             entry["fields"].append({"name": ch["name"], "type": ftype or "?", "pos": ch["selectionRange"]["start"]})
         return key2
 
+    # ---------------------------------------------------------------- function records
+    @staticmethod
+    def _copy_record(rec: FunctionRecord) -> FunctionRecord:
+        """Traversal mutates `depth` and `calls` on the node it is handed (and may append to call-site lists), so a
+        memoised record is never shared: every caller gets its own copy (review finding H4 safeguard)."""
+        return FunctionRecord(node=copy.deepcopy(rec.node), callsites=[copy.copy(cs) for cs in rec.callsites],
+                              type_keys=list(rec.type_keys), global_keys=list(rec.global_keys))
+
+    @staticmethod
+    def _is_method(item: dict) -> bool:
+        """Pyright reports methods as kind 12 (Function) in call-hierarchy items; the class then shows only in `detail`."""
+        return item.get("kind") in (6, 9) or bool(re.match(r"^class \S+ \(", item.get("detail") or ""))
+
+    @staticmethod
+    def _pos(item: dict) -> tuple[int, int]:
+        p = item["selectionRange"]["start"]
+        return (p["line"], p["character"])
+
+    def _is_overload(self, item: dict) -> bool:
+        """True when an `@overload` / `@typing.overload` decorator sits above the declaration (blank, comment and other
+        decorator lines are skipped)."""
+        lines = self._lines(item["uri"])
+        li = item["range"]["start"]["line"] - 1
+        while li >= 0:
+            s = lines[li].strip() if li < len(lines) else ""
+            if not s or s.startswith("#"):
+                li -= 1
+                continue
+            if s.startswith("@"):
+                if re.match(r"^@(?:typing\.)?overload\b", s):
+                    return True
+                li -= 1
+                continue
+            return False
+        return False
+
+    def _scope_label(self, item: dict) -> Optional[str]:
+        """Lexical scope of an item: its container path (`str`), the CONFIRMED module scope `<module>` (a plain-function
+        `detail` such as `(builtins.pyi)`, or documentSymbol succeeded and no container holds the position), or None
+        when the scope is unknown — an unknown scope never joins a family."""
+        containers = [n for n, k in self._scope_path(item) if k in CONTAINER_KINDS]
+        if containers:
+            return ".".join(containers)
+        if re.match(r"^\(.+\)", item.get("detail") or "") or self._symbols(item["uri"]):
+            return "<module>"
+        return None
+
+    def _family_key(self, item: dict) -> Optional[tuple]:
+        """(uri, scope, name) of a VERIFIED Python stub overload family member, else None: the item must come from a
+        `.pyi` or a library file, carry `@overload`, and have a known lexical scope. Never a name-only rule; Rust and
+        other servers are untouched."""
+        if self.lang != "py":
+            return None
+        uri = item["uri"]
+        if not (uri.endswith(".pyi") or not self._in_root(uri)):
+            return None
+        if not self._is_overload(item):
+            return None
+        scope = self._scope_label(item)
+        if scope is None:
+            return None
+        return (uri, scope, item["name"])
+
+    def _outgoing(self, item: dict, uri: str) -> list[CallSite]:
+        """Call sites of an item. The members of a verified stub overload family (Pyright returns one call-hierarchy
+        item per `@overload`) collapse into ONE target — the member at the smallest position — with one call site per
+        distinct fromRange; the representative's `family` metadata is kept for `declaration()` so the migration mapper
+        has independent evidence. Everything else is one target per item."""
+        callsites: list[CallSite] = []
+        try:
+            calls = self._req("callHierarchy/outgoingCalls", {"item": item}) or []
+        except LspError as e:
+            self.errors.append({"file": self._rel(uri), "error": str(e)})
+            calls = []
+        families: dict[tuple, dict] = {}
+        order: list[tuple] = []
+        for c in calls:
+            to = c["to"]
+            fk = self._family_key(to)
+            if fk is None:
+                ckey = self._register(to)
+                for fr in c.get("fromRanges") or [None]:
+                    callsites.append(CallSite(callee_key=ckey, name=to["name"], loc=self._mkloc(uri, fr) if fr else None, kind="call",
+                                              args=self._call_args(uri, fr) if fr else []))
+                continue
+            fam = families.get(fk)
+            if fam is None:
+                fam = families[fk] = {"item": to, "ranges": [], "size": 0}
+                order.append(fk)
+            fam["size"] += 1
+            if self._pos(to) < self._pos(fam["item"]):
+                fam["item"] = to
+            fam["ranges"].extend(c.get("fromRanges") or [])
+        for fk in order:
+            fam = families[fk]
+            rep = fam["item"]
+            ckey = self._register(rep)
+            self._families[ckey] = {"size": fam["size"], "evidence": "@overload", "scope": fk[1]}
+            seen: set[tuple[int, int]] = set()
+            ranges = []
+            for fr in fam["ranges"]:
+                k = (fr["start"]["line"], fr["start"]["character"])
+                if k not in seen:
+                    seen.add(k)
+                    ranges.append(fr)
+            for fr in ranges or [None]:
+                callsites.append(CallSite(callee_key=ckey, name=rep["name"], loc=self._mkloc(uri, fr) if fr else None, kind="call",
+                                          args=self._call_args(uri, fr) if fr else []))
+        return callsites
+
+    def _module_record(self, key: str, item: dict) -> FunctionRecord:
+        """A module caller (Pyright's `(module) x.py`, kind 2, zero-length range): a `module` node spanning the whole
+        file whose body hash covers the whole source (review finding H5). Outgoing calls are skipped for Python only:
+        every one of the 12,638 module outgoing requests in the recorded evidence returned nothing."""
+        uri = item["uri"]
+        lines = self._lines(uri)
+        full = self._full_range(item)
+        base = os.path.basename(uri_to_path(uri))
+        node = Node(id=self.ids[key], kind="module", name=item["name"], qualname=item["name"], lang=self.lang,
+                    loc=self._mkloc(uri, full), signature=f"module {base}", storage=None,
+                    body_hash=_ids.body_hash("\n".join(lines), self.lang), precision="lsp",
+                    returns=None, params=[], globals=GlobalRefs(), attrs={})
+        callsites = [] if self.lang == "py" else self._outgoing(item, uri)
+        return FunctionRecord(node=node, callsites=callsites, type_keys=[], global_keys=[])
+
     def function(self, key: str) -> Optional[FunctionRecord]:
+        cached = self._fn_cache.get(key)
+        if cached is not None:
+            return self._copy_record(cached)
         item = self.items.get(key)
         if item is None:
             return None
         uri = item["uri"]
         if not self._in_root(uri):
             return None
+        if item.get("kind") == 2:
+            rec = self._module_record(key, item)
+            self._fn_cache[key] = rec
+            return self._copy_record(rec)
         sig, path_block = self._hover_sig(item)
         params, ret = parse_signature(sig, self.lang)
         full = self._full_range(item)
@@ -695,54 +835,33 @@ class LspFrontend(Frontend):
             pparams.append(Param(name=p["name"], type=p["type"], type_ref=self.type_ids.get(tk or ""), dir=p["dir"],
                                  dir_source="heuristic" if self.lang == "rs" else "explicit"))
         qual = self._qualname(item)
-        is_method = item.get("kind") in (6, 9)
         body = self._text(uri, full)
-        node = Node(id=self.ids[key], kind="method" if is_method else "function", name=item["name"], qualname=qual, lang=self.lang,
-                    loc=self._mkloc(uri, full), signature=sig, storage=None, body_hash=_ids.body_hash(body, self.lang), precision="lsp",
+        node = Node(id=self.ids[key], kind="method" if self._is_method(item) else "function", name=item["name"], qualname=qual,
+                    lang=self.lang, loc=self._mkloc(uri, full), signature=sig, storage=None,
+                    body_hash=_ids.body_hash(body, self.lang), precision="lsp",
                     returns=TypeUse(type=ret) if ret else None, params=pparams, globals=GlobalRefs(),
                     attrs={"module": path_block} if path_block else {})
-        callsites: list[CallSite] = []
-        try:
-            calls = self._req("callHierarchy/outgoingCalls", {"item": item}) or []
-        except LspError as e:
-            self.errors.append({"file": self._rel(uri), "error": str(e)})
-            calls = []
-        for c in calls:
-            to = c["to"]
-            ckey = self._register(to)
-            for fr in c.get("fromRanges") or [None]:
-                loc = self._mkloc(uri, fr) if fr else None
-                args = self._call_args(uri, fr) if fr else []
-                callsites.append(CallSite(callee_key=ckey, name=to["name"], loc=loc, kind="call", args=args))
-        return FunctionRecord(node=node, callsites=callsites, type_keys=_uniq(type_keys), global_keys=[])
+        rec = FunctionRecord(node=node, callsites=self._outgoing(item, uri), type_keys=_uniq(type_keys), global_keys=[])
+        self._fn_cache[key] = rec
+        return self._copy_record(rec)
 
     def _call_args(self, uri: str, rng: dict) -> list[str]:
+        """Spelled arguments of the call whose callee name ends at `rng.end`: skip the callee tail (turbofish,
+        generics, Rust `!`) to the `(`, then let `ids.paren_args` match the list and split it — literal-aware,
+        so commas, brackets and `>` inside strings never split (review finding H1)."""
         lines = self._lines(uri)
         li, ci = rng["end"]["line"], rng["end"]["character"]
-        buf, depth, started = [], 0, False
-        while li < len(lines) and li < rng["end"]["line"] + 30:
+        last = min(len(lines), rng["end"]["line"] + 30)
+        while li < last:
             line = lines[li]
             while ci < len(line):
                 ch = line[ci]
-                if not started:
-                    if ch == "(":
-                        started, depth = True, 1
-                    elif ch in " \t" or (ch == ":" and self.lang == "rs") or ch == "!":
-                        pass
-                    elif ch.isalnum() or ch == "_" or ch in "<>:":
-                        pass  # turbofish / generic args before '('
-                    else:
-                        return []
-                else:
-                    if ch in "([{":
-                        depth += 1
-                    elif ch in ")]}":
-                        depth -= 1
-                        if depth == 0:
-                            return split_top(re.sub(r"\s+", " ", "".join(buf)).strip())
-                    buf.append(ch)
-                ci += 1
-            buf.append(" ")
+                if ch == "(":
+                    return _ids.paren_args("\n".join([line[ci:]] + lines[li + 1:last]), self.lang)
+                if ch in " \t" or (ch == ":" and self.lang == "rs") or ch == "!" or ch.isalnum() or ch == "_" or ch in "<>:":
+                    ci += 1          # turbofish / generic args before '('
+                    continue
+                return []
             li, ci = li + 1, 0
         return []
 
@@ -752,12 +871,20 @@ class LspFrontend(Frontend):
             return None
         uri = item["uri"]
         inside = self._in_root(uri)
+        fam = self._families.get(key)
+        if item.get("kind") == 2:                 # module caller: admissible like a function, spanning the file (H5)
+            loc = self._mkloc(uri, self._full_range(item))
+            return DeclRecord(id=self.ids[key], name=item["name"], loc=loc, has_definition=inside, system=not inside, relpath=loc.file,
+                              reason=None if inside else "outside project root (library)")
         loc = self._mkloc(uri, item["range"])
         if item.get("kind") not in FUNC_KINDS:
             return DeclRecord(id=self.ids[key], name=item["name"], loc=loc, has_definition=False, system=not inside, relpath=loc.file,
-                              reason=f"not a function ({SK.get(item.get('kind'), 'symbol')} constructor/variant)")
+                              reason=f"not a function ({SK.get(item.get('kind'), 'symbol')} constructor/variant)", family=fam)
+        if inside and uri.endswith(".pyi"):      # a project stub: declared here, defined nowhere (library stubs keep their wording)
+            return DeclRecord(id=self.ids[key], name=item["name"], loc=loc, has_definition=False, system=False, relpath=loc.file,
+                              reason="stub declaration (a .pyi has no body)", family=fam)
         return DeclRecord(id=self.ids[key], name=item["name"], loc=loc, has_definition=inside, system=not inside, relpath=loc.file,
-                          reason=None if inside else "outside project root (library)")
+                          reason=None if inside else "outside project root (library)", family=fam)
 
     def type(self, key: str) -> Optional[TypeRecord]:
         t = self.types.get(key)

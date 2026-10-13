@@ -42,12 +42,12 @@ class _Builder:
             return False
         return any(fnmatch.fnmatch(relpath, pat) for pat in self.opts.exclude)
 
-    def unresolved(self, name: str, src: str, reason: str, loc, uid: Optional[str]) -> None:
+    def unresolved(self, name: str, src: str, reason: str, loc, uid: Optional[str], family: Optional[dict] = None) -> None:
         key = (uid or name, src, reason)
         if key in self.seen_unresolved:
             return
         self.seen_unresolved.add(key)
-        self.g.unresolved.append(Unresolved(name=name, src=src, reason=reason, loc=loc, id=uid))
+        self.g.unresolved.append(Unresolved(name=name, src=src, reason=reason, loc=loc, id=uid, family=family))
 
     def edge_from(self, src_id: str, cs: CallSite, dst_id: Optional[str]) -> Edge:
         e = Edge(src=src_id, dst=dst_id, kind=cs.kind, loc=cs.loc, args=list(cs.args),
@@ -102,16 +102,16 @@ class _Builder:
             self.unresolved(cs.name, src_id, "unknown symbol", cs.loc, target_id)
             return None
         if self.excluded(decl.relpath):
-            self.unresolved(decl.name, src_id, "excluded by filter", cs.loc, decl.id)
+            self.unresolved(decl.name, src_id, "excluded by filter", cs.loc, decl.id, decl.family)
             return None
         if decl.system and not self.opts.include_system:
-            self.unresolved(decl.name, src_id, decl.reason or "system header excluded", cs.loc, decl.id)
+            self.unresolved(decl.name, src_id, decl.reason or "system header excluded", cs.loc, decl.id, decl.family)
             return None
         if not decl.has_definition:
-            self.unresolved(decl.name, src_id, decl.reason or "no definition in TU set", cs.loc, decl.id)
+            self.unresolved(decl.name, src_id, decl.reason or "no definition in TU set", cs.loc, decl.id, decl.family)
             return None
         if self.opts.depth is not None and abs(next_depth) > self.opts.depth:
-            self.unresolved(decl.name, src_id, "beyond depth limit", cs.loc, decl.id)
+            self.unresolved(decl.name, src_id, "beyond depth limit", cs.loc, decl.id, decl.family)
             return None
         return target_id
 
@@ -133,7 +133,7 @@ class _Builder:
             decl = self.fe.declaration(key)
             name = cs.name if cs else (decl.name if decl else key)
             self.unresolved(name, parent_id, reason, cs.loc if cs else (decl.loc if decl else None),
-                            decl.id if decl else self.fe.stable_id(key))
+                            decl.id if decl else self.fe.stable_id(key), decl.family if decl else None)
 
     # -- passes -----------------------------------------------------------
     def callees(self, entry_key: str) -> None:
@@ -183,25 +183,30 @@ class _Builder:
             if self.opts.depth is not None and abs(d - 1) > self.opts.depth:
                 continue
             for caller_key, cs in self.fe.callers(key):
-                rec = self.fe.function(caller_key)
-                if rec is None:
-                    continue
-                node = rec.node
+                # Review finding H4: decide admission from the cheap declaration record FIRST; the function record
+                # (hover + outgoing calls for an LSP frontend) is fetched only for a caller that enters the graph.
                 decl = self.fe.declaration(caller_key)
-                if decl and (self.excluded(decl.relpath) or (decl.system and not self.opts.include_system)):
+                if decl is None or self.excluded(decl.relpath) or (decl.system and not self.opts.include_system):
                     continue
-                if node.id not in self.g.nodes:
+                node = self.g.nodes.get(decl.id)
+                if node is None:
                     if self.opts.max_nodes is not None and len(self.g.nodes) >= self.opts.max_nodes:
                         # the caller would not fit: no edge from a node that is not in the graph, just the record
                         self.truncated = True
                         if callee_id:
-                            self.unresolved(node.name, callee_id, "caller truncated by --max-nodes", cs.loc, node.id)
+                            self.unresolved(decl.name, callee_id, "caller truncated by --max-nodes", cs.loc, decl.id, decl.family)
                         continue
+                    rec = self.fe.function(caller_key)
+                    if rec is None:
+                        continue
+                    node = rec.node
                     self.add_node(node, d - 1)
                     for tk in rec.type_keys:
                         self.add_type(tk, 0, node.id)
                     self.add_globals(rec)
-                self.edge_from(node.id, cs, callee_id)
+                elif abs(d - 1) < abs(node.depth):
+                    node.depth = d - 1
+                self.edge_from(node.id, cs, callee_id)       # `node` is the GRAPH node, so `calls` lands where it is kept
                 if callee_id and callee_id not in node.calls:
                     node.calls.append(callee_id)
                 if caller_key not in seen:

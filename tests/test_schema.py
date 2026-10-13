@@ -1,4 +1,4 @@
-"""The published IR schema (hx/schema/hx-1.schema.json) validates real graphs, and the loader enforces the major."""
+"""The published IR schema (hx/schema/hx-3.schema.json) validates real graphs, and the loader enforces the major."""
 import json
 import os
 
@@ -7,7 +7,7 @@ import pytest
 from hx.model import Graph, SchemaError
 
 jsonschema = pytest.importorskip("jsonschema")
-SCHEMA_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "hx", "schema", "hx-2.schema.json")
+SCHEMA_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "hx", "schema", "hx-3.schema.json")
 
 
 def _validator():
@@ -39,23 +39,36 @@ def test_fake_graph_validates_and_roundtrips():
 
 def test_loader_enforces_schema_major(tmp_path):
     from hx import graphio
-    d = {"schema": "hx/2", "root": "/r", "lang": "c", "entry": "c:a.c::f", "nodes": {}, "types": {}, "globals": {}, "edges": [], "unresolved": []}
+    d = {"schema": "hx/3", "root": "/r", "lang": "c", "entry": "c:a.c::f", "nodes": {}, "types": {}, "globals": {}, "edges": [], "unresolved": []}
     assert Graph.from_dict(d).entry == "c:a.c::f"
-    d2 = dict(d, schema="hx/2.3")           # minor additions are fine
-    assert Graph.from_dict(d2).schema == "hx/2.3"
+    d2 = dict(d, schema="hx/3.3")           # minor additions are fine
+    assert Graph.from_dict(d2).schema == "hx/3.3"
     with pytest.raises(SchemaError):
-        Graph.from_dict(dict(d, schema="hx/3"))
+        Graph.from_dict(dict(d, schema="hx/4"))
     with pytest.raises(SchemaError):
         Graph.from_dict({k: v for k, v in d.items() if k != "schema"})
     with pytest.raises(SchemaError):
         Graph.from_dict(dict(d, schema="other/1"))
-    with pytest.raises(SchemaError):          # the dataclass boundary takes only the current major …
-        Graph.from_dict(dict(d, schema="hx/1"))
-    up, rep = graphio.upgrade(dict(d, schema="hx/1"))   # … the shared loader upgrades hx/1 in memory first
-    assert up["schema"] == "hx/2" and rep is not None and rep.from_schema == "hx/1" and not rep.pending
-    p = tmp_path / "old.json"
-    p.write_text(json.dumps(dict(d, schema="hx/1")))
-    assert Graph.load(str(p)).schema == "hx/2"
-    p.write_text(json.dumps(dict(d, schema="hx/3")))
+    for old in ("hx/1", "hx/2"):
+        with pytest.raises(SchemaError):      # the dataclass boundary takes only the current major …
+            Graph.from_dict(dict(d, schema=old))
+        up, rep = graphio.upgrade(dict(d, schema=old))   # … the shared loader walks older majors up in memory first
+        assert up["schema"] == "hx/3" and rep is not None and rep.from_schema == old and not rep.pending
+        p = tmp_path / "old.json"
+        p.write_text(json.dumps(dict(d, schema=old)))
+        assert Graph.load(str(p)).schema == "hx/3"
+    p = tmp_path / "new.json"
+    p.write_text(json.dumps(dict(d, schema="hx/4")))
     with pytest.raises(SchemaError):
         Graph.load(str(p))
+
+
+def test_chain_stamps_each_step():
+    """`migrate_1_to_2` alone yields a literal hx/2 document (not the current major), so the chain cannot skip a step."""
+    from hx import graphio
+    d = {"schema": "hx/1", "root": "/r", "lang": "c", "entry": "c:a.c::f", "nodes": {}, "types": {}, "globals": {}, "edges": [], "unresolved": []}
+    mid, rep = graphio.migrate_1_to_2(dict(d))
+    assert mid["schema"] == "hx/2" and rep.from_schema == "hx/1"
+    final, rep2 = graphio.migrate_2_to_3(mid)
+    assert final["schema"] == "hx/3" and rep2.from_schema == "hx/2"
+    assert list(graphio.MIGRATIONS) == ["1", "2"]

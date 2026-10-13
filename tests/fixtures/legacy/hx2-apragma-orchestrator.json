@@ -1,0 +1,5075 @@
+{
+  "schema": "hx/2",
+  "generated": "2026-10-10T08:07:29+00:00",
+  "root": "/home/canswang/apragma",
+  "lang": "py",
+  "entry": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.build",
+  "meta": {
+    "truncated": false,
+    "options": {
+      "depth": 3,
+      "type_depth": 2,
+      "include_callers": false,
+      "include_system": false,
+      "exclude": [],
+      "max_nodes": 500
+    },
+    "entry_arg": "src/apragma/backends/build_orchestrator.py:BuildOrchestrator.build",
+    "server": "/home/canswang/hierX/.venv/bin/python -m pyright.langserver --stdio",
+    "extract_args": {
+      "entry": "src/apragma/backends/build_orchestrator.py:BuildOrchestrator.build",
+      "root": "/home/canswang/apragma",
+      "compile_commands": null,
+      "depth": 3,
+      "type_depth": 2,
+      "include_callers": false,
+      "include_system": false,
+      "exclude": [],
+      "max_nodes": 500,
+      "extra_args": [],
+      "resource_dir": null,
+      "lang": "python",
+      "sv_files": [],
+      "filelist": null,
+      "top": null,
+      "verilator": "verilator",
+      "lsp_cmd": [
+        "/home/canswang/hierX/.venv/bin/python",
+        "-m",
+        "pyright.langserver",
+        "--stdio"
+      ],
+      "lsp_timeout": 120
+    },
+    "index": {
+      "server": "/home/canswang/hierX/.venv/bin/python -m pyright.langserver --stdio",
+      "ready_seconds": 1.66,
+      "tus": 0,
+      "parsed": 0,
+      "cached": 0,
+      "tu_errors": 0,
+      "diagnostics": 0,
+      "index_seconds": 1.66
+    }
+  },
+  "nodes": {
+    "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.build": {
+      "id": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.build",
+      "kind": "method",
+      "name": "build",
+      "qualname": "BuildOrchestrator.build",
+      "lang": "py",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 245,
+        "end_line": 256,
+        "col": 3
+      },
+      "signature": "(method) def build(s: Self@BuildOrchestrator) -> None",
+      "storage": null,
+      "depth": 0,
+      "body_hash": "sha1:1f8fbcaf33c82174d020a8ccc57b84075e9580ad",
+      "precision": "lsp",
+      "returns": {
+        "type": "None",
+        "type_ref": null
+      },
+      "params": [
+        {
+          "name": "s",
+          "type": "Self@BuildOrchestrator",
+          "type_ref": null,
+          "dir": "in",
+          "dir_source": "explicit"
+        }
+      ],
+      "globals": {
+        "reads": [],
+        "writes": []
+      },
+      "calls": [
+        "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator._build"
+      ],
+      "attrs": {},
+      "runtime": null
+    },
+    "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator._build": {
+      "id": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator._build",
+      "kind": "method",
+      "name": "_build",
+      "qualname": "BuildOrchestrator._build",
+      "lang": "py",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 258,
+        "end_line": 512,
+        "col": 3
+      },
+      "signature": "(method) def _build(s: Self@BuildOrchestrator) -> None",
+      "storage": null,
+      "depth": 1,
+      "body_hash": "sha1:4343fdbb0e1ac4655110201c1752a50ddbe4657a",
+      "precision": "lsp",
+      "returns": {
+        "type": "None",
+        "type_ref": null
+      },
+      "params": [
+        {
+          "name": "s",
+          "type": "Self@BuildOrchestrator",
+          "type_ref": null,
+          "dir": "in",
+          "dir_source": "explicit"
+        }
+      ],
+      "globals": {
+        "reads": [],
+        "writes": []
+      },
+      "calls": [
+        "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.setup",
+        "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator._node_banner_cmd"
+      ],
+      "attrs": {},
+      "runtime": null
+    },
+    "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.setup": {
+      "id": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.setup",
+      "kind": "method",
+      "name": "setup",
+      "qualname": "BuildOrchestrator.setup",
+      "lang": "py",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 193,
+        "end_line": 239,
+        "col": 3
+      },
+      "signature": "(method) def setup(s: Self@BuildOrchestrator) -> None",
+      "storage": null,
+      "depth": 2,
+      "body_hash": "sha1:c43c555a72e86b862e51ee85471485507be0a243",
+      "precision": "lsp",
+      "returns": {
+        "type": "None",
+        "type_ref": null
+      },
+      "params": [
+        {
+          "name": "s",
+          "type": "Self@BuildOrchestrator",
+          "type_ref": null,
+          "dir": "in",
+          "dir_source": "explicit"
+        }
+      ],
+      "globals": {
+        "reads": [],
+        "writes": []
+      },
+      "calls": [
+        "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.set_unique_build_ids",
+        "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.dump_yamls",
+        "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.dump_commands",
+        "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.dump_debug_commands",
+        "py:src/apragma/backends/build_orchestrator.py::_dump_assertion_check_scripts",
+        "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.dump_graphviz"
+      ],
+      "attrs": {},
+      "runtime": null
+    },
+    "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator._node_banner_cmd": {
+      "id": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator._node_banner_cmd",
+      "kind": "method",
+      "name": "_node_banner_cmd",
+      "qualname": "BuildOrchestrator._node_banner_cmd",
+      "lang": "py",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 241,
+        "end_line": 243,
+        "col": 3
+      },
+      "signature": "(method) def _node_banner_cmd( s: Self@BuildOrchestrator, node_name: Unknown ) -> str",
+      "storage": null,
+      "depth": 2,
+      "body_hash": "sha1:2616fb869cba48cc94825114382eb57b211467fd",
+      "precision": "lsp",
+      "returns": {
+        "type": "str",
+        "type_ref": null
+      },
+      "params": [
+        {
+          "name": "s",
+          "type": "Self@BuildOrchestrator",
+          "type_ref": null,
+          "dir": "in",
+          "dir_source": "explicit"
+        },
+        {
+          "name": "node_name",
+          "type": "Unknown",
+          "type_ref": null,
+          "dir": "in",
+          "dir_source": "explicit"
+        }
+      ],
+      "globals": {
+        "reads": [],
+        "writes": []
+      },
+      "calls": [
+        "py:src/apragma/backends/cli_commands.py::helper_command"
+      ],
+      "attrs": {},
+      "runtime": null
+    },
+    "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.set_unique_build_ids": {
+      "id": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.set_unique_build_ids",
+      "kind": "method",
+      "name": "set_unique_build_ids",
+      "qualname": "BuildOrchestrator.set_unique_build_ids",
+      "lang": "py",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 157,
+        "end_line": 178,
+        "col": 3
+      },
+      "signature": "(method) def set_unique_build_ids(s: Self@BuildOrchestrator) -> None",
+      "storage": null,
+      "depth": 3,
+      "body_hash": "sha1:8fc2aaf654d9533781e6deb672dc5ab890d808cd",
+      "precision": "lsp",
+      "returns": {
+        "type": "None",
+        "type_ref": null
+      },
+      "params": [
+        {
+          "name": "s",
+          "type": "Self@BuildOrchestrator",
+          "type_ref": null,
+          "dir": "in",
+          "dir_source": "explicit"
+        }
+      ],
+      "globals": {
+        "reads": [],
+        "writes": []
+      },
+      "calls": [],
+      "attrs": {},
+      "runtime": null
+    },
+    "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.dump_yamls": {
+      "id": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.dump_yamls",
+      "kind": "method",
+      "name": "dump_yamls",
+      "qualname": "BuildOrchestrator.dump_yamls",
+      "lang": "py",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 57,
+        "end_line": 62,
+        "col": 3
+      },
+      "signature": "(method) def dump_yamls( s: Self@BuildOrchestrator, node_name: Unknown, build_dir: Unknown ) -> None",
+      "storage": null,
+      "depth": 3,
+      "body_hash": "sha1:e8d872397d37f413b478641d60c8e911ef3a6311",
+      "precision": "lsp",
+      "returns": {
+        "type": "None",
+        "type_ref": null
+      },
+      "params": [
+        {
+          "name": "s",
+          "type": "Self@BuildOrchestrator",
+          "type_ref": null,
+          "dir": "in",
+          "dir_source": "explicit"
+        },
+        {
+          "name": "node_name",
+          "type": "Unknown",
+          "type_ref": null,
+          "dir": "in",
+          "dir_source": "explicit"
+        },
+        {
+          "name": "build_dir",
+          "type": "Unknown",
+          "type_ref": null,
+          "dir": "in",
+          "dir_source": "explicit"
+        }
+      ],
+      "globals": {
+        "reads": [],
+        "writes": []
+      },
+      "calls": [],
+      "attrs": {},
+      "runtime": null
+    },
+    "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.dump_commands": {
+      "id": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.dump_commands",
+      "kind": "method",
+      "name": "dump_commands",
+      "qualname": "BuildOrchestrator.dump_commands",
+      "lang": "py",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 64,
+        "end_line": 115,
+        "col": 3
+      },
+      "signature": "(method) def dump_commands( s: Self@BuildOrchestrator, commands: Unknown, node_name: Unknown, build_dir: Unknown ) -> None",
+      "storage": null,
+      "depth": 3,
+      "body_hash": "sha1:9e253b1d7bacdae55b1654539276694be94a2812",
+      "precision": "lsp",
+      "returns": {
+        "type": "None",
+        "type_ref": null
+      },
+      "params": [
+        {
+          "name": "s",
+          "type": "Self@BuildOrchestrator",
+          "type_ref": null,
+          "dir": "in",
+          "dir_source": "explicit"
+        },
+        {
+          "name": "commands",
+          "type": "Unknown",
+          "type_ref": null,
+          "dir": "in",
+          "dir_source": "explicit"
+        },
+        {
+          "name": "node_name",
+          "type": "Unknown",
+          "type_ref": null,
+          "dir": "in",
+          "dir_source": "explicit"
+        },
+        {
+          "name": "build_dir",
+          "type": "Unknown",
+          "type_ref": null,
+          "dir": "in",
+          "dir_source": "explicit"
+        }
+      ],
+      "globals": {
+        "reads": [],
+        "writes": []
+      },
+      "calls": [],
+      "attrs": {},
+      "runtime": null
+    },
+    "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.dump_debug_commands": {
+      "id": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.dump_debug_commands",
+      "kind": "method",
+      "name": "dump_debug_commands",
+      "qualname": "BuildOrchestrator.dump_debug_commands",
+      "lang": "py",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 117,
+        "end_line": 152,
+        "col": 3
+      },
+      "signature": "(method) def dump_debug_commands( s: Self@BuildOrchestrator, commands: Unknown, node_name: Unknown, build_dir: Unknown ) -> None",
+      "storage": null,
+      "depth": 3,
+      "body_hash": "sha1:000bd6280b755e4a32be66b4797685c8d227263b",
+      "precision": "lsp",
+      "returns": {
+        "type": "None",
+        "type_ref": null
+      },
+      "params": [
+        {
+          "name": "s",
+          "type": "Self@BuildOrchestrator",
+          "type_ref": null,
+          "dir": "in",
+          "dir_source": "explicit"
+        },
+        {
+          "name": "commands",
+          "type": "Unknown",
+          "type_ref": null,
+          "dir": "in",
+          "dir_source": "explicit"
+        },
+        {
+          "name": "node_name",
+          "type": "Unknown",
+          "type_ref": null,
+          "dir": "in",
+          "dir_source": "explicit"
+        },
+        {
+          "name": "build_dir",
+          "type": "Unknown",
+          "type_ref": null,
+          "dir": "in",
+          "dir_source": "explicit"
+        }
+      ],
+      "globals": {
+        "reads": [],
+        "writes": []
+      },
+      "calls": [],
+      "attrs": {},
+      "runtime": null
+    },
+    "py:src/apragma/backends/build_orchestrator.py::_dump_assertion_check_scripts": {
+      "id": "py:src/apragma/backends/build_orchestrator.py::_dump_assertion_check_scripts",
+      "kind": "function",
+      "name": "_dump_assertion_check_scripts",
+      "qualname": "_dump_assertion_check_scripts",
+      "lang": "py",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 19,
+        "end_line": 21,
+        "col": 1
+      },
+      "signature": "(function) def _dump_assertion_check_scripts( node_name: Unknown, inner_dir: Unknown ) -> None",
+      "storage": null,
+      "depth": 3,
+      "body_hash": "sha1:5d93fc378677112eba3d6dd0c1e7bfd46d67b5ed",
+      "precision": "lsp",
+      "returns": {
+        "type": "None",
+        "type_ref": null
+      },
+      "params": [
+        {
+          "name": "node_name",
+          "type": "Unknown",
+          "type_ref": null,
+          "dir": "in",
+          "dir_source": "explicit"
+        },
+        {
+          "name": "inner_dir",
+          "type": "Unknown",
+          "type_ref": null,
+          "dir": "in",
+          "dir_source": "explicit"
+        }
+      ],
+      "globals": {
+        "reads": [],
+        "writes": []
+      },
+      "calls": [],
+      "attrs": {},
+      "runtime": null
+    },
+    "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.dump_graphviz": {
+      "id": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.dump_graphviz",
+      "kind": "method",
+      "name": "dump_graphviz",
+      "qualname": "BuildOrchestrator.dump_graphviz",
+      "lang": "py",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 154,
+        "end_line": 155,
+        "col": 3
+      },
+      "signature": "(method) def dump_graphviz(s: Self@BuildOrchestrator) -> None",
+      "storage": null,
+      "depth": 3,
+      "body_hash": "sha1:92032c959d58cef224536a9dbe11812ccff7c0b4",
+      "precision": "lsp",
+      "returns": {
+        "type": "None",
+        "type_ref": null
+      },
+      "params": [
+        {
+          "name": "s",
+          "type": "Self@BuildOrchestrator",
+          "type_ref": null,
+          "dir": "in",
+          "dir_source": "explicit"
+        }
+      ],
+      "globals": {
+        "reads": [],
+        "writes": []
+      },
+      "calls": [],
+      "attrs": {},
+      "runtime": null
+    },
+    "py:src/apragma/backends/cli_commands.py::helper_command": {
+      "id": "py:src/apragma/backends/cli_commands.py::helper_command",
+      "kind": "function",
+      "name": "helper_command",
+      "qualname": "helper_command",
+      "lang": "py",
+      "loc": {
+        "file": "src/apragma/backends/cli_commands.py",
+        "line": 20,
+        "end_line": 30,
+        "col": 1
+      },
+      "signature": "(function) def helper_command( name: Unknown, *args: Unknown, for_build: bool = True ) -> str",
+      "storage": null,
+      "depth": 3,
+      "body_hash": "sha1:b7ff3f96ed74be236c7d0d014c4bad6511a01ab9",
+      "precision": "lsp",
+      "returns": {
+        "type": "str",
+        "type_ref": null
+      },
+      "params": [
+        {
+          "name": "name",
+          "type": "Unknown",
+          "type_ref": null,
+          "dir": "in",
+          "dir_source": "explicit"
+        },
+        {
+          "name": "args",
+          "type": "tuple[Unknown, ...]",
+          "type_ref": null,
+          "dir": "in",
+          "dir_source": "explicit"
+        },
+        {
+          "name": "for_build",
+          "type": "bool",
+          "type_ref": null,
+          "dir": "in",
+          "dir_source": "explicit"
+        }
+      ],
+      "globals": {
+        "reads": [],
+        "writes": []
+      },
+      "calls": [],
+      "attrs": {},
+      "runtime": null
+    }
+  },
+  "types": {},
+  "globals": {},
+  "edges": [
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.build",
+      "to": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator._build",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 248,
+        "end_line": 248,
+        "col": 16
+      },
+      "args": [],
+      "name": "_build",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.build",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::getattr",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 250,
+        "end_line": 250,
+        "col": 15
+      },
+      "args": [
+        "s.w",
+        "'close'",
+        "None"
+      ],
+      "name": "getattr",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.build",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::getattr",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 254,
+        "end_line": 254,
+        "col": 14
+      },
+      "args": [
+        "s.w",
+        "'fd'",
+        "None"
+      ],
+      "name": "getattr",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.build",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::getattr#1574e9c6",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 250,
+        "end_line": 250,
+        "col": 15
+      },
+      "args": [
+        "s.w",
+        "'close'",
+        "None"
+      ],
+      "name": "getattr",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.build",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::getattr#1574e9c6",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 254,
+        "end_line": 254,
+        "col": 14
+      },
+      "args": [
+        "s.w",
+        "'fd'",
+        "None"
+      ],
+      "name": "getattr",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.build",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::getattr#7d46c2e2",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 250,
+        "end_line": 250,
+        "col": 15
+      },
+      "args": [
+        "s.w",
+        "'close'",
+        "None"
+      ],
+      "name": "getattr",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.build",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::getattr#7d46c2e2",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 254,
+        "end_line": 254,
+        "col": 14
+      },
+      "args": [
+        "s.w",
+        "'fd'",
+        "None"
+      ],
+      "name": "getattr",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.build",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::getattr#9c040ffc",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 250,
+        "end_line": 250,
+        "col": 15
+      },
+      "args": [
+        "s.w",
+        "'close'",
+        "None"
+      ],
+      "name": "getattr",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.build",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::getattr#9c040ffc",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 254,
+        "end_line": 254,
+        "col": 14
+      },
+      "args": [
+        "s.w",
+        "'fd'",
+        "None"
+      ],
+      "name": "getattr",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.build",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::getattr#00ec3969",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 250,
+        "end_line": 250,
+        "col": 15
+      },
+      "args": [
+        "s.w",
+        "'close'",
+        "None"
+      ],
+      "name": "getattr",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.build",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::getattr#00ec3969",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 254,
+        "end_line": 254,
+        "col": 14
+      },
+      "args": [
+        "s.w",
+        "'fd'",
+        "None"
+      ],
+      "name": "getattr",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.build",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::getattr#93782f01",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 250,
+        "end_line": 250,
+        "col": 15
+      },
+      "args": [
+        "s.w",
+        "'close'",
+        "None"
+      ],
+      "name": "getattr",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.build",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::getattr#93782f01",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 254,
+        "end_line": 254,
+        "col": 14
+      },
+      "args": [
+        "s.w",
+        "'fd'",
+        "None"
+      ],
+      "name": "getattr",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.build",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::callable",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 251,
+        "end_line": 251,
+        "col": 10
+      },
+      "args": [
+        "close"
+      ],
+      "name": "callable",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator._build",
+      "to": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.setup",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 260,
+        "end_line": 260,
+        "col": 7
+      },
+      "args": [],
+      "name": "setup",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator._build",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::enumerate",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 273,
+        "end_line": 273,
+        "col": 25
+      },
+      "args": [
+        "s.order"
+      ],
+      "name": "enumerate",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator._build",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::set",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 308,
+        "end_line": 308,
+        "col": 20
+      },
+      "args": [],
+      "name": "set",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator._build",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::set",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 324,
+        "end_line": 324,
+        "col": 53
+      },
+      "args": [],
+      "name": "set",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator._build",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::set",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 348,
+        "end_line": 348,
+        "col": 58
+      },
+      "args": [],
+      "name": "set",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator._build",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::set",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 386,
+        "end_line": 386,
+        "col": 20
+      },
+      "args": [],
+      "name": "set",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator._build",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::set",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 396,
+        "end_line": 396,
+        "col": 51
+      },
+      "args": [],
+      "name": "set",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator._build",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::set",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 414,
+        "end_line": 414,
+        "col": 67
+      },
+      "args": [],
+      "name": "set",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator._build",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::set",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 440,
+        "end_line": 440,
+        "col": 59
+      },
+      "args": [],
+      "name": "set",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator._build",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::set",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 453,
+        "end_line": 453,
+        "col": 20
+      },
+      "args": [],
+      "name": "set",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator._build",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::set",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 463,
+        "end_line": 463,
+        "col": 59
+      },
+      "args": [],
+      "name": "set",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator._build",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::set",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 470,
+        "end_line": 470,
+        "col": 20
+      },
+      "args": [],
+      "name": "set",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator._build",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::set",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 488,
+        "end_line": 488,
+        "col": 49
+      },
+      "args": [],
+      "name": "set",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator._build",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::get",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 311,
+        "end_line": 311,
+        "col": 34
+      },
+      "args": [
+        "src_node_name",
+        "{}"
+      ],
+      "name": "get",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator._build",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::get#6b202120",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 311,
+        "end_line": 311,
+        "col": 34
+      },
+      "args": [
+        "src_node_name",
+        "{}"
+      ],
+      "name": "get",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator._build",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::dict.get",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 311,
+        "end_line": 311,
+        "col": 34
+      },
+      "args": [
+        "src_node_name",
+        "{}"
+      ],
+      "name": "get",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator._build",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::set.add",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 312,
+        "end_line": 312,
+        "col": 22
+      },
+      "args": [
+        "o"
+      ],
+      "name": "add",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator._build",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::set.add",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 388,
+        "end_line": 388,
+        "col": 20
+      },
+      "args": [
+        "o"
+      ],
+      "name": "add",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator._build",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::set.add",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 390,
+        "end_line": 390,
+        "col": 20
+      },
+      "args": [
+        "o"
+      ],
+      "name": "add",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator._build",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::set.add",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 455,
+        "end_line": 455,
+        "col": 20
+      },
+      "args": [
+        "o"
+      ],
+      "name": "add",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator._build",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::set.add",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 457,
+        "end_line": 457,
+        "col": 20
+      },
+      "args": [
+        "o"
+      ],
+      "name": "add",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator._build",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::set.add",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 472,
+        "end_line": 472,
+        "col": 20
+      },
+      "args": [
+        "o"
+      ],
+      "name": "add",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator._build",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::set.add",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 474,
+        "end_line": 474,
+        "col": 20
+      },
+      "args": [
+        "o"
+      ],
+      "name": "add",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator._build",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::set.add",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 476,
+        "end_line": 476,
+        "col": 20
+      },
+      "args": [
+        "o"
+      ],
+      "name": "add",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator._build",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::list",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 313,
+        "end_line": 313,
+        "col": 20
+      },
+      "args": [
+        "extra_deps"
+      ],
+      "name": "list",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator._build",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::list",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 391,
+        "end_line": 391,
+        "col": 20
+      },
+      "args": [
+        "extra_deps"
+      ],
+      "name": "list",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator._build",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::list",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 458,
+        "end_line": 458,
+        "col": 20
+      },
+      "args": [
+        "extra_deps"
+      ],
+      "name": "list",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator._build",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::list",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 477,
+        "end_line": 477,
+        "col": 20
+      },
+      "args": [
+        "extra_deps"
+      ],
+      "name": "list",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator._build",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::dict",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 316,
+        "end_line": 316,
+        "col": 19
+      },
+      "args": [
+        "rule"
+      ],
+      "name": "dict",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator._build",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::pop",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 317,
+        "end_line": 317,
+        "col": 17
+      },
+      "args": [
+        "'sandbox'",
+        "None"
+      ],
+      "name": "pop",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator._build",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::pop#d1fa86fc",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 317,
+        "end_line": 317,
+        "col": 17
+      },
+      "args": [
+        "'sandbox'",
+        "None"
+      ],
+      "name": "pop",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator._build",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::dict.pop",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 317,
+        "end_line": 317,
+        "col": 17
+      },
+      "args": [
+        "'sandbox'",
+        "None"
+      ],
+      "name": "pop",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator._build",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::isinstance",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 322,
+        "end_line": 322,
+        "col": 54
+      },
+      "args": [
+        "t",
+        "list"
+      ],
+      "name": "isinstance",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator._build",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::isinstance",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 345,
+        "end_line": 345,
+        "col": 62
+      },
+      "args": [
+        "t",
+        "list"
+      ],
+      "name": "isinstance",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator._build",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::isinstance",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 394,
+        "end_line": 394,
+        "col": 52
+      },
+      "args": [
+        "t",
+        "list"
+      ],
+      "name": "isinstance",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator._build",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::isinstance",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 412,
+        "end_line": 412,
+        "col": 67
+      },
+      "args": [
+        "t",
+        "list"
+      ],
+      "name": "isinstance",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator._build",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::isinstance",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 430,
+        "end_line": 430,
+        "col": 63
+      },
+      "args": [
+        "t",
+        "list"
+      ],
+      "name": "isinstance",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator._build",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::isinstance",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 437,
+        "end_line": 437,
+        "col": 63
+      },
+      "args": [
+        "t",
+        "list"
+      ],
+      "name": "isinstance",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator._build",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::isinstance",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 461,
+        "end_line": 461,
+        "col": 60
+      },
+      "args": [
+        "t",
+        "list"
+      ],
+      "name": "isinstance",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator._build",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::isinstance",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 485,
+        "end_line": 485,
+        "col": 53
+      },
+      "args": [
+        "t",
+        "list"
+      ],
+      "name": "isinstance",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator._build",
+      "to": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator._node_banner_cmd",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 368,
+        "end_line": 368,
+        "col": 22
+      },
+      "args": [
+        "node_name"
+      ],
+      "name": "_node_banner_cmd",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator._build",
+      "to": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator._node_banner_cmd",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 404,
+        "end_line": 404,
+        "col": 13
+      },
+      "args": [
+        "node_name"
+      ],
+      "name": "_node_banner_cmd",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator._build",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::join",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 370,
+        "end_line": 370,
+        "col": 25
+      },
+      "args": [
+        "[ 'set -o pipefail', banner_cmd, 'chmod +x {}'.format( run_script ), 'cp -f {} {}'.format( run_script, build_dir ), 'if [[ -e ' + debug_script + ' ]]; then chmod +x ' + debug_script + ' && cp -f ' + debug_script + ' ' + build_dir + '; fi', 'if [[ -e ' + precond_script + ' ]]; then chmod +x ' + precond_script + ' && cp -f ' + precond_script + ' ' + build_dir + '; fi', 'if [[ -e ' + postcond_script + ' ]]; then chmod +x ' + postcond_script + ' && cp -f ' + postcond_script + ' ' + build_dir + '; fi', 'cd ' + build_dir, 'if [[ -e ' + s.apragma_precond + ' ]]; then ./' + s.apragma_precond + ' || exit 1; fi', './' + s.apragma_run + ' 2>&1 | tee ' + s.apragma_run + '.log || exit 1'",
+        "'cd ..'",
+        "]"
+      ],
+      "name": "join",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator._build",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::join",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 402,
+        "end_line": 402,
+        "col": 30
+      },
+      "args": [
+        "[ 'set -o pipefail', s._node_banner_cmd( node_name ), 'cd ' + build_dir, 'make $*', 'cd ..' ]"
+      ],
+      "name": "join",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator._build",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::join",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 446,
+        "end_line": 446,
+        "col": 25
+      },
+      "args": [
+        "[ 'cd ' + build_dir, 'if [[ -e ' + s.apragma_postcond + ' ]]; then ./' + s.apragma_postcond + ' || exit 1; fi', 'cd ..', ]"
+      ],
+      "name": "join",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator._build",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::join",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 499,
+        "end_line": 499,
+        "col": 27
+      },
+      "args": [
+        "[ 'cd ' + build_dir, './' + s.apragma_debug + ' 2>&1 | tee ' + s.apragma_debug + '.log' ]"
+      ],
+      "name": "join",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator._build",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::str.join",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 370,
+        "end_line": 370,
+        "col": 25
+      },
+      "args": [
+        "[ 'set -o pipefail', banner_cmd, 'chmod +x {}'.format( run_script ), 'cp -f {} {}'.format( run_script, build_dir ), 'if [[ -e ' + debug_script + ' ]]; then chmod +x ' + debug_script + ' && cp -f ' + debug_script + ' ' + build_dir + '; fi', 'if [[ -e ' + precond_script + ' ]]; then chmod +x ' + precond_script + ' && cp -f ' + precond_script + ' ' + build_dir + '; fi', 'if [[ -e ' + postcond_script + ' ]]; then chmod +x ' + postcond_script + ' && cp -f ' + postcond_script + ' ' + build_dir + '; fi', 'cd ' + build_dir, 'if [[ -e ' + s.apragma_precond + ' ]]; then ./' + s.apragma_precond + ' || exit 1; fi', './' + s.apragma_run + ' 2>&1 | tee ' + s.apragma_run + '.log || exit 1'",
+        "'cd ..'",
+        "]"
+      ],
+      "name": "join",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator._build",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::str.join",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 402,
+        "end_line": 402,
+        "col": 30
+      },
+      "args": [
+        "[ 'set -o pipefail', s._node_banner_cmd( node_name ), 'cd ' + build_dir, 'make $*', 'cd ..' ]"
+      ],
+      "name": "join",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator._build",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::str.join",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 446,
+        "end_line": 446,
+        "col": 25
+      },
+      "args": [
+        "[ 'cd ' + build_dir, 'if [[ -e ' + s.apragma_postcond + ' ]]; then ./' + s.apragma_postcond + ' || exit 1; fi', 'cd ..', ]"
+      ],
+      "name": "join",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator._build",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::str.join",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 499,
+        "end_line": 499,
+        "col": 27
+      },
+      "args": [
+        "[ 'cd ' + build_dir, './' + s.apragma_debug + ' 2>&1 | tee ' + s.apragma_debug + '.log' ]"
+      ],
+      "name": "join",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator._build",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::format",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 373,
+        "end_line": 373,
+        "col": 23
+      },
+      "args": [
+        "run_script"
+      ],
+      "name": "format",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator._build",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::format",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 374,
+        "end_line": 374,
+        "col": 23
+      },
+      "args": [
+        "run_script",
+        "build_dir"
+      ],
+      "name": "format",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator._build",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::str.format",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 373,
+        "end_line": 373,
+        "col": 23
+      },
+      "args": [
+        "run_script"
+      ],
+      "name": "format",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator._build",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::str.format",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 374,
+        "end_line": 374,
+        "col": 23
+      },
+      "args": [
+        "run_script",
+        "build_dir"
+      ],
+      "name": "format",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator._build",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::next",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 426,
+        "end_line": 426,
+        "col": 38
+      },
+      "args": [
+        "iter(o.values())"
+      ],
+      "name": "next",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator._build",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::next",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 427,
+        "end_line": 427,
+        "col": 46
+      },
+      "args": [
+        "iter(o.keys())"
+      ],
+      "name": "next",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator._build",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::next#1ea309d2",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 426,
+        "end_line": 426,
+        "col": 38
+      },
+      "args": [
+        "iter(o.values())"
+      ],
+      "name": "next",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator._build",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::next#1ea309d2",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 427,
+        "end_line": 427,
+        "col": 46
+      },
+      "args": [
+        "iter(o.keys())"
+      ],
+      "name": "next",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator._build",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::iter",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 426,
+        "end_line": 426,
+        "col": 43
+      },
+      "args": [
+        "o.values()"
+      ],
+      "name": "iter",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator._build",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::iter",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 427,
+        "end_line": 427,
+        "col": 51
+      },
+      "args": [
+        "o.keys()"
+      ],
+      "name": "iter",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator._build",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::iter#2939db79",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 426,
+        "end_line": 426,
+        "col": 43
+      },
+      "args": [
+        "o.values()"
+      ],
+      "name": "iter",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator._build",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::iter#2939db79",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 427,
+        "end_line": 427,
+        "col": 51
+      },
+      "args": [
+        "o.keys()"
+      ],
+      "name": "iter",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator._build",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::iter#04e85d58",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 426,
+        "end_line": 426,
+        "col": 43
+      },
+      "args": [
+        "o.values()"
+      ],
+      "name": "iter",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator._build",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::iter#04e85d58",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 427,
+        "end_line": 427,
+        "col": 51
+      },
+      "args": [
+        "o.keys()"
+      ],
+      "name": "iter",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator._build",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::iter#bb620c6d",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 426,
+        "end_line": 426,
+        "col": 43
+      },
+      "args": [
+        "o.values()"
+      ],
+      "name": "iter",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator._build",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::iter#bb620c6d",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 427,
+        "end_line": 427,
+        "col": 51
+      },
+      "args": [
+        "o.keys()"
+      ],
+      "name": "iter",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.setup",
+      "to": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.set_unique_build_ids",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 199,
+        "end_line": 199,
+        "col": 7
+      },
+      "args": [],
+      "name": "set_unique_build_ids",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.setup",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::dict.items",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 202,
+        "end_line": 202,
+        "col": 44
+      },
+      "args": [],
+      "name": "items",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.setup",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::dict.items",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 218,
+        "end_line": 218,
+        "col": 46
+      },
+      "args": [],
+      "name": "items",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.setup",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::dict.items",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 221,
+        "end_line": 221,
+        "col": 46
+      },
+      "args": [],
+      "name": "items",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.setup",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::dict.items",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 227,
+        "end_line": 227,
+        "col": 46
+      },
+      "args": [],
+      "name": "items",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.setup",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::dict.items",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 233,
+        "end_line": 233,
+        "col": 46
+      },
+      "args": [],
+      "name": "items",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.setup",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/os/__init__.pyi::makedirs",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 213,
+        "end_line": 213,
+        "col": 12
+      },
+      "args": [
+        "node_dir",
+        "exist_ok=True"
+      ],
+      "name": "makedirs",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.setup",
+      "to": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.dump_yamls",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 219,
+        "end_line": 219,
+        "col": 9
+      },
+      "args": [
+        "node_name",
+        "build_dir"
+      ],
+      "name": "dump_yamls",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.setup",
+      "to": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.dump_commands",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 225,
+        "end_line": 225,
+        "col": 11
+      },
+      "args": [
+        "node_commands",
+        "node_name",
+        "build_dir"
+      ],
+      "name": "dump_commands",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.setup",
+      "to": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.dump_debug_commands",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 231,
+        "end_line": 231,
+        "col": 11
+      },
+      "args": [
+        "debug_commands",
+        "node_name",
+        "build_dir"
+      ],
+      "name": "dump_debug_commands",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.setup",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/genericpath.pyi::exists",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 235,
+        "end_line": 235,
+        "col": 22
+      },
+      "args": [
+        "inner_dir"
+      ],
+      "name": "exists",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.setup",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/os/__init__.pyi::mkdir",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 236,
+        "end_line": 236,
+        "col": 12
+      },
+      "args": [
+        "inner_dir"
+      ],
+      "name": "mkdir",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.setup",
+      "to": "py:src/apragma/backends/build_orchestrator.py::_dump_assertion_check_scripts",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 237,
+        "end_line": 237,
+        "col": 7
+      },
+      "args": [
+        "node_name",
+        "inner_dir"
+      ],
+      "name": "_dump_assertion_check_scripts",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.setup",
+      "to": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.dump_graphviz",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 239,
+        "end_line": 239,
+        "col": 7
+      },
+      "args": [],
+      "name": "dump_graphviz",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator._node_banner_cmd",
+      "to": "py:src/apragma/backends/cli_commands.py::helper_command",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 243,
+        "end_line": 243,
+        "col": 12
+      },
+      "args": [
+        "\"banner\"",
+        "\"-c\"",
+        "\"-t\"",
+        "node_name"
+      ],
+      "name": "helper_command",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.set_unique_build_ids",
+      "to": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator._find_existing_build_ids",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 159,
+        "end_line": 159,
+        "col": 28
+      },
+      "args": [],
+      "name": "_find_existing_build_ids",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.set_unique_build_ids",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::print",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 162,
+        "end_line": 162,
+        "col": 7
+      },
+      "args": [
+        "''' Found the following existing build directories. Their numbering will be preserved in the new graph. For a completely clean build",
+        "run \"clean-all\".\\n'''"
+      ],
+      "name": "print",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.set_unique_build_ids",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::print",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 166,
+        "end_line": 166,
+        "col": 9
+      },
+      "args": [
+        "'- {: >3} : {}'.format( build_id, build_id+'-'+node_name )"
+      ],
+      "name": "print",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.set_unique_build_ids",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::print",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 167,
+        "end_line": 167,
+        "col": 7
+      },
+      "args": [],
+      "name": "print",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.set_unique_build_ids",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::print#5c9c78c2",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 162,
+        "end_line": 162,
+        "col": 7
+      },
+      "args": [
+        "''' Found the following existing build directories. Their numbering will be preserved in the new graph. For a completely clean build",
+        "run \"clean-all\".\\n'''"
+      ],
+      "name": "print",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.set_unique_build_ids",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::print#5c9c78c2",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 166,
+        "end_line": 166,
+        "col": 9
+      },
+      "args": [
+        "'- {: >3} : {}'.format( build_id, build_id+'-'+node_name )"
+      ],
+      "name": "print",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.set_unique_build_ids",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::print#5c9c78c2",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 167,
+        "end_line": 167,
+        "col": 7
+      },
+      "args": [],
+      "name": "print",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.set_unique_build_ids",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::sorted",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 165,
+        "end_line": 165,
+        "col": 34
+      },
+      "args": [
+        "existing_build_ids.items()",
+        "key=lambda x: int(x[1])"
+      ],
+      "name": "sorted",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.set_unique_build_ids",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::sorted#da5e7ddb",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 165,
+        "end_line": 165,
+        "col": 34
+      },
+      "args": [
+        "existing_build_ids.items()",
+        "key=lambda x: int(x[1])"
+      ],
+      "name": "sorted",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.set_unique_build_ids",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::dict.items",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 165,
+        "end_line": 165,
+        "col": 61
+      },
+      "args": [],
+      "name": "items",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.set_unique_build_ids",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::int",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 165,
+        "end_line": 165,
+        "col": 84
+      },
+      "args": [
+        "x[1]"
+      ],
+      "name": "int",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.set_unique_build_ids",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::format",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 166,
+        "end_line": 166,
+        "col": 32
+      },
+      "args": [
+        "build_id",
+        "build_id+'-'+node_name"
+      ],
+      "name": "format",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.set_unique_build_ids",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::str.format",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 166,
+        "end_line": 166,
+        "col": 32
+      },
+      "args": [
+        "build_id",
+        "build_id+'-'+node_name"
+      ],
+      "name": "format",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.set_unique_build_ids",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::dict.keys",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 173,
+        "end_line": 173,
+        "col": 35
+      },
+      "args": [],
+      "name": "keys",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.set_unique_build_ids",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::str",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 175,
+        "end_line": 175,
+        "col": 13
+      },
+      "args": [
+        "i"
+      ],
+      "name": "str",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.set_unique_build_ids",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::str",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 177,
+        "end_line": 177,
+        "col": 34
+      },
+      "args": [
+        "i"
+      ],
+      "name": "str",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.set_unique_build_ids",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::dict.values",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 175,
+        "end_line": 175,
+        "col": 35
+      },
+      "args": [],
+      "name": "values",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.dump_yamls",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/genericpath.pyi::exists",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 59,
+        "end_line": 59,
+        "col": 20
+      },
+      "args": [
+        "inner_dir"
+      ],
+      "name": "exists",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.dump_yamls",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/os/__init__.pyi::mkdir",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 60,
+        "end_line": 60,
+        "col": 10
+      },
+      "args": [
+        "inner_dir"
+      ],
+      "name": "mkdir",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.dump_commands",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/genericpath.pyi::exists",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 67,
+        "end_line": 67,
+        "col": 20
+      },
+      "args": [
+        "inner_dir"
+      ],
+      "name": "exists",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.dump_commands",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/os/__init__.pyi::mkdir",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 68,
+        "end_line": 68,
+        "col": 10
+      },
+      "args": [
+        "inner_dir"
+      ],
+      "name": "mkdir",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.dump_commands",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::rstrip",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 70,
+        "end_line": 70,
+        "col": 39
+      },
+      "args": [
+        "'c'"
+      ],
+      "name": "rstrip",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.dump_commands",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::str.rstrip",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 70,
+        "end_line": 70,
+        "col": 39
+      },
+      "args": [
+        "'c'"
+      ],
+      "name": "rstrip",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.dump_commands",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/posixpath.pyi::abspath",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 70,
+        "end_line": 70,
+        "col": 19
+      },
+      "args": [
+        "__file__"
+      ],
+      "name": "abspath",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.dump_commands",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::open",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 72,
+        "end_line": 72,
+        "col": 10
+      },
+      "args": [
+        "inner_dir + '/' + s.apragma_run",
+        "'w'"
+      ],
+      "name": "open",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.dump_commands",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::open#91714740",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 72,
+        "end_line": 72,
+        "col": 10
+      },
+      "args": [
+        "inner_dir + '/' + s.apragma_run",
+        "'w'"
+      ],
+      "name": "open",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.dump_commands",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::open#1a3d001d",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 72,
+        "end_line": 72,
+        "col": 10
+      },
+      "args": [
+        "inner_dir + '/' + s.apragma_run",
+        "'w'"
+      ],
+      "name": "open",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.dump_commands",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::open#a06f6189",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 72,
+        "end_line": 72,
+        "col": 10
+      },
+      "args": [
+        "inner_dir + '/' + s.apragma_run",
+        "'w'"
+      ],
+      "name": "open",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.dump_commands",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::open#29a653a0",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 72,
+        "end_line": 72,
+        "col": 10
+      },
+      "args": [
+        "inner_dir + '/' + s.apragma_run",
+        "'w'"
+      ],
+      "name": "open",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.dump_commands",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::open#d05b753a",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 72,
+        "end_line": 72,
+        "col": 10
+      },
+      "args": [
+        "inner_dir + '/' + s.apragma_run",
+        "'w'"
+      ],
+      "name": "open",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.dump_commands",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::open#08e9cc1a",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 72,
+        "end_line": 72,
+        "col": 10
+      },
+      "args": [
+        "inner_dir + '/' + s.apragma_run",
+        "'w'"
+      ],
+      "name": "open",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.dump_commands",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/_io.pyi::_TextIOBase.write",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 74,
+        "end_line": 74,
+        "col": 10
+      },
+      "args": [
+        "'#! /usr/bin/env bash\\n'"
+      ],
+      "name": "write",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.dump_commands",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/_io.pyi::_TextIOBase.write",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 75,
+        "end_line": 75,
+        "col": 10
+      },
+      "args": [
+        "'set -euo pipefail\\n'"
+      ],
+      "name": "write",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.dump_commands",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/_io.pyi::_TextIOBase.write",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 76,
+        "end_line": 76,
+        "col": 10
+      },
+      "args": [
+        "'#' + '='*73 + '\\n'"
+      ],
+      "name": "write",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.dump_commands",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/_io.pyi::_TextIOBase.write",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 77,
+        "end_line": 77,
+        "col": 10
+      },
+      "args": [
+        "'# ' + s.apragma_run + '\\n'"
+      ],
+      "name": "write",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.dump_commands",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/_io.pyi::_TextIOBase.write",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 78,
+        "end_line": 78,
+        "col": 10
+      },
+      "args": [
+        "'#' + '='*73 + '\\n'"
+      ],
+      "name": "write",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.dump_commands",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/_io.pyi::_TextIOBase.write",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 79,
+        "end_line": 79,
+        "col": 10
+      },
+      "args": [
+        "'# Generator : ' + gen + '\\n'"
+      ],
+      "name": "write",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.dump_commands",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/_io.pyi::_TextIOBase.write",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 80,
+        "end_line": 80,
+        "col": 10
+      },
+      "args": [
+        "'\\n'"
+      ],
+      "name": "write",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.dump_commands",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/_io.pyi::_TextIOBase.write",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 98,
+        "end_line": 98,
+        "col": 10
+      },
+      "args": [
+        "'# Pre\\n\\n'"
+      ],
+      "name": "write",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.dump_commands",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/_io.pyi::_TextIOBase.write",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 100,
+        "end_line": 100,
+        "col": 12
+      },
+      "args": [
+        "c + '\\n'"
+      ],
+      "name": "write",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.dump_commands",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/_io.pyi::_TextIOBase.write",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 101,
+        "end_line": 101,
+        "col": 10
+      },
+      "args": [
+        "'\\n'"
+      ],
+      "name": "write",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.dump_commands",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/_io.pyi::_TextIOBase.write",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 103,
+        "end_line": 103,
+        "col": 10
+      },
+      "args": [
+        "'# Commands\\n\\n'"
+      ],
+      "name": "write",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.dump_commands",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/_io.pyi::_TextIOBase.write",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 105,
+        "end_line": 105,
+        "col": 12
+      },
+      "args": [
+        "c + '\\n'"
+      ],
+      "name": "write",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.dump_commands",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/_io.pyi::_TextIOBase.write",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 106,
+        "end_line": 106,
+        "col": 10
+      },
+      "args": [
+        "'\\n'"
+      ],
+      "name": "write",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.dump_commands",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/_io.pyi::_TextIOBase.write",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 112,
+        "end_line": 112,
+        "col": 10
+      },
+      "args": [
+        "'# Post\\n\\n'"
+      ],
+      "name": "write",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.dump_commands",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/_io.pyi::_TextIOBase.write",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 114,
+        "end_line": 114,
+        "col": 12
+      },
+      "args": [
+        "c + '\\n'"
+      ],
+      "name": "write",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.dump_commands",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/_io.pyi::_TextIOBase.write",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 115,
+        "end_line": 115,
+        "col": 10
+      },
+      "args": [
+        "'\\n'"
+      ],
+      "name": "write",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.dump_commands",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::type",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 86,
+        "end_line": 86,
+        "col": 12
+      },
+      "args": [
+        "v"
+      ],
+      "name": "type",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.dump_commands",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::list.append",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 87,
+        "end_line": 87,
+        "col": 27
+      },
+      "args": [
+        "params_str.format(k, serialize_list(v))"
+      ],
+      "name": "append",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.dump_commands",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::list.append",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 89,
+        "end_line": 89,
+        "col": 27
+      },
+      "args": [
+        "params_str.format(k, v)"
+      ],
+      "name": "append",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.dump_commands",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::format",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 87,
+        "end_line": 87,
+        "col": 46
+      },
+      "args": [
+        "k",
+        "serialize_list(v)"
+      ],
+      "name": "format",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.dump_commands",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::format",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 89,
+        "end_line": 89,
+        "col": 46
+      },
+      "args": [
+        "k",
+        "v"
+      ],
+      "name": "format",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.dump_commands",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::str.format",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 87,
+        "end_line": 87,
+        "col": 46
+      },
+      "args": [
+        "k",
+        "serialize_list(v)"
+      ],
+      "name": "format",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.dump_commands",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::str.format",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 89,
+        "end_line": 89,
+        "col": 46
+      },
+      "args": [
+        "k",
+        "v"
+      ],
+      "name": "format",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.dump_commands",
+      "to": "py:src/apragma/graph_builder/_utils.py::serialize_list",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 87,
+        "end_line": 87,
+        "col": 56
+      },
+      "args": [
+        "v"
+      ],
+      "name": "serialize_list",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.dump_debug_commands",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/genericpath.pyi::exists",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 120,
+        "end_line": 120,
+        "col": 20
+      },
+      "args": [
+        "inner_dir"
+      ],
+      "name": "exists",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.dump_debug_commands",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/os/__init__.pyi::mkdir",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 121,
+        "end_line": 121,
+        "col": 10
+      },
+      "args": [
+        "inner_dir"
+      ],
+      "name": "mkdir",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.dump_debug_commands",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::rstrip",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 123,
+        "end_line": 123,
+        "col": 39
+      },
+      "args": [
+        "'c'"
+      ],
+      "name": "rstrip",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.dump_debug_commands",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::str.rstrip",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 123,
+        "end_line": 123,
+        "col": 39
+      },
+      "args": [
+        "'c'"
+      ],
+      "name": "rstrip",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.dump_debug_commands",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/posixpath.pyi::abspath",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 123,
+        "end_line": 123,
+        "col": 19
+      },
+      "args": [
+        "__file__"
+      ],
+      "name": "abspath",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.dump_debug_commands",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::open",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 125,
+        "end_line": 125,
+        "col": 10
+      },
+      "args": [
+        "inner_dir + '/' + s.apragma_debug",
+        "'w'"
+      ],
+      "name": "open",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.dump_debug_commands",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::open#91714740",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 125,
+        "end_line": 125,
+        "col": 10
+      },
+      "args": [
+        "inner_dir + '/' + s.apragma_debug",
+        "'w'"
+      ],
+      "name": "open",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.dump_debug_commands",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::open#1a3d001d",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 125,
+        "end_line": 125,
+        "col": 10
+      },
+      "args": [
+        "inner_dir + '/' + s.apragma_debug",
+        "'w'"
+      ],
+      "name": "open",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.dump_debug_commands",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::open#a06f6189",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 125,
+        "end_line": 125,
+        "col": 10
+      },
+      "args": [
+        "inner_dir + '/' + s.apragma_debug",
+        "'w'"
+      ],
+      "name": "open",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.dump_debug_commands",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::open#29a653a0",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 125,
+        "end_line": 125,
+        "col": 10
+      },
+      "args": [
+        "inner_dir + '/' + s.apragma_debug",
+        "'w'"
+      ],
+      "name": "open",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.dump_debug_commands",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::open#d05b753a",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 125,
+        "end_line": 125,
+        "col": 10
+      },
+      "args": [
+        "inner_dir + '/' + s.apragma_debug",
+        "'w'"
+      ],
+      "name": "open",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.dump_debug_commands",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::open#08e9cc1a",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 125,
+        "end_line": 125,
+        "col": 10
+      },
+      "args": [
+        "inner_dir + '/' + s.apragma_debug",
+        "'w'"
+      ],
+      "name": "open",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.dump_debug_commands",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/_io.pyi::_TextIOBase.write",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 127,
+        "end_line": 127,
+        "col": 10
+      },
+      "args": [
+        "'#! /usr/bin/env bash\\n'"
+      ],
+      "name": "write",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.dump_debug_commands",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/_io.pyi::_TextIOBase.write",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 128,
+        "end_line": 128,
+        "col": 10
+      },
+      "args": [
+        "'set -euo pipefail\\n'"
+      ],
+      "name": "write",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.dump_debug_commands",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/_io.pyi::_TextIOBase.write",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 129,
+        "end_line": 129,
+        "col": 10
+      },
+      "args": [
+        "'#' + '='*73 + '\\n'"
+      ],
+      "name": "write",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.dump_debug_commands",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/_io.pyi::_TextIOBase.write",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 130,
+        "end_line": 130,
+        "col": 10
+      },
+      "args": [
+        "'# ' + s.apragma_debug + '\\n'"
+      ],
+      "name": "write",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.dump_debug_commands",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/_io.pyi::_TextIOBase.write",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 131,
+        "end_line": 131,
+        "col": 10
+      },
+      "args": [
+        "'#' + '='*73 + '\\n'"
+      ],
+      "name": "write",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.dump_debug_commands",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/_io.pyi::_TextIOBase.write",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 132,
+        "end_line": 132,
+        "col": 10
+      },
+      "args": [
+        "'# Generator : ' + gen + '\\n'"
+      ],
+      "name": "write",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.dump_debug_commands",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/_io.pyi::_TextIOBase.write",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 133,
+        "end_line": 133,
+        "col": 10
+      },
+      "args": [
+        "'\\n'"
+      ],
+      "name": "write",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.dump_debug_commands",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/_io.pyi::_TextIOBase.write",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 144,
+        "end_line": 144,
+        "col": 10
+      },
+      "args": [
+        "'# Pre\\n\\n'"
+      ],
+      "name": "write",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.dump_debug_commands",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/_io.pyi::_TextIOBase.write",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 146,
+        "end_line": 146,
+        "col": 12
+      },
+      "args": [
+        "c + '\\n'"
+      ],
+      "name": "write",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.dump_debug_commands",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/_io.pyi::_TextIOBase.write",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 147,
+        "end_line": 147,
+        "col": 10
+      },
+      "args": [
+        "'\\n'"
+      ],
+      "name": "write",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.dump_debug_commands",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/_io.pyi::_TextIOBase.write",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 149,
+        "end_line": 149,
+        "col": 10
+      },
+      "args": [
+        "'# Debug\\n\\n'"
+      ],
+      "name": "write",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.dump_debug_commands",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/_io.pyi::_TextIOBase.write",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 151,
+        "end_line": 151,
+        "col": 12
+      },
+      "args": [
+        "c + '\\n'"
+      ],
+      "name": "write",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.dump_debug_commands",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/_io.pyi::_TextIOBase.write",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 152,
+        "end_line": 152,
+        "col": 10
+      },
+      "args": [
+        "'\\n'"
+      ],
+      "name": "write",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.dump_debug_commands",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::type",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 139,
+        "end_line": 139,
+        "col": 12
+      },
+      "args": [
+        "v"
+      ],
+      "name": "type",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.dump_debug_commands",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::list.append",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 140,
+        "end_line": 140,
+        "col": 27
+      },
+      "args": [
+        "params_str.format(k, ','.join(str(x) for x in v))"
+      ],
+      "name": "append",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.dump_debug_commands",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::list.append",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 142,
+        "end_line": 142,
+        "col": 27
+      },
+      "args": [
+        "params_str.format(k, v)"
+      ],
+      "name": "append",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.dump_debug_commands",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::format",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 140,
+        "end_line": 140,
+        "col": 46
+      },
+      "args": [
+        "k",
+        "'",
+        "'.join(str(x) for x in v)"
+      ],
+      "name": "format",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.dump_debug_commands",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::format",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 142,
+        "end_line": 142,
+        "col": 46
+      },
+      "args": [
+        "k",
+        "v"
+      ],
+      "name": "format",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.dump_debug_commands",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::str.format",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 140,
+        "end_line": 140,
+        "col": 46
+      },
+      "args": [
+        "k",
+        "'",
+        "'.join(str(x) for x in v)"
+      ],
+      "name": "format",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.dump_debug_commands",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::str.format",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 142,
+        "end_line": 142,
+        "col": 46
+      },
+      "args": [
+        "k",
+        "v"
+      ],
+      "name": "format",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.dump_debug_commands",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::join",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 140,
+        "end_line": 140,
+        "col": 60
+      },
+      "args": [
+        "str(x) for x in v"
+      ],
+      "name": "join",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.dump_debug_commands",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::str.join",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 140,
+        "end_line": 140,
+        "col": 60
+      },
+      "args": [
+        "str(x) for x in v"
+      ],
+      "name": "join",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.dump_debug_commands",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::str",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 140,
+        "end_line": 140,
+        "col": 65
+      },
+      "args": [
+        "x"
+      ],
+      "name": "str",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/cli_commands.py::helper_command",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::strip",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/cli_commands.py",
+        "line": 27,
+        "end_line": 27,
+        "col": 35
+      },
+      "args": [],
+      "name": "strip",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/cli_commands.py::helper_command",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::str.strip",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/cli_commands.py",
+        "line": 27,
+        "end_line": 27,
+        "col": 35
+      },
+      "args": [],
+      "name": "strip",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/cli_commands.py::helper_command",
+      "to": "py:src/apragma/graph_builder/_utils.py::get_scripts_dir",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/cli_commands.py",
+        "line": 27,
+        "end_line": 27,
+        "col": 17
+      },
+      "args": [],
+      "name": "get_scripts_dir",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/cli_commands.py::helper_command",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::str",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/cli_commands.py",
+        "line": 28,
+        "end_line": 28,
+        "col": 14
+      },
+      "args": [
+        "Path(directory).expanduser().resolve() / script"
+      ],
+      "name": "str",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/cli_commands.py::helper_command",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::str",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/cli_commands.py",
+        "line": 29,
+        "end_line": 29,
+        "col": 37
+      },
+      "args": [
+        "arg"
+      ],
+      "name": "str",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/cli_commands.py::helper_command",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/pathlib/__init__.pyi::Path.resolve",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/cli_commands.py",
+        "line": 28,
+        "end_line": 28,
+        "col": 47
+      },
+      "args": [],
+      "name": "resolve",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/cli_commands.py::helper_command",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/pathlib/__init__.pyi::Path.expanduser",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/cli_commands.py",
+        "line": 28,
+        "end_line": 28,
+        "col": 34
+      },
+      "args": [],
+      "name": "expanduser",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/cli_commands.py::helper_command",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/pathlib/__init__.pyi::Path",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/cli_commands.py",
+        "line": 28,
+        "end_line": 28,
+        "col": 18
+      },
+      "args": [
+        "directory"
+      ],
+      "name": "Path",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/cli_commands.py::helper_command",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/shlex.pyi::join",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/cli_commands.py",
+        "line": 29,
+        "end_line": 29,
+        "col": 21
+      },
+      "args": [
+        "[*words, *(str(arg) for arg in args)]"
+      ],
+      "name": "join",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/cli_commands.py::helper_command",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::replace",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/cli_commands.py",
+        "line": 30,
+        "end_line": 30,
+        "col": 20
+      },
+      "args": [
+        "'$'",
+        "'$$'"
+      ],
+      "name": "replace",
+      "macro": null,
+      "ptr_type": null
+    },
+    {
+      "from": "py:src/apragma/backends/cli_commands.py::helper_command",
+      "to": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::str.replace",
+      "kind": "call",
+      "loc": {
+        "file": "src/apragma/backends/cli_commands.py",
+        "line": 30,
+        "end_line": 30,
+        "col": 20
+      },
+      "args": [
+        "'$'",
+        "'$$'"
+      ],
+      "name": "replace",
+      "macro": null,
+      "ptr_type": null
+    }
+  ],
+  "unresolved": [
+    {
+      "name": "getattr",
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.build",
+      "reason": "outside project root (library)",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 250,
+        "end_line": 250,
+        "col": 15
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::getattr"
+    },
+    {
+      "name": "getattr",
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.build",
+      "reason": "outside project root (library)",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 250,
+        "end_line": 250,
+        "col": 15
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::getattr#1574e9c6"
+    },
+    {
+      "name": "getattr",
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.build",
+      "reason": "outside project root (library)",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 250,
+        "end_line": 250,
+        "col": 15
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::getattr#7d46c2e2"
+    },
+    {
+      "name": "getattr",
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.build",
+      "reason": "outside project root (library)",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 250,
+        "end_line": 250,
+        "col": 15
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::getattr#9c040ffc"
+    },
+    {
+      "name": "getattr",
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.build",
+      "reason": "outside project root (library)",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 250,
+        "end_line": 250,
+        "col": 15
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::getattr#00ec3969"
+    },
+    {
+      "name": "getattr",
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.build",
+      "reason": "outside project root (library)",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 250,
+        "end_line": 250,
+        "col": 15
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::getattr#93782f01"
+    },
+    {
+      "name": "callable",
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.build",
+      "reason": "outside project root (library)",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 251,
+        "end_line": 251,
+        "col": 10
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::callable"
+    },
+    {
+      "name": "enumerate",
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator._build",
+      "reason": "not a function (class constructor/variant)",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 273,
+        "end_line": 273,
+        "col": 25
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::enumerate"
+    },
+    {
+      "name": "set",
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator._build",
+      "reason": "not a function (class constructor/variant)",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 308,
+        "end_line": 308,
+        "col": 20
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::set"
+    },
+    {
+      "name": "get",
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator._build",
+      "reason": "outside project root (library)",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 311,
+        "end_line": 311,
+        "col": 34
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::get"
+    },
+    {
+      "name": "get",
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator._build",
+      "reason": "outside project root (library)",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 311,
+        "end_line": 311,
+        "col": 34
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::get#6b202120"
+    },
+    {
+      "name": "get",
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator._build",
+      "reason": "outside project root (library)",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 311,
+        "end_line": 311,
+        "col": 34
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::dict.get"
+    },
+    {
+      "name": "add",
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator._build",
+      "reason": "outside project root (library)",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 312,
+        "end_line": 312,
+        "col": 22
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::set.add"
+    },
+    {
+      "name": "list",
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator._build",
+      "reason": "not a function (class constructor/variant)",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 313,
+        "end_line": 313,
+        "col": 20
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::list"
+    },
+    {
+      "name": "dict",
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator._build",
+      "reason": "not a function (class constructor/variant)",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 316,
+        "end_line": 316,
+        "col": 19
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::dict"
+    },
+    {
+      "name": "pop",
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator._build",
+      "reason": "outside project root (library)",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 317,
+        "end_line": 317,
+        "col": 17
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::pop"
+    },
+    {
+      "name": "pop",
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator._build",
+      "reason": "outside project root (library)",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 317,
+        "end_line": 317,
+        "col": 17
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::pop#d1fa86fc"
+    },
+    {
+      "name": "pop",
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator._build",
+      "reason": "outside project root (library)",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 317,
+        "end_line": 317,
+        "col": 17
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::dict.pop"
+    },
+    {
+      "name": "isinstance",
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator._build",
+      "reason": "outside project root (library)",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 322,
+        "end_line": 322,
+        "col": 54
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::isinstance"
+    },
+    {
+      "name": "join",
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator._build",
+      "reason": "outside project root (library)",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 370,
+        "end_line": 370,
+        "col": 25
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::join"
+    },
+    {
+      "name": "join",
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator._build",
+      "reason": "outside project root (library)",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 370,
+        "end_line": 370,
+        "col": 25
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::str.join"
+    },
+    {
+      "name": "format",
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator._build",
+      "reason": "outside project root (library)",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 373,
+        "end_line": 373,
+        "col": 23
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::format"
+    },
+    {
+      "name": "format",
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator._build",
+      "reason": "outside project root (library)",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 373,
+        "end_line": 373,
+        "col": 23
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::str.format"
+    },
+    {
+      "name": "next",
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator._build",
+      "reason": "outside project root (library)",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 426,
+        "end_line": 426,
+        "col": 38
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::next"
+    },
+    {
+      "name": "next",
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator._build",
+      "reason": "outside project root (library)",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 426,
+        "end_line": 426,
+        "col": 38
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::next#1ea309d2"
+    },
+    {
+      "name": "iter",
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator._build",
+      "reason": "outside project root (library)",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 426,
+        "end_line": 426,
+        "col": 43
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::iter"
+    },
+    {
+      "name": "iter",
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator._build",
+      "reason": "outside project root (library)",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 426,
+        "end_line": 426,
+        "col": 43
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::iter#2939db79"
+    },
+    {
+      "name": "iter",
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator._build",
+      "reason": "outside project root (library)",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 426,
+        "end_line": 426,
+        "col": 43
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::iter#04e85d58"
+    },
+    {
+      "name": "iter",
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator._build",
+      "reason": "outside project root (library)",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 426,
+        "end_line": 426,
+        "col": 43
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::iter#bb620c6d"
+    },
+    {
+      "name": "items",
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.setup",
+      "reason": "outside project root (library)",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 202,
+        "end_line": 202,
+        "col": 44
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::dict.items"
+    },
+    {
+      "name": "makedirs",
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.setup",
+      "reason": "outside project root (library)",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 213,
+        "end_line": 213,
+        "col": 12
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/os/__init__.pyi::makedirs"
+    },
+    {
+      "name": "exists",
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.setup",
+      "reason": "outside project root (library)",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 235,
+        "end_line": 235,
+        "col": 22
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/genericpath.pyi::exists"
+    },
+    {
+      "name": "mkdir",
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.setup",
+      "reason": "outside project root (library)",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 236,
+        "end_line": 236,
+        "col": 12
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/os/__init__.pyi::mkdir"
+    },
+    {
+      "name": "_find_existing_build_ids",
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.set_unique_build_ids",
+      "reason": "beyond depth limit",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 159,
+        "end_line": 159,
+        "col": 28
+      },
+      "id": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator._find_existing_build_ids"
+    },
+    {
+      "name": "print",
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.set_unique_build_ids",
+      "reason": "outside project root (library)",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 162,
+        "end_line": 162,
+        "col": 7
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::print"
+    },
+    {
+      "name": "print",
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.set_unique_build_ids",
+      "reason": "outside project root (library)",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 162,
+        "end_line": 162,
+        "col": 7
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::print#5c9c78c2"
+    },
+    {
+      "name": "sorted",
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.set_unique_build_ids",
+      "reason": "outside project root (library)",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 165,
+        "end_line": 165,
+        "col": 34
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::sorted"
+    },
+    {
+      "name": "sorted",
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.set_unique_build_ids",
+      "reason": "outside project root (library)",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 165,
+        "end_line": 165,
+        "col": 34
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::sorted#da5e7ddb"
+    },
+    {
+      "name": "items",
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.set_unique_build_ids",
+      "reason": "outside project root (library)",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 165,
+        "end_line": 165,
+        "col": 61
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::dict.items"
+    },
+    {
+      "name": "int",
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.set_unique_build_ids",
+      "reason": "not a function (class constructor/variant)",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 165,
+        "end_line": 165,
+        "col": 84
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::int"
+    },
+    {
+      "name": "format",
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.set_unique_build_ids",
+      "reason": "outside project root (library)",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 166,
+        "end_line": 166,
+        "col": 32
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::format"
+    },
+    {
+      "name": "format",
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.set_unique_build_ids",
+      "reason": "outside project root (library)",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 166,
+        "end_line": 166,
+        "col": 32
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::str.format"
+    },
+    {
+      "name": "keys",
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.set_unique_build_ids",
+      "reason": "outside project root (library)",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 173,
+        "end_line": 173,
+        "col": 35
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::dict.keys"
+    },
+    {
+      "name": "str",
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.set_unique_build_ids",
+      "reason": "not a function (class constructor/variant)",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 175,
+        "end_line": 175,
+        "col": 13
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::str"
+    },
+    {
+      "name": "values",
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.set_unique_build_ids",
+      "reason": "outside project root (library)",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 175,
+        "end_line": 175,
+        "col": 35
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::dict.values"
+    },
+    {
+      "name": "exists",
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.dump_yamls",
+      "reason": "outside project root (library)",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 59,
+        "end_line": 59,
+        "col": 20
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/genericpath.pyi::exists"
+    },
+    {
+      "name": "mkdir",
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.dump_yamls",
+      "reason": "outside project root (library)",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 60,
+        "end_line": 60,
+        "col": 10
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/os/__init__.pyi::mkdir"
+    },
+    {
+      "name": "exists",
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.dump_commands",
+      "reason": "outside project root (library)",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 67,
+        "end_line": 67,
+        "col": 20
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/genericpath.pyi::exists"
+    },
+    {
+      "name": "mkdir",
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.dump_commands",
+      "reason": "outside project root (library)",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 68,
+        "end_line": 68,
+        "col": 10
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/os/__init__.pyi::mkdir"
+    },
+    {
+      "name": "rstrip",
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.dump_commands",
+      "reason": "outside project root (library)",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 70,
+        "end_line": 70,
+        "col": 39
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::rstrip"
+    },
+    {
+      "name": "rstrip",
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.dump_commands",
+      "reason": "outside project root (library)",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 70,
+        "end_line": 70,
+        "col": 39
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::str.rstrip"
+    },
+    {
+      "name": "abspath",
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.dump_commands",
+      "reason": "outside project root (library)",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 70,
+        "end_line": 70,
+        "col": 19
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/posixpath.pyi::abspath"
+    },
+    {
+      "name": "open",
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.dump_commands",
+      "reason": "outside project root (library)",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 72,
+        "end_line": 72,
+        "col": 10
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::open"
+    },
+    {
+      "name": "open",
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.dump_commands",
+      "reason": "outside project root (library)",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 72,
+        "end_line": 72,
+        "col": 10
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::open#91714740"
+    },
+    {
+      "name": "open",
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.dump_commands",
+      "reason": "outside project root (library)",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 72,
+        "end_line": 72,
+        "col": 10
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::open#1a3d001d"
+    },
+    {
+      "name": "open",
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.dump_commands",
+      "reason": "outside project root (library)",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 72,
+        "end_line": 72,
+        "col": 10
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::open#a06f6189"
+    },
+    {
+      "name": "open",
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.dump_commands",
+      "reason": "outside project root (library)",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 72,
+        "end_line": 72,
+        "col": 10
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::open#29a653a0"
+    },
+    {
+      "name": "open",
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.dump_commands",
+      "reason": "outside project root (library)",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 72,
+        "end_line": 72,
+        "col": 10
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::open#d05b753a"
+    },
+    {
+      "name": "open",
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.dump_commands",
+      "reason": "outside project root (library)",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 72,
+        "end_line": 72,
+        "col": 10
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::open#08e9cc1a"
+    },
+    {
+      "name": "write",
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.dump_commands",
+      "reason": "outside project root (library)",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 74,
+        "end_line": 74,
+        "col": 10
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/_io.pyi::_TextIOBase.write"
+    },
+    {
+      "name": "type",
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.dump_commands",
+      "reason": "not a function (class constructor/variant)",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 86,
+        "end_line": 86,
+        "col": 12
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::type"
+    },
+    {
+      "name": "append",
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.dump_commands",
+      "reason": "outside project root (library)",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 87,
+        "end_line": 87,
+        "col": 27
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::list.append"
+    },
+    {
+      "name": "format",
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.dump_commands",
+      "reason": "outside project root (library)",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 87,
+        "end_line": 87,
+        "col": 46
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::format"
+    },
+    {
+      "name": "format",
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.dump_commands",
+      "reason": "outside project root (library)",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 87,
+        "end_line": 87,
+        "col": 46
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::str.format"
+    },
+    {
+      "name": "serialize_list",
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.dump_commands",
+      "reason": "beyond depth limit",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 87,
+        "end_line": 87,
+        "col": 56
+      },
+      "id": "py:src/apragma/graph_builder/_utils.py::serialize_list"
+    },
+    {
+      "name": "exists",
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.dump_debug_commands",
+      "reason": "outside project root (library)",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 120,
+        "end_line": 120,
+        "col": 20
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/genericpath.pyi::exists"
+    },
+    {
+      "name": "mkdir",
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.dump_debug_commands",
+      "reason": "outside project root (library)",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 121,
+        "end_line": 121,
+        "col": 10
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/os/__init__.pyi::mkdir"
+    },
+    {
+      "name": "rstrip",
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.dump_debug_commands",
+      "reason": "outside project root (library)",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 123,
+        "end_line": 123,
+        "col": 39
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::rstrip"
+    },
+    {
+      "name": "rstrip",
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.dump_debug_commands",
+      "reason": "outside project root (library)",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 123,
+        "end_line": 123,
+        "col": 39
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::str.rstrip"
+    },
+    {
+      "name": "abspath",
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.dump_debug_commands",
+      "reason": "outside project root (library)",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 123,
+        "end_line": 123,
+        "col": 19
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/posixpath.pyi::abspath"
+    },
+    {
+      "name": "open",
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.dump_debug_commands",
+      "reason": "outside project root (library)",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 125,
+        "end_line": 125,
+        "col": 10
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::open"
+    },
+    {
+      "name": "open",
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.dump_debug_commands",
+      "reason": "outside project root (library)",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 125,
+        "end_line": 125,
+        "col": 10
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::open#91714740"
+    },
+    {
+      "name": "open",
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.dump_debug_commands",
+      "reason": "outside project root (library)",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 125,
+        "end_line": 125,
+        "col": 10
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::open#1a3d001d"
+    },
+    {
+      "name": "open",
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.dump_debug_commands",
+      "reason": "outside project root (library)",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 125,
+        "end_line": 125,
+        "col": 10
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::open#a06f6189"
+    },
+    {
+      "name": "open",
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.dump_debug_commands",
+      "reason": "outside project root (library)",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 125,
+        "end_line": 125,
+        "col": 10
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::open#29a653a0"
+    },
+    {
+      "name": "open",
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.dump_debug_commands",
+      "reason": "outside project root (library)",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 125,
+        "end_line": 125,
+        "col": 10
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::open#d05b753a"
+    },
+    {
+      "name": "open",
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.dump_debug_commands",
+      "reason": "outside project root (library)",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 125,
+        "end_line": 125,
+        "col": 10
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::open#08e9cc1a"
+    },
+    {
+      "name": "write",
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.dump_debug_commands",
+      "reason": "outside project root (library)",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 127,
+        "end_line": 127,
+        "col": 10
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/_io.pyi::_TextIOBase.write"
+    },
+    {
+      "name": "type",
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.dump_debug_commands",
+      "reason": "not a function (class constructor/variant)",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 139,
+        "end_line": 139,
+        "col": 12
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::type"
+    },
+    {
+      "name": "append",
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.dump_debug_commands",
+      "reason": "outside project root (library)",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 140,
+        "end_line": 140,
+        "col": 27
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::list.append"
+    },
+    {
+      "name": "format",
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.dump_debug_commands",
+      "reason": "outside project root (library)",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 140,
+        "end_line": 140,
+        "col": 46
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::format"
+    },
+    {
+      "name": "format",
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.dump_debug_commands",
+      "reason": "outside project root (library)",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 140,
+        "end_line": 140,
+        "col": 46
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::str.format"
+    },
+    {
+      "name": "join",
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.dump_debug_commands",
+      "reason": "outside project root (library)",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 140,
+        "end_line": 140,
+        "col": 60
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::join"
+    },
+    {
+      "name": "join",
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.dump_debug_commands",
+      "reason": "outside project root (library)",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 140,
+        "end_line": 140,
+        "col": 60
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::str.join"
+    },
+    {
+      "name": "str",
+      "from": "py:src/apragma/backends/build_orchestrator.py::BuildOrchestrator.dump_debug_commands",
+      "reason": "not a function (class constructor/variant)",
+      "loc": {
+        "file": "src/apragma/backends/build_orchestrator.py",
+        "line": 140,
+        "end_line": 140,
+        "col": 65
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::str"
+    },
+    {
+      "name": "strip",
+      "from": "py:src/apragma/backends/cli_commands.py::helper_command",
+      "reason": "outside project root (library)",
+      "loc": {
+        "file": "src/apragma/backends/cli_commands.py",
+        "line": 27,
+        "end_line": 27,
+        "col": 35
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::strip"
+    },
+    {
+      "name": "strip",
+      "from": "py:src/apragma/backends/cli_commands.py::helper_command",
+      "reason": "outside project root (library)",
+      "loc": {
+        "file": "src/apragma/backends/cli_commands.py",
+        "line": 27,
+        "end_line": 27,
+        "col": 35
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::str.strip"
+    },
+    {
+      "name": "get_scripts_dir",
+      "from": "py:src/apragma/backends/cli_commands.py::helper_command",
+      "reason": "beyond depth limit",
+      "loc": {
+        "file": "src/apragma/backends/cli_commands.py",
+        "line": 27,
+        "end_line": 27,
+        "col": 17
+      },
+      "id": "py:src/apragma/graph_builder/_utils.py::get_scripts_dir"
+    },
+    {
+      "name": "str",
+      "from": "py:src/apragma/backends/cli_commands.py::helper_command",
+      "reason": "not a function (class constructor/variant)",
+      "loc": {
+        "file": "src/apragma/backends/cli_commands.py",
+        "line": 28,
+        "end_line": 28,
+        "col": 14
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::str"
+    },
+    {
+      "name": "resolve",
+      "from": "py:src/apragma/backends/cli_commands.py::helper_command",
+      "reason": "outside project root (library)",
+      "loc": {
+        "file": "src/apragma/backends/cli_commands.py",
+        "line": 28,
+        "end_line": 28,
+        "col": 47
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/pathlib/__init__.pyi::Path.resolve"
+    },
+    {
+      "name": "expanduser",
+      "from": "py:src/apragma/backends/cli_commands.py::helper_command",
+      "reason": "outside project root (library)",
+      "loc": {
+        "file": "src/apragma/backends/cli_commands.py",
+        "line": 28,
+        "end_line": 28,
+        "col": 34
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/pathlib/__init__.pyi::Path.expanduser"
+    },
+    {
+      "name": "Path",
+      "from": "py:src/apragma/backends/cli_commands.py::helper_command",
+      "reason": "not a function (class constructor/variant)",
+      "loc": {
+        "file": "src/apragma/backends/cli_commands.py",
+        "line": 28,
+        "end_line": 28,
+        "col": 18
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/pathlib/__init__.pyi::Path"
+    },
+    {
+      "name": "join",
+      "from": "py:src/apragma/backends/cli_commands.py::helper_command",
+      "reason": "outside project root (library)",
+      "loc": {
+        "file": "src/apragma/backends/cli_commands.py",
+        "line": 29,
+        "end_line": 29,
+        "col": 21
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/shlex.pyi::join"
+    },
+    {
+      "name": "replace",
+      "from": "py:src/apragma/backends/cli_commands.py::helper_command",
+      "reason": "outside project root (library)",
+      "loc": {
+        "file": "src/apragma/backends/cli_commands.py",
+        "line": 30,
+        "end_line": 30,
+        "col": 20
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::replace"
+    },
+    {
+      "name": "replace",
+      "from": "py:src/apragma/backends/cli_commands.py::helper_command",
+      "reason": "outside project root (library)",
+      "loc": {
+        "file": "src/apragma/backends/cli_commands.py",
+        "line": 30,
+        "end_line": 30,
+        "col": 20
+      },
+      "id": "py:/home/canswang/hierX/.venv/lib/python3.12/site-packages/pyright/dist/dist/typeshed-fallback/stdlib/builtins.pyi::str.replace"
+    }
+  ]
+}
