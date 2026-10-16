@@ -134,3 +134,76 @@ def test_watch_runs_update_after_quiet_period(cproj):
     assert seen[1][0].changed and "body changed" in seen[1][0].markdown
     r = run(["watch", "--once"], cwd=cproj)
     assert r.returncode == 0 and "= src/hal.c:hal_write32: no structural change" in r.stdout
+
+
+# ---------------------------------------------------------------- netlist entries (Phase N1)
+SPICE_FIX = os.path.join(os.path.dirname(__file__), "fixtures", "spice")
+
+
+def _spice_proj(tmp_path, sub="ota"):
+    import shutil
+    dst = tmp_path / "sp"
+    shutil.copytree(os.path.join(SPICE_FIX, sub), dst, ignore=shutil.ignore_patterns(".hx"))
+    return dst
+
+
+def test_track_spice_options_roundtrip(tmp_path):
+    from hx import project
+    root = str(_spice_proj(tmp_path))
+    project.track(root, "ota.sp:.", depth=None, dialect="ngspice", deck="ota.sp", search_paths=["lib", "extra"])
+    cfg = project.load_config(root)
+    e = cfg["entries"][0]
+    assert e["dialect"] == "ngspice" and e["deck"] == "ota.sp" and e["search_paths"] == ["lib", "extra"]
+    res = project.update(root)
+    assert res[0].error is None and res[0].graph["meta"]["extract_args"]["search_paths"] == ["lib", "extra"]
+    assert res[0].graph["meta"]["extract_args"]["dialect"] == "ngspice"
+
+
+def test_track_standalone_library_entry(tmp_path):
+    """A tracked `lib.inc:@name` entry keeps the library reading across `update` (the deck stays omitted), while an
+    explicit --deck is tracked and replayed as the deck."""
+    from hx import project
+    root = str(_spice_proj(tmp_path, "params"))
+    project.track(root, "inc_first_subckt.inc:@leaf", depth=None)
+    assert "deck" not in project.load_config(root)["entries"][0] or project.load_config(root)["entries"][0].get("deck") is None
+    res = project.update(root)
+    assert res[0].error is None, res[0].error
+    g = res[0].graph
+    assert g["entry"] == "sp:inc_first_subckt.inc::@leaf" and g["meta"]["index"]["deck_role"] == "library" and g["meta"]["extract_args"]["deck"] is None
+    project.track(root, "inc_first_subckt.inc:.", depth=None, deck="inc_first_subckt.inc")
+    res = project.update(root)
+    g2 = next(r.graph for r in res if r.graph["meta"]["extract_args"]["entry"] == "inc_first_subckt.inc:.")
+    assert g2["meta"]["extract_args"]["deck"] == "inc_first_subckt.inc" and g2["meta"]["index"]["deck_role"] == "deck"
+
+
+def test_watch_reacts_to_a_newly_created_include_and_a_shadowing_candidate(tmp_path):
+    """Dependency probes are watched, missing candidates included: creating an include that was missing, or an
+    earlier search-path candidate that shadows the resolved file, changes the signature (review round 9)."""
+    import shutil
+    from hx import project
+    root = _spice_proj(tmp_path, "oracle/search_path")
+    out = tmp_path / "outside"
+    out.mkdir()
+    shutil.copy(root / "inc" / "only_here.inc", out / "only_here.inc")
+    (root / "inc" / "only_here.inc").unlink()
+    project.track(str(root), "deck.sp:.", depth=None, search_paths=[str(out)])
+    res = project.update(str(root))
+    assert res[0].error is None
+    deps = project.dependency_files(str(root))
+    shadow = str(root / "only_here.inc")                              # the deck directory is probed before any --search-path
+    assert str(out / "only_here.inc") in deps and shadow in deps      # the resolved file and the missing earlier candidate
+    sig = project.source_signature(str(root), None, extra=deps)
+    assert sig[shadow] == project.MISSING and sig[str(out / "only_here.inc")] > 0
+    (root / "only_here.inc").write_text(".subckt shared a b\nr1 a b 2k\n.ends\n")                   # a shadowing candidate appears
+    sig2 = project.source_signature(str(root), None, extra=deps)
+    assert sig2 != sig and sig2[shadow] > 0
+    res2 = project.update(str(root))
+    assert res2[0].graph["circuit"]["files"][1]["path"] == "only_here.inc"                           # re-resolved to the new file
+    g = res2[0].graph
+    assert g["nodes"]["sp:deck.sp::x1.r1"]["signature"] == "r1 a b 2k"
+    (out / "only_here.inc").unlink()
+    (root / "only_here.inc").unlink()
+    res3 = project.update(str(root))                                                               # both gone: an error diagnostic, still a graph
+    assert res3[0].error is None and any(d["code"] == "missing-include" for d in res3[0].graph["circuit"]["diagnostics"])
+    sig3 = project.source_signature(str(root), None, extra=project.dependency_files(str(root)))
+    assert sig3[str(out / "only_here.inc")] == project.MISSING

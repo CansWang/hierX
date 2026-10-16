@@ -6,4 +6,5 @@ __pycache__/
 build/
 dist/
 .pytest_cache/
+site/
 tests/fixtures/rust/target/

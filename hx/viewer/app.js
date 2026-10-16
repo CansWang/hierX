@@ -190,10 +190,17 @@ async function loadHistory() {
   const sel = $("#diff-base");
   const cur = S.diffBase;
   sel.replaceChildren(h("option", {value: ""}, S.history.length ? "no diff" : "no snapshots yet"));
-  for (const sn of [...S.history].reverse()) sel.append(h("option", {value: sn.ts}, "vs " + sn.ts.replace("T", " ").slice(0, 19)));
+  for (const sn of [...S.history].reverse()) sel.append(h("option", {value: sn.ts}, "vs " + snapshotLabel(sn)));
   sel.value = S.history.some((x) => x.ts === cur) ? cur : "";
   if (sel.value !== cur) { S.diffBase = sel.value; }
 }
+function snapshotLabel(sn) {
+  const stamp = sn.generated ? sn.generated.replace("T", " ").slice(0, 19) + " UTC" : sn.ts;
+  const git = (sn.provenance || {}).git || {};
+  const revision = git.commit ? git.commit.slice(0, 12) : git.status === "no-repo" ? "no Git" : "revision unknown";
+  return stamp + " · " + revision + (git.dirty ? " · modified" : "");
+}
+function diffStamp() { return S.diff.since_generated || S.diff.since; }
 async function applyDiff(base) {
   S.diffBase = base || "";
   if (!S.diffBase) { S.diff = null; renderAll(); setStatus(""); updateHash(); return; }
@@ -204,7 +211,7 @@ async function applyDiff(base) {
   } catch (err) { S.diff = null; setStatus("diff failed: " + err.message, true); return; }
   const s = S.diff.summary;
   const st = $("#status"); st.classList.remove("err");
-  st.replaceChildren("diff vs " + S.diff.since.slice(0, 19).replace("T", " ") + " · functions ",
+  st.replaceChildren("diff vs " + diffStamp().slice(0, 19).replace("T", " ") + " · functions ",
     h("span", {class: "d-add"}, "+" + s.nodes_added), " ", h("span", {class: "d-rm"}, "−" + s.nodes_removed), " ",
     h("span", {class: "d-chg"}, "~" + s.nodes_changed), " · types ~" + s.types_changed + " · edges +" + s.edges_added + " −" + s.edges_removed);
   renderAll(); updateHash();
@@ -257,7 +264,7 @@ async function takeBaseline() {
 }
 function changesSection(root) {
   const d = S.diff; if (!d) return;
-  root.append(h("div", {class: "tree-h"}, "changes vs " + d.since.slice(0, 16).replace("T", " ")));
+  root.append(h("div", {class: "tree-h"}, "changes vs " + diffStamp().slice(0, 16).replace("T", " ")));
   const row = (id, cls, label, kind, extra) => {
     const r = h("div", {class: "row " + cls + (S.sel && S.sel.id === id ? " sel" : ""), title: id, onclick: () => select(kind, id)},
       h("span", {class: "caret empty"}), h("span", {class: "nm"}, label), extra ? h("span", {class: "muted small"}, extra) : null);
@@ -266,7 +273,7 @@ function changesSection(root) {
   for (const id of d.nodes.added) row(id, "d-add", "+ " + shortId(id), "node");
   for (const id of d.nodes.removed) row(id, "d-rm", "− " + shortId(id), "removed");
   for (const [id, ch] of Object.entries(d.nodes.changed)) {
-    const what = [ch.signature ? "signature" : null, ch.body ? "body" : null, ch.globals ? "globals" : null, ch.calls ? "calls" : null, ch.moved ? "moved" : null].filter(Boolean).join(", ");
+    const what = [ch.signature ? "signature" : null, ch.body ? "body" : null, ch.globals ? "globals" : null, ch.calls ? "calls" : null, ch.moved ? "moved" : null, ch.wiring ? "wiring" : null, ch.attrs ? "attrs" : null].filter(Boolean).join(", ");
     row(id, "d-chg", "~ " + shortId(id), "node", what);
   }
   for (const id of d.types.added) row(id, "d-add", "+ " + shortId(id), "type");
@@ -277,7 +284,7 @@ function changesSection(root) {
 function diffBlock(id) {
   const d = S.diff; if (!d) return null;
   const ch = d.nodes.changed[id] || d.types.changed[id];
-  if (d.nodes.added.includes(id) || d.types.added.includes(id)) return h("div", {class: "diffbox"}, h("b", {class: "new"}, "new since " + d.since.slice(0, 16)));
+  if (d.nodes.added.includes(id) || d.types.added.includes(id)) return h("div", {class: "diffbox"}, h("b", {class: "new"}, "new since " + diffStamp().slice(0, 16)));
   if (!ch) return null;
   const items = [];
   if (ch.signature) items.push(h("li", null, "signature: ", h("span", {class: "old mono"}, ch.signature.old), " → ", h("span", {class: "new mono"}, ch.signature.new)));
@@ -289,15 +296,17 @@ function diffBlock(id) {
   for (const k of ["size", "align", "kind", "underlying"]) if (ch[k]) items.push(h("li", null, k + ": ", h("span", {class: "old"}, String(ch[k].old)), " → ", h("span", {class: "new"}, String(ch[k].new))));
   for (const f of ch.fields || []) items.push(h("li", null, "field " + (f.name || "(reorder)") + ": " + f.change + (f.old != null ? " " + JSON.stringify(f.old) : "") + (f.new != null ? " → " + JSON.stringify(f.new) : "")));
   for (const e of ch.enumerators || []) items.push(h("li", null, "enum " + e.name + ": " + e.change + (e.old != null ? " " + e.old : "") + (e.new != null ? " → " + e.new : "")));
+  for (const w of ch.wiring || []) items.push(h("li", null, "wiring " + w.terminal + ": ", h("span", {class: "old mono"}, String(w.old)), " → ", h("span", {class: "new mono"}, String(w.new))));
+  for (const [k, v] of Object.entries(ch.attrs || {})) items.push(h("li", null, "attr " + k + ": " + ("old" in v || "new" in v ? JSON.stringify(v.old) + " → " + JSON.stringify(v.new) : JSON.stringify(v))));
   if (ch.moved) items.push(h("li", null, "moved " + ch.moved.old + " → " + ch.moved.new));
   if (ch.depth && items.length === 0) items.push(h("li", null, "depth " + ch.depth.old + " → " + ch.depth.new));
-  return h("div", {class: "diffbox"}, h("b", null, "changed since " + d.since.slice(0, 16)), h("ul", {class: "list"}, items));
+  return h("div", {class: "diffbox"}, h("b", null, "changed since " + diffStamp().slice(0, 16)), h("ul", {class: "list"}, items));
 }
 function renderRemoved(d, id) {
   const info = (S.diff && S.diff.nodes.removed_info[id]) || {};
   d.append(navBar(h("span", {class: "muted small"}, "removed function")));
   d.append(h("h2", null, info.name || shortId(id)));
-  d.append(h("div", {class: "diffbox"}, h("b", {class: "old"}, "no longer in the graph since " + S.diff.since.slice(0, 16)),
+  d.append(h("div", {class: "diffbox"}, h("b", {class: "old"}, "no longer in the graph since " + diffStamp().slice(0, 16)),
     info.signature ? h("pre", {class: "sig", style: "margin-top:6px"}, info.signature) : null,
     info.loc ? h("div", {class: "muted small"}, info.loc.file + ":" + info.loc.line) : null,
     info.calls && info.calls.length ? h("div", {class: "small"}, "called: " + info.calls.map(shortId).join(", ")) : null));
@@ -445,7 +454,8 @@ function renderSearch(root, q) {
   const tys = Object.values(g.types).filter((t) => t.name.toLowerCase().includes(q) || t.id.toLowerCase().includes(q));
   const gls = Object.values(g.globals).filter((v) => v.name.toLowerCase().includes(q) || v.id.toLowerCase().includes(q));
   const ghs = Object.values(S.idx.ghosts).filter((x) => x.label.toLowerCase().includes(q));
-  root.append(h("div", {class: "tree-h"}, "functions (" + fns.length + ")"));
+  const elementsGraph = Object.values(g.nodes).some((n) => n.kind === "device");
+  root.append(h("div", {class: "tree-h"}, (elementsGraph ? "elements (" : "functions (") + fns.length + ")"));
   for (const n of fns.slice(0, 200)) root.append(treeRow({id: n.id, label: n.name, depthLabel: n.depth, cls: n.depth < 0 ? "caller" : "", kind: "node", n}));
   root.append(h("div", {class: "tree-h"}, "types (" + tys.length + ")"));
   for (const t of tys.slice(0, 200)) root.append(treeRow({id: t.id, label: (t.kind === "typedef" ? "" : t.kind + " ") + t.name, kind: "type"}));
@@ -512,7 +522,7 @@ function buildElements() {
   // In a hierarchy graph (HDL) a file's module instances and that module's own functions/tasks get SEPARATE groups.
   // A group mixing an instance with its module's routine, joined by a call edge, is exactly what makes dagre's
   // ranker throw on nested compounds (CVA6 at depth 3; tests/fixtures/viewer/layout-fail.json).
-  const hierarchical = Object.values(g.nodes).some((n) => n.kind === "module" || n.kind === "instance");
+  const hierarchical = Object.values(g.nodes).some((n) => n.kind === "module" || n.kind === "instance" || n.kind === "device");
   const parentFor = (file, kind) => {
     if (!S.showFiles || !file) return undefined;
     const routine = hierarchical && (kind === "function" || kind === "task");
@@ -714,6 +724,8 @@ function renderNode(d, n) {
     h("span", {class: "link mono", title: "show source", onclick: () => showSource(n)}, n.loc.file + ":" + n.loc.line + (n.loc.end_line ? "–" + n.loc.end_line : "")),
     h("span", {class: "muted mono small", title: "body hash (whitespace-insensitive)"}, (n.body_hash || "").slice(5, 13))));
   d.append(h("pre", {class: "sig"}, n.signature));
+  if (n.kind === "device" && n.attrs) d.append(h("div", {style: "margin-top:4px"}, h("span", {class: "badge kind-device"}, (n.attrs.family || "?") + " " + (n.attrs.element || "")),
+    n.attrs.guard ? h("span", {class: "badge", title: "conditional branch (guard id " + (n.attrs.guard_id || "") + ")"}, "if " + n.attrs.guard) : null));
   const dbn = diffBlock(n.id); if (dbn) d.append(dbn);
   if (n.attrs && Object.keys(n.attrs).length) d.append(attrsBlock(n.attrs));
   d.append(h("div", {class: "verify", style: "margin-top:8px"},
@@ -721,7 +733,7 @@ function renderNode(d, n) {
     vs === "ok" ? h("span", {class: "badge ok"}, "✓ unchanged since verified") : null,
     vs === "changed" ? h("span", {class: "badge chg", title: "verified " + a.verified_body_hash}, "! body changed since verified") : null));
   if (n.params.length) {
-    d.append(h("h3", null, "parameters"));
+    d.append(h("h3", null, n.kind === "device" ? "terminals" : (n.lang === "sp" ? "ports" : "parameters")));
     d.append(h("table", {class: "t"}, h("thead", null, h("tr", null, h("th", null, "name"), h("th", null, "type"), h("th", {title: "click to override; heuristic = guessed from constness"}, "dir"), h("th", null, "note"))),
       h("tbody", null, n.params.map((p) => {
         const pd = paramDir(n, p);
@@ -731,7 +743,8 @@ function renderNode(d, n) {
           h("td", null, h("input", {class: "tags", value: pnote, placeholder: "…", onchange: (ev) => applyPatch({nodes: {[n.id]: {params: {[p.name]: {note: ev.target.value.trim() || null}}}}})})));
       }))));
   }
-  if (n.returns || !["module", "instance", "task"].includes(n.kind)) d.append(h("h3", null, "returns"), h("div", null, typeLink(n.returns && n.returns.type_ref, n.returns ? n.returns.type : "void")));
+  const tt = terminalsTable(n); if (tt) d.append(tt);
+  if (n.returns || !["module", "instance", "task", "device"].includes(n.kind)) d.append(h("h3", null, "returns"), h("div", null, typeLink(n.returns && n.returns.type_ref, n.returns ? n.returns.type : "void")));
   if (n.globals.reads.length || n.globals.writes.length) {
     d.append(h("h3", null, "globals"));
     d.append(h("dl", {class: "kv"},
@@ -774,6 +787,19 @@ function fmtValue(v) {
   const short = m && m[2].length > 12 ? m[1] + m[2].slice(0, 8) + "…" + m[2].slice(-4) : s.slice(0, 23) + "…";
   return h("span", {class: "mono", title: s + " (" + s.length + " chars)"}, short);
 }
+function terminalsTable(n) {
+  // Netlist graphs: the circuit block maps a device's terminals and an instance's ports to nets (hx/3 `circuit`).
+  const c = S.graph.circuit; if (!c) return null;
+  const rows = n.kind === "device" ? (c.terminals || {})[n.id] : (c.ports || {})[n.id];
+  if (!rows || !rows.length) return null;
+  const isDev = n.kind === "device";
+  return h("div", null, h("h3", null, isDev ? "terminals → nets" : "ports → nets"),
+    h("table", {class: "t"}, h("thead", null, h("tr", null, h("th", null, isDev ? "terminal" : "port"), h("th", null, "net"), h("th", null, "as written"))),
+      h("tbody", null, rows.map((r) => h("tr", null, h("td", {class: "mono"}, isDev ? r.terminal : r.port),
+        // the outermost net reached through the enclosing instances' bindings, with the net in this scope when it differs
+        h("td", {class: "mono"}, isDev ? (r.canonical && r.canonical !== r.net ? r.canonical + " (via " + r.net + ")" : r.net) : r.net + (r.outer !== r.net ? " (via " + r.outer + ")" : "")),
+        h("td", {class: "mono muted"}, r.as_written))))));
+}
 function attrsBlock(attrs) {
   const dl = h("dl", {class: "kv", style: "margin-top:8px"});
   for (const [k, v] of Object.entries(attrs)) {
@@ -781,6 +807,8 @@ function attrsBlock(attrs) {
     let val;
     if (k === "signals" && Array.isArray(v)) val = h("details", null, h("summary", {class: "link small"}, v.length + " internal signals"),
       h("ul", {class: "list"}, v.map((sg) => h("li", null, h("span", {class: "mono"}, sg.name), h("span", {class: "muted small"}, sg.type)))));
+    else if (Array.isArray(v) && v.length && v.every((x) => x && typeof x === "object" && ("key" in x || "target" in x)))
+      val = v.map((x, i) => [i ? ", " : null, x.target ? nodeLink(x.target, x.as_written || shortId(x.target)) : h("span", {class: "mono"}, x.key + (x.guard_id ? "#" + x.guard_id : ""))]).flat().filter((x) => x !== null);
     else if (typeof v === "object" && !Array.isArray(v)) val = Object.entries(v).flatMap(([pk, pv], i) => [i ? ", " : null, pk + "=", fmtValue(pv)]).filter((x) => x !== null);
     else if (Array.isArray(v)) val = v.map((x) => typeof x === "object" ? JSON.stringify(x) : String(x)).join(", ");
     else val = String(v);
@@ -949,7 +977,8 @@ async function loadData() {
   S.collapsed = new Set(Object.entries(S.ann.nodes).filter(([, v]) => v.collapsed).map(([k]) => k));
   S.hidden = new Set(((S.ann.view && S.ann.view.hidden) || []).filter((id) => S.graph.nodes[id] && id !== S.graph.entry));
   const slider = $("#depth"); slider.max = Math.max(1, S.idx.maxDepth); if (S.depthMax > Number(slider.max)) S.depthMax = Number(slider.max); slider.value = S.depthMax; $("#depth-val").textContent = S.depthMax;
-  $("#entry-label").textContent = S.graph.entry; $("#entry-label").title = S.graph.entry + " · generated " + S.graph.generated;
+  $("#entry-label").textContent = S.graph.entry;
+  $("#entry-label").title = S.graph.entry + " · " + snapshotLabel({generated: S.graph.generated, ts: "", provenance: (S.graph.meta || {}).provenance});
   document.title = "hx · " + shortId(S.graph.entry);
 }
 function notice(text) {   // persistent notice in the banner strip (the status line is overwritten by later events)

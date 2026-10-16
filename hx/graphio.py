@@ -243,7 +243,18 @@ def upgrade(doc: dict) -> tuple[dict, Optional[MigrationReport]]:
 
 
 def load_graph_dict(path: str) -> dict:
-    """Graph document from disk, normalized and (if needed) upgraded in memory. Raises SchemaError / OSError / ValueError."""
+    """Read a graph dictionary, normalizing values and upgrading schemas in memory.
+
+    Args:
+        path: UTF-8 graph JSON file.
+
+    Returns:
+        Current-major graph dictionary. The source file is not rewritten.
+
+    Raises:
+        OSError: The file cannot be read.
+        ValueError: JSON is malformed, including SchemaError for unsupported schemas.
+    """
     with open(path, encoding="utf-8") as fh:
         doc = load_graph_text(fh.read())
     doc, _rep = upgrade(doc)
@@ -251,6 +262,12 @@ def load_graph_dict(path: str) -> dict:
 
 
 def load_graph_with_report(path: str) -> tuple[dict, Optional[MigrationReport]]:
+    """Load a normalized graph plus an optional migration report.
+
+    Returns a pair of the current-major dictionary and MigrationReport, or None
+    for the report when no schema upgrade was needed. Writes no files. Raises
+    OSError, ValueError, or SchemaError for the same failures as load_graph_dict.
+    """
     with open(path, encoding="utf-8") as fh:
         doc = load_graph_text(fh.read())
     return upgrade(doc)

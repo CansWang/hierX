@@ -1,0 +1,7 @@
+* corner library: only the selected section is read
+.lib tt
+.include "tt_models.inc"
+.endl tt
+.lib ff
+.include "ff_models.inc"
+.endl ff

@@ -43,6 +43,7 @@ _UNRENAME = {v: k for k, v in _RENAME.items()}
 
 @dataclass
 class Loc:
+    """Source range with one-based line numbers and an optional column/end line."""
     file: str
     line: int
     end_line: Optional[int] = None
@@ -51,12 +52,14 @@ class Loc:
 
 @dataclass
 class TypeUse:
+    """Spelled type and optional reference to an entry in the graph type table."""
     type: str
     type_ref: Optional[str] = None
 
 
 @dataclass
 class Param:
+    """Parameter type, inferred/explicit direction, and direction provenance."""
     name: str
     type: str
     type_ref: Optional[str] = None
@@ -66,6 +69,7 @@ class Param:
 
 @dataclass
 class Field:
+    """Member type and optional layout; units depend on the source language."""
     name: str
     type: str
     type_ref: Optional[str] = None
@@ -77,12 +81,14 @@ class Field:
 
 @dataclass
 class Enumerator:
+    """Enum member with a JSON-safe numeric or literal value."""
     name: str
     value: Union[int, str, None]   # JSON number when |v| < 2**53, else canonical string (hx/values.py); x/z keep their pattern
 
 
 @dataclass
 class TypeDef:
+    """Reached type definition, including layout, aliases, and graph users."""
     id: str
     kind: str            # struct | union | class | enum | typedef | ...
     name: str
@@ -101,12 +107,14 @@ class TypeDef:
 
 @dataclass
 class GlobalRefs:
+    """IDs of globals read and written by a node."""
     reads: list[str] = field(default_factory=list)
     writes: list[str] = field(default_factory=list)
 
 
 @dataclass
 class Node:
+    """A reached function, method, module, task, instance, or primitive device."""
     id: str
     kind: str            # function | method | module | instance | task ...
     name: str
@@ -128,6 +136,7 @@ class Node:
 
 @dataclass
 class GlobalVar:
+    """A touched variable with type, source location, and storage scope."""
     id: str
     name: str
     type: str
@@ -140,6 +149,7 @@ class GlobalVar:
 
 @dataclass
 class Edge:
+    """Graph relationship; src/dst serialize to the JSON keys from/to."""
     src: str
     dst: Optional[str]
     kind: str                          # call | ref | fnptr | macro | instance
@@ -152,6 +162,7 @@ class Edge:
 
 @dataclass
 class Unresolved:
+    """Reached but unexpanded target, including a reason and optional ID."""
     name: str
     src: str
     reason: str
@@ -162,39 +173,68 @@ class Unresolved:
 
 @dataclass
 class Graph:
+    """Language-neutral extraction result with ID-keyed records.
+
+    Use nodes, types, globals, edges, and unresolved to inspect structure. Netlists
+    also populate the circuit dictionary. See the graph format reference for units
+    and precision. Generated graphs do not contain the human annotation layer.
+    """
     root: str
     lang: str
     entry: str
     schema: str = SCHEMA
-    generated: str = field(default_factory=lambda: _dt.datetime.now(_dt.timezone.utc).isoformat(timespec="seconds"))
+    generated: str = field(default_factory=lambda: _dt.datetime.now(_dt.timezone.utc).isoformat(timespec="microseconds"))
     nodes: dict[str, Node] = field(default_factory=dict)
     types: dict[str, TypeDef] = field(default_factory=dict)
     globals: dict[str, GlobalVar] = field(default_factory=dict)
     edges: list[Edge] = field(default_factory=list)
     unresolved: list[Unresolved] = field(default_factory=list)
     meta: dict[str, Any] = field(default_factory=dict)
+    circuit: Optional[dict] = None     # hx/3 additive: netlist frontends only (definitions, models, nets, terminals, ports, …)
 
     _ORDER = ("schema", "generated", "root", "lang", "entry", "meta",
-              "nodes", "types", "globals", "edges", "unresolved")
+              "nodes", "types", "globals", "edges", "unresolved", "circuit")
 
     def to_dict(self) -> dict:
+        """Return a JSON-ready dictionary with ordered top-level keys.
+
+        Edges use from/to keys. The circuit field is omitted when it is None. This
+        operation does not write a file or validate the complete JSON Schema.
+        """
         d = _ser(self)
-        return {k: d[k] for k in self._ORDER if k in d}
+        return {k: d[k] for k in self._ORDER if k in d and not (k == "circuit" and d[k] is None)}
 
     def to_json(self, indent: Optional[int] = 2) -> str:
+        """Serialize to JSON text with optional indentation; write no files."""
         return json.dumps(self.to_dict(), indent=indent, ensure_ascii=False)
 
     def save(self, path: str) -> None:
+        """Atomically write UTF-8 JSON and a trailing newline to path.
+
+        Parent directories are created by the atomic writer. Filesystem failures raise
+        OSError. Existing graph content at the destination is replaced.
+        """
         from .fsutil import atomic_write
         atomic_write(path, self.to_json() + "\n")
 
     @classmethod
     def from_dict(cls, d: dict) -> "Graph":
+        """Construct records from a current-major graph dictionary.
+
+        Raises SchemaError for a missing or unsupported schema. Unknown fields are
+        ignored. This does not upgrade legacy schemas or perform full JSON Schema
+        validation; use load for normalized file input.
+        """
         check_schema(d)
         return _de(cls, d)
 
     @classmethod
     def load(cls, path: str) -> "Graph":
+        """Read, normalize, and upgrade a graph file in memory.
+
+        Returns a Graph without rewriting the source file. Raises OSError for file
+        failures, ValueError for invalid JSON, or SchemaError for unsupported schemas.
+        """
         from .graphio import load_graph_dict   # the shared reader: wide values, hx/1 upgrade in memory
         return cls.from_dict(load_graph_dict(path))
 

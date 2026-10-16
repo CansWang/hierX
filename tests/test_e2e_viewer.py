@@ -307,3 +307,40 @@ def test_python_module_node_renders(browser, py_module_server):
     assert page.locator("#detail h3", has_text="returns").count() == 0
     assert page.evaluate("() => window.HX_DEBUG.state().cy.nodes(':parent').length") >= 2
     ctx.close()
+
+
+SPICE_OTA = os.path.join(HERE, "fixtures", "viewer", "spice-ota.json")
+
+
+@pytest.fixture
+def spice_server(tmp_path):
+    proj = tmp_path / "sp"; (proj / ".hx").mkdir(parents=True)
+    shutil.copy(SPICE_OTA, proj / ".hx" / "graph.json")
+    s = Served(proj / ".hx" / "graph.json")
+    yield s, proj
+    s.stop()
+
+
+def test_spice_device_detail_pane(browser, spice_server):
+    """An hx/3 netlist graph (Phase N1): deck, instance and device nodes lay out; a device's detail pane shows the
+    family badge and the terminal→net table and no returns; an instance's pane shows its ports bound to outer nets."""
+    s, _ = spice_server
+    did = "sp:ota.sp::xa.m_load_1"
+    ctx, page, errors, _ = _open(browser, s.url + f"/#depth=3&kind=node&sel={did}")
+    t = page.evaluate("() => window.HX_TEST")
+    assert errors == [] and t["lastLayout"] == "dagre", t
+    assert page.locator("#tree .row.sel").get_attribute("title") == did
+    assert page.locator("#detail .badge.kind-device").count() >= 1
+    assert page.locator("#detail h3", has_text="terminals").count() >= 1
+    assert page.locator("#detail h3", has_text="returns").count() == 0
+    rows = [r.split("\t") for r in page.locator("#detail table.t tbody tr").all_inner_texts()]
+    assert any(r[0] == "d" and r[1] == "xa.vmir" and r[2] == "vmir" for r in rows), rows
+    assert page.evaluate("() => window.HX_DEBUG.state().cy.nodes(':parent').length") >= 2
+    ctx.close()
+    iid = "sp:ota.sp::xa"
+    ctx, page, errors, _ = _open(browser, s.url + f"/#depth=3&kind=node&sel={iid}")
+    assert errors == [] and page.locator("#tree .row.sel").get_attribute("title") == iid
+    assert page.locator("#detail h3", has_text="ports").count() >= 1
+    rows = [r.split("\t") for r in page.locator("#detail table.t tbody tr").all_inner_texts()]
+    assert any(r[0] == "vip" and r[1] == "vip" for r in rows), rows
+    ctx.close()

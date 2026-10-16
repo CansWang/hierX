@@ -342,6 +342,9 @@ class LspFrontend(Frontend):
         self.stats = {"server": " ".join(self.cmd), "ready_seconds": round(time.time() - t0, 2), "tus": 0, "parsed": 0,
                       "cached": 0, "tu_errors": 0, "diagnostics": 0, "index_seconds": round(time.time() - t0, 2)}
 
+    def provenance_inputs(self) -> dict[str, Optional[int]]:
+        return dict(getattr(self, "_provenance_deps", {}))
+
     def close(self) -> None:
         if self.client:
             self.client.shutdown()
@@ -360,6 +363,9 @@ class LspFrontend(Frontend):
     def _open(self, path: str) -> str:
         uri = path_to_uri(path)
         if uri not in self.opened:
+            if not hasattr(self, "_provenance_deps"):
+                self._provenance_deps = {}
+            self._provenance_deps[path] = os.stat(path).st_mtime_ns
             with open(path, encoding="utf-8", errors="replace") as fh:
                 text = fh.read()
             self.client.notify("textDocument/didOpen", {"textDocument": {"uri": uri, "languageId": self.profile["language_id"],
@@ -371,6 +377,9 @@ class LspFrontend(Frontend):
     def _lines(self, uri: str) -> list[str]:
         if uri not in self.src_cache:
             try:
+                if not hasattr(self, "_provenance_deps"):
+                    self._provenance_deps = {}
+                self._provenance_deps[uri_to_path(uri)] = os.stat(uri_to_path(uri)).st_mtime_ns
                 with open(uri_to_path(uri), encoding="utf-8", errors="replace") as fh:
                     self.src_cache[uri] = fh.read().splitlines()
             except OSError:

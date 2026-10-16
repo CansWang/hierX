@@ -1,0 +1,59 @@
+site_name: hx documentation
+site_description: Extract, inspect, annotate, and compare code and circuit hierarchies.
+repo_url: https://github.com/CansWang/hierX
+edit_uri: ''
+theme:
+  name: mkdocs
+  highlightjs: false  # mkdocstrings already marks up signatures; avoid highlighting them twice
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          paths: [.]
+          options:
+            docstring_style: google
+            docstring_section_style: list
+            show_root_heading: true
+            show_root_full_path: false
+            show_source: false
+            show_signature_annotations: true
+            separate_signature: true
+            line_length: 88
+hooks:
+  - docs/hooks.py
+exclude_docs: |
+  hooks.py
+validation:
+  nav:
+    omitted_files: warn
+  links:
+    not_found: warn
+    anchors: warn
+    unrecognized_links: warn
+nav:
+  - Home: index.md
+  - Getting started:
+      - Install and choose a frontend: getting-started/install.md
+      - Prepare tutorial projects: getting-started/examples.md
+  - Tutorials:
+      - C and C++ review workflow: tutorials/c-review.md
+      - Netlist quickstart: tutorials/netlists.md
+      - Script with Python: tutorials/python-api.md
+      - Agent integration: tutorials/agents.md
+  - Language guides:
+      - C and C++: guides/c-cpp.md
+      - SystemVerilog: guides/systemverilog.md
+      - Rust: guides/rust.md
+      - Python: guides/python.md
+  - Reference:
+      - CLI: reference/cli.md
+      - Python API: reference/python.md
+      - Graph format: reference/graph.md
+      - Annotations: reference/annotations.md
+      - Project configuration: reference/configuration.md
+      - Structural diffs: reference/diff.md
+      - HTTP and events: reference/http.md
+      - MCP tools: reference/mcp.md
+  - Troubleshooting: troubleshooting.md
+  - Contributing documentation: contributing.md

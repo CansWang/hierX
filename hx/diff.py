@@ -162,6 +162,17 @@ def _edge_key(e: dict) -> tuple:
 
 
 def diff_graphs(old: dict, new: dict) -> dict:
+    """Compare two graph dictionaries and return an hx-diff/1 document.
+
+    Args:
+        old: Baseline graph, preferably from the shared graph loader or Graph.to_dict.
+        new: Current graph with the same intended build configuration.
+
+    Returns:
+        Category-specific changes and a summary whose any flag indicates differences.
+        Input files and annotations are not modified. This function does not upgrade
+        schemas; load legacy graph files through the shared readers first.
+    """
     on, nn = old.get("nodes", {}), new.get("nodes", {})
     ot, nt = old.get("types", {}), new.get("types", {})
     og, ng = old.get("globals", {}), new.get("globals", {})
@@ -272,6 +283,8 @@ def diff_graphs(old: dict, new: dict) -> dict:
             if gone and came:
                 edges_args.append({**_edge_view(k, 0), "old_args": [list(x) for x in gone.elements()], "new_args": [list(x) for x in came.elements()]})
 
+    circuit = _diff_circuit(old.get("circuit"), new.get("circuit"), nodes_changed, set(on) & set(nn))
+
     ou = {(u["name"], u["from"], u["reason"]) for u in old.get("unresolved", [])}
     nu = {(u["name"], u["from"], u["reason"]) for u in new.get("unresolved", [])}
     unresolved_added = [{"name": n, "from": f, "reason": r} for (n, f, r) in sorted(nu - ou)]
@@ -288,6 +301,8 @@ def diff_graphs(old: dict, new: dict) -> dict:
         "edges_added": sum(e["count"] for e in edges_added), "edges_removed": sum(e["count"] for e in edges_removed),
         "edges_args_changed": len(edges_args),
         "unresolved_added": len(unresolved_added), "unresolved_removed": len(unresolved_removed),
+        "wiring_changed": circuit["wiring_changed"], "models_changed": circuit["models_changed"],
+        "cdefs_changed": circuit["cdefs_changed"], "cparams_changed": circuit["cparams_changed"],
     }
     summary["total"] = sum(v for k, v in summary.items() if k not in ("nodes_changed",)) + summary["nodes_changed"] - summary["signature_changed"] - summary["body_changed"]
     summary["any"] = any(v for k, v in summary.items() if k not in ("total", "any"))
@@ -301,7 +316,50 @@ def diff_graphs(old: dict, new: dict) -> dict:
         "globals": {"added": globals_added, "removed": globals_removed, "changed": globals_changed},
         "edges": {"added": edges_added, "removed": edges_removed, "args_changed": edges_args},
         "unresolved": {"added": unresolved_added, "removed": unresolved_removed},
+        "circuit": circuit["sections"],
     }
+
+
+def _decl_hashes(rec: dict) -> dict[str, dict]:
+    """declaration identity (`scope/name#<guard_id>`) -> declaration record, for one circuit declaration entry."""
+    return {(d.get("identity") or ""): d for d in rec.get("declarations", [])}
+
+
+def _diff_decls(a: dict, b: dict) -> dict:
+    """Netlist declarations (models, definitions, params) compared by their guarded identity: an edited `.model`
+    card registers even when every instance keeps its model name; an edit confined to one branch moves one key."""
+    da = {ident: d for rec in a.values() for ident, d in _decl_hashes(rec).items()}
+    db = {ident: d for rec in b.values() for ident, d in _decl_hashes(rec).items()}
+    changed = [{"key": k, "old_hash": da[k].get("hash"), "new_hash": db[k].get("hash")} for k in sorted(set(da) & set(db)) if da[k].get("hash") != db[k].get("hash")]
+    out = {"added": sorted(set(db) - set(da)), "removed": sorted(set(da) - set(db)), "changed": changed}
+    return {k: v for k, v in out.items() if v}
+
+
+def _diff_circuit(oc: Optional[dict], nc: Optional[dict], nodes_changed: dict, common_nodes: set) -> dict:
+    """Terminal→net rewiring per common node plus declaration-level changes of the netlist block."""
+    out = {"wiring_changed": 0, "models_changed": 0, "cdefs_changed": 0, "cparams_changed": 0, "sections": {}}
+    if not oc and not nc:
+        return out
+    oc, nc = oc or {}, nc or {}
+    # Immediate bindings only: a device's terminal net keys in its scope, an instance's `outer` nets (the ones written
+    # on its line, in the parent's scope). Canonical nets would report an ancestor's rewiring on every descendant.
+    ot, nt = oc.get("terminals", {}), nc.get("terminals", {})
+    op, np_ = oc.get("ports", {}), nc.get("ports", {})
+    for nid in sorted(common_nodes):
+        a = {t["terminal"]: t["net"] for t in ot.get(nid, [])} or {t["port"]: t["outer"] for t in op.get(nid, [])}
+        b = {t["terminal"]: t["net"] for t in nt.get(nid, [])} or {t["port"]: t["outer"] for t in np_.get(nid, [])}
+        w = [{"terminal": t, "old": a.get(t), "new": b.get(t)} for t in list(a) + [t for t in b if t not in a] if a.get(t) != b.get(t)]
+        if w:
+            nodes_changed.setdefault(nid, {})["wiring"] = w
+            out["wiring_changed"] += 1
+    sections = {}
+    for key, name in (("models", "models"), ("definitions", "definitions"), ("params", "params")):
+        d = _diff_decls(oc.get(key, {}), nc.get(key, {}))
+        if d:
+            sections[name] = d
+            out[{"models": "models_changed", "definitions": "cdefs_changed", "params": "cparams_changed"}[key]] = sum(len(v) for v in d.values())
+    out["sections"] = sections
+    return out
 
 
 _LAYOUT_SUFFIX = re.compile(r"@[0-9a-f]{8}$")
@@ -337,6 +395,17 @@ def _cap(items: list, limit: int) -> tuple[list, int]:
 
 
 def render_markdown(d: dict, new_graph: Optional[dict] = None, limit: int = 12, title: Optional[str] = None) -> str:
+    """Render a structural diff as a compact Markdown report.
+
+    Args:
+        d: Diff returned by diff_graphs.
+        new_graph: Optional current graph for names and change details.
+        limit: Maximum displayed items per change section; JSON data stays complete.
+        title: Optional report heading.
+
+    Returns:
+        Markdown text, without writing files.
+    """
     s = d["summary"]
     lines: list[str] = []
     head = title or f"hx diff · {d['new'].get('entry') or '?'}"
@@ -351,6 +420,8 @@ def render_markdown(d: dict, new_graph: Optional[dict] = None, limit: int = 12, 
         bits.append(f"edges +{s['edges_added']} −{s['edges_removed']}" + (f" args~{s['edges_args_changed']}" if s["edges_args_changed"] else ""))
     if s["unresolved_added"] or s["unresolved_removed"]:
         bits.append(f"unresolved +{s['unresolved_added']} −{s['unresolved_removed']}")
+    if s.get("wiring_changed") or s.get("models_changed") or s.get("cdefs_changed") or s.get("cparams_changed"):
+        bits.append(f"circuit wiring~{s.get('wiring_changed', 0)} models~{s.get('models_changed', 0)} defs~{s.get('cdefs_changed', 0)} params~{s.get('cparams_changed', 0)}")
     lines.append(" · ".join(bits))
     if not s["any"]:
         lines.append("")
@@ -408,6 +479,8 @@ def render_markdown(d: dict, new_graph: Optional[dict] = None, limit: int = 12, 
                     parts.append(f"calls +{', '.join(_leaf(x) for x in ch['calls']['added'])}")
                 if ch["calls"]["removed"]:
                     parts.append(f"calls −{', '.join(_leaf(x) for x in ch['calls']['removed'])}")
+            for w in ch.get("wiring", [])[:6]:
+                parts.append(f"wiring {w['terminal']} {w['old']} → {w['new']}")
             if "moved" in ch:
                 parts.append(f"moved {ch['moved']['old']} → {ch['moved']['new']}")
             if "storage" in ch:
@@ -485,6 +558,17 @@ def render_markdown(d: dict, new_graph: Optional[dict] = None, limit: int = 12, 
             lines.append(f"  … {more} more removed")
         for e in d["edges"]["args_changed"][:limit]:
             lines.append(f"~ {_leaf(e['from'])} → {_leaf(e['to'])} args {e['old_args']} → {e['new_args']}")
+
+    if d.get("circuit"):
+        lines.append("")
+        lines.append("## Circuit")
+        for name, dd in d["circuit"].items():
+            for k in dd.get("added", [])[:limit]:
+                lines.append(f"+ {name[:-1] if name.endswith('s') else name} {k}")
+            for k in dd.get("removed", [])[:limit]:
+                lines.append(f"− {name[:-1] if name.endswith('s') else name} {k}")
+            for c in dd.get("changed", [])[:limit]:
+                lines.append(f"~ {name[:-1] if name.endswith('s') else name} {c['key']}  ({(c['old_hash'] or '?')[:12]} → {(c['new_hash'] or '?')[:12]})")
 
     if d["unresolved"]["added"] or d["unresolved"]["removed"]:
         lines.append("")

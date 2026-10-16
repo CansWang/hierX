@@ -1,18 +1,22 @@
 """Project-level bookkeeping under <root>/.hx/:
 
   config.toml          tracked entry points (+ watch settings)
-  graphs/<slug>.json   one graph per tracked entry (hx update / hx watch / hx mcp extract)
-  history/<slug>/<generated>.json   previous graphs, pruned to `history` (default 20)
+  graphs/<slug>.json   authoritative current graph per extracted entry
+  graph.json          compatibility copy of the latest default CLI selection
+  history/<slug>/<timestamp>-<revision>-<run-id>.json   immutable previous graphs (default 20)
   last-diff.md         what the last update changed, for humans and agents
 """
 from __future__ import annotations
 
 import json
+import datetime as dt
+import hashlib
 import os
 import re
 import shutil
 import sys
 import time
+import uuid
 from dataclasses import dataclass, field
 from typing import Any, Callable, Iterable, Optional
 
@@ -22,15 +26,17 @@ except ModuleNotFoundError:  # pragma: no cover
     import tomli as tomllib  # type: ignore
 
 from .diff import diff_graphs, render_markdown
-from .fsutil import atomic_write
+from .fsutil import atomic_create, atomic_write, file_lock
 
 HX_DIR = ".hx"
-SOURCE_EXTS = {".c", ".h", ".cc", ".cpp", ".cxx", ".hpp", ".hh", ".sv", ".svh", ".v", ".vh", ".rs", ".py", ".pyi", ".go", ".f"}
+SOURCE_EXTS = {".c", ".h", ".cc", ".cpp", ".cxx", ".hpp", ".hh", ".sv", ".svh", ".v", ".vh", ".rs", ".py", ".pyi", ".go", ".f",
+               ".sp", ".spi", ".spice", ".cir", ".ckt", ".net", ".sub", ".lib", ".inc"}
 # build descriptions that change what an extraction means, watched by name regardless of extension
 WATCHED_NAMES = {"compile_commands.json", "Cargo.toml", "Cargo.lock", "pyrightconfig.json", "pyproject.toml", "CMakeLists.txt"}
 SKIP_DIRS = {".git", ".hx", ".venv", "venv", "node_modules", "target", "build", "obj_dir", "__pycache__", ".cache", "dist"}
 EXTRACT_KEYS = ("depth", "type_depth", "include_callers", "include_system", "exclude", "max_nodes", "extra_args", "resource_dir",
-                "lang", "compile_commands", "sv_files", "filelist", "top", "verilator", "lsp_cmd", "lsp_timeout", "jobs")
+                "lang", "compile_commands", "sv_files", "filelist", "top", "verilator", "lsp_cmd", "lsp_timeout", "jobs",
+                "dialect", "deck", "search_paths")
 
 
 def hx_dir(root: str) -> str:
@@ -69,6 +75,10 @@ def _migrate_legacy(root: str, entry: str) -> None:
 
 
 def graph_path(root: str, entry: str) -> str:
+    """Return the current graph path for an entry beneath root/.hx/graphs.
+
+    May rename a pre-0.2 legacy slug to its current filename on first access.
+    """
     _migrate_legacy(root, entry)
     return os.path.join(hx_dir(root), "graphs", slug(entry) + ".json")
 
@@ -85,6 +95,11 @@ def default_config() -> dict:
 
 
 def load_config(root: str) -> dict:
+    """Read tracked entries and watch settings, filling omitted defaults.
+
+    A missing config returns defaults. This does not write configuration. Invalid
+    TOML or filesystem errors propagate to the caller.
+    """
     p = config_path(root)
     cfg = default_config()
     if not os.path.exists(p):
@@ -132,7 +147,21 @@ def save_config(root: str, cfg: dict) -> str:
 
 
 def track(root: str, entry: str, **opts: Any) -> dict:
-    """Add or replace a tracked entry. Returns the saved entry table."""
+    """Add or replace one tracked entry in root/.hx/config.toml.
+
+    Args:
+        root: Project root containing the configuration.
+        entry: File/symbol entry text, used as the configuration key.
+        **opts: Supported extraction keywords, not CLI flag names. Unrecognized
+            keys and empty values are omitted; false booleans are retained.
+
+    Returns:
+        The saved entry table. Previous options for this entry are replaced,
+        not merged. No extraction runs until update is called.
+
+    Raises:
+        OSError: Configuration cannot be read or written.
+    """
     cfg = load_config(root)
     table = {"entry": entry}
     for k, v in opts.items():
@@ -144,6 +173,10 @@ def track(root: str, entry: str, **opts: Any) -> dict:
 
 
 def untrack(root: str, entry: str) -> bool:
+    """Remove an entry table, write config, and return whether it existed.
+
+    Saved graphs and history are not deleted. Filesystem errors propagate.
+    """
     cfg = load_config(root)
     before = len(cfg["entries"])
     cfg["entries"] = [e for e in cfg["entries"] if e["entry"] != entry]
@@ -154,7 +187,12 @@ def untrack(root: str, entry: str) -> bool:
 # ---------------------------------------------------------------- graphs & history
 
 def find_graphs(root: str) -> list[dict]:
-    """Every graph the project knows: tracked graphs under .hx/graphs plus the ad-hoc .hx/graph.json."""
+    """Discover saved graphs with names, paths, entries, languages, and counts.
+
+    Reads tracked graph files and the default graph; malformed files are skipped.
+    Returns an empty list when none are available.
+    """
+    from .provenance import summary
     out = []
     gdir = os.path.join(hx_dir(root), "graphs")
     paths = []
@@ -170,7 +208,8 @@ def find_graphs(root: str) -> list[dict]:
             continue
         name = "graph" if p == default else os.path.splitext(os.path.basename(p))[0]
         out.append({"name": name, "path": p, "entry": g.get("entry"), "entry_arg": (g.get("meta") or {}).get("entry_arg"),
-                    "generated": g.get("generated"), "nodes": len(g.get("nodes", {})), "lang": g.get("lang")})
+                    "generated": g.get("generated"), "nodes": len(g.get("nodes", {})), "lang": g.get("lang"),
+                    "provenance": summary(g)})
     return out
 
 
@@ -179,53 +218,122 @@ def _safe_ts(ts: Optional[str]) -> str:
     return re.sub(r"[^0-9TZ+-]", "-", ts)
 
 
-def snapshot(root: str, entry: str, src_path: Optional[str] = None, keep: int = 20) -> Optional[str]:
-    """Copy the current graph for `entry` into history (named by its `generated` stamp). Returns the snapshot path."""
-    src = src_path or graph_path(root, entry)
-    if not os.path.exists(src):
+def _retention(root: str, keep: Optional[int]) -> int:
+    keep = int(load_config(root)["watch"].get("history", 20)) if keep is None else int(keep)
+    if keep < 0:
+        raise ValueError("history retention must be zero or greater")
+    return keep
+
+
+def _parse_time(value: Optional[str]) -> Optional[dt.datetime]:
+    if not isinstance(value, str) or not value:
         return None
     try:
-        g = load_graph(src)
-    except (OSError, ValueError):
+        stamp = dt.datetime.fromisoformat(value.replace("Z", "+00:00"))
+        return stamp.replace(tzinfo=dt.timezone.utc) if stamp.tzinfo is None else stamp.astimezone(dt.timezone.utc)
+    except ValueError:
         return None
+
+
+def _filename_time(name: str) -> Optional[dt.datetime]:
+    match = re.match(r"(\d{4}-\d\d-\d\d)T(\d\d)-(\d\d)-(\d\d)([+-])(\d\d)-(\d\d)", name)
+    if match:
+        date, hh, mm, ss, sign, oh, om = match.groups()
+        return _parse_time(f"{date}T{hh}:{mm}:{ss}{sign}{oh}:{om}")
+    match = re.match(r"\d{8}T\d{6}\.\d{6}Z", name)
+    if match:
+        try:
+            return dt.datetime.strptime(match.group(), "%Y%m%dT%H%M%S.%fZ").replace(tzinfo=dt.timezone.utc)
+        except ValueError:
+            return None
+    return None
+
+
+def _archive(root: str, entry: str, payload: bytes, graph: dict) -> str:
+    """Called under the project lock; copy saved bytes without recomputing provenance."""
     hdir = history_dir(root, entry)
-    os.makedirs(hdir, exist_ok=True)
-    base = os.path.join(hdir, _safe_ts(g.get("generated")))
-    dst = base + ".json"
-    with open(src, "rb") as fh:
-        payload = fh.read()
-    n = 1
-    while os.path.exists(dst):          # same second, different content → suffix; identical content → reuse
-        with open(dst, "rb") as fh:
-            if fh.read() == payload:
-                return dst
-        n += 1
-        dst = f"{base}-{n}.json"
-    atomic_write(dst, payload)
-    prune_history(root, entry, keep)
-    return dst
+    stamp = _parse_time(graph.get("generated"))
+    timestamp = stamp.strftime("%Y%m%dT%H%M%S.%fZ") if stamp else "unknown-time"
+    provenance = (graph.get("meta") or {}).get("provenance") or {}
+    git = provenance.get("git") or {}
+    revision = (git.get("commit") or "")[:12] or ("nogit" if git.get("status") == "no-repo" else "unknown")
+    if git.get("dirty"):
+        revision += "-dirty"
+    identity = provenance.get("run_id") or hashlib.sha256(payload).hexdigest()
+    basename = re.sub(r"[^A-Za-z0-9._-]", "_", f"{timestamp}-{revision}-{identity}")
+    dst = os.path.join(hdir, basename + ".json")
+    while True:
+        try:
+            atomic_create(dst, payload)
+            return dst
+        except FileExistsError:
+            with open(dst, "rb") as fh:
+                if fh.read() == payload:
+                    return dst
+            dst = os.path.join(hdir, basename + "-" + uuid.uuid4().hex + ".json")
+
+
+def snapshot(root: str, entry: str, src_path: Optional[str] = None, keep: Optional[int] = None) -> Optional[str]:
+    """Archive exact current bytes, reusing an identical snapshot. None uses configured retention."""
+    with file_lock(os.path.join(hx_dir(root), "persistence")):
+        limit = _retention(root, keep)
+        src = src_path or graph_path(root, entry)
+        if not os.path.exists(src):
+            return None
+        if limit == 0:
+            _prune_history(root, entry, limit)
+            return None
+        graph = _load_current(src)
+        with open(src, "rb") as fh:
+            path = _archive(root, entry, fh.read(), graph)
+        _prune_history(root, entry, limit)
+        return path if os.path.exists(path) else None
 
 
 def prune_history(root: str, entry: str, keep: int) -> None:
-    hdir = history_dir(root, entry)
-    if not os.path.isdir(hdir):
-        return
-    files = sorted(f for f in os.listdir(hdir) if f.endswith(".json"))
-    for f in files[:-keep] if keep > 0 else files:
+    """Remove oldest snapshots; retained files are never modified."""
+    with file_lock(os.path.join(hx_dir(root), "persistence")):
+        _prune_history(root, entry, _retention(root, keep))
+
+
+def _prune_history(root: str, entry: str, keep: int) -> None:
+    files = list_history(root, entry)
+    for item in files[:-keep] if keep > 0 else files:
         try:
-            os.remove(os.path.join(hdir, f))
+            os.remove(item["path"])
         except OSError:
             pass
 
 
 def list_history(root: str, entry: str) -> list[dict]:
+    """List an entry's snapshots in timestamp order as ts/path dictionaries.
+
+    Returns an empty list when the history directory is absent. Access can migrate
+    a pre-0.2 legacy slug, like graph_path.
+    """
     hdir = history_dir(root, entry)
     if not os.path.isdir(hdir):
         return []
+    from .provenance import summary
     out = []
-    for f in sorted(os.listdir(hdir)):
+    for f in os.listdir(hdir):
         if f.endswith(".json"):
-            out.append({"ts": f[:-5], "path": os.path.join(hdir, f)})
+            path = os.path.join(hdir, f)
+            try:
+                graph = load_graph(path)
+            except (OSError, ValueError):
+                graph = {}
+            generated = graph.get("generated")
+            stamp = _parse_time(generated) or _filename_time(f)
+            try:
+                mtime = os.stat(path).st_mtime_ns
+            except FileNotFoundError:  # another writer may have pruned it
+                continue
+            out.append({"ts": f[:-5], "path": path, "generated": generated,
+                        "provenance": summary(graph), "_order": ((stamp.timestamp() if stamp else mtime / 1e9), mtime, f)})
+    out.sort(key=lambda item: item["_order"])
+    for item in out:
+        item.pop("_order")
     return out
 
 
@@ -239,9 +347,142 @@ def resolve_history(root: str, entry: str, since: str = "prev") -> Optional[dict
     exact = [h for h in hist if h["ts"] == since or h["ts"] == _safe_ts(since)]
     if exact:
         return exact[0]
-    key = _safe_ts(since)
-    older = [h for h in hist if h["ts"] <= key]
+    target = _parse_time(since)
+    if target is None:
+        raise ValueError(f"unknown history point {since!r}; use a snapshot identifier or ISO timestamp")
+    older = [h for h in hist if (_parse_time(h.get("generated")) or _filename_time(h["ts"]) or
+                                dt.datetime.fromtimestamp(os.stat(h["path"]).st_mtime, dt.timezone.utc)) <= target]
     return older[-1] if older else hist[0]
+
+
+@dataclass
+class SaveResult:
+    """A shared save outcome. previous is None on first extraction or disabled history."""
+    graph_path: str
+    previous: Optional[str] = None
+    old_graph: Optional[dict] = None
+    mirrors: list[str] = field(default_factory=list)
+
+
+class GraphSaveError(OSError):
+    """Persistence failure, including whether the authoritative current file committed."""
+    def __init__(self, message: str, result: SaveResult, committed: bool):
+        super().__init__(f"{message} (current {'committed' if committed else 'not committed'}: {result.graph_path})")
+        self.result = result
+        self.committed = committed
+
+
+def _entry_key(graph: dict) -> str:
+    return (graph.get("meta") or {}).get("entry_arg") or graph.get("entry") or "graph"
+
+
+def _protect_history(path: str) -> None:
+    from pathlib import Path
+    for location in (Path(os.path.abspath(path)), Path(os.path.realpath(path))):
+        if any(p.name == "history" and p.parent.name == ".hx" for p in (location, *location.parents)):
+            raise ValueError("historical graphs are immutable; choose a current/output path")
+
+
+def _load_current(path: str) -> dict:
+    graph = load_graph(path)
+    shapes = {"generated": str, "root": str, "lang": str, "entry": str,
+              "nodes": dict, "types": dict, "globals": dict, "edges": list, "unresolved": list}
+    if any(not isinstance(graph.get(key), kind) for key, kind in shapes.items()):
+        raise ValueError(f"invalid current graph structure: {path}")
+    return graph
+
+
+def _repair_default(root: str) -> None:
+    """Recover an interrupted two-file save under the project lock."""
+    pending = os.path.join(hx_dir(root), "default-pending.json")
+    if not os.path.exists(pending):
+        return
+    with open(pending, encoding="utf-8") as fh:
+        intent = json.load(fh)
+    path = graph_path(root, intent["entry"])
+    if os.path.exists(path):
+        with open(path, "rb") as fh:
+            payload = fh.read()
+        if hashlib.sha256(payload).hexdigest() == intent["sha256"]:
+            _load_current(path)
+            atomic_write(os.path.join(hx_dir(root), "graph.json"), payload)
+    # A nonmatching current means replacement never committed, or a later save superseded it.
+    os.unlink(pending)
+
+
+def save_extraction(root: str, entry: str, graph, *, output: Optional[str] = None,
+                    archive: bool = True, refresh_default: bool = False,
+                    keep_history: Optional[int] = None) -> SaveResult:
+    """Save an extraction with locked history and atomic current-file replacement.
+
+    With no output, use the per-entry current file and refresh a matching default
+    copy. refresh_default selects this entry as the default. An explicit output
+    saves only that destination; archive=False also bypasses project bookkeeping.
+    Input Graph/dict provenance is preserved. Historical destinations are refused.
+    """
+    root = os.path.abspath(root)
+    _protect_history(output if output is not None else os.path.join(hx_dir(root), "graphs", slug(entry) + ".json"))
+    document = graph.to_dict() if hasattr(graph, "to_dict") else graph
+    payload = (json.dumps(document, indent=2, ensure_ascii=False) + "\n").encode("utf-8")
+    if output is not None:
+        path = os.path.abspath(output)
+        if not archive:
+            result = SaveResult(path)
+            try:
+                atomic_write(path, payload)
+            except OSError as exc:
+                raise GraphSaveError(str(exc), result, False) from exc
+            return result
+    with file_lock(os.path.join(hx_dir(root), "persistence")):
+        limit = _retention(root, keep_history)
+        _repair_default(root)
+        path = os.path.abspath(output) if output is not None else graph_path(root, entry)
+        result = SaveResult(path)
+        default = os.path.join(hx_dir(root), "graph.json")
+        mirror = None
+        if output is None and os.path.lexists(default):
+            try:
+                mirror = _load_current(default)
+            except (OSError, ValueError):
+                if refresh_default:
+                    raise
+        same_entry = mirror is not None and (_entry_key(mirror) == entry or mirror.get("entry") == document.get("entry"))
+        if output is None and mirror is not None and (refresh_default or same_entry):
+            # Import legacy default bytes before replacement. The import is not a new extraction.
+            old_entry = entry if same_entry else _entry_key(mirror)
+            imported = graph_path(root, old_entry)
+            if not os.path.lexists(imported):
+                with open(default, "rb") as fh:
+                    atomic_write(imported, fh.read())
+        if os.path.lexists(path):
+            result.old_graph = _load_current(path)  # malformed current state must not be discarded
+            if archive and limit:
+                with open(path, "rb") as fh:
+                    result.previous = _archive(root, entry if output is None else _entry_key(result.old_graph), fh.read(), result.old_graph)
+        mirror_needed = output is None and (refresh_default or same_entry)
+        pending = os.path.join(hx_dir(root), "default-pending.json")
+        if mirror_needed:
+            try:
+                atomic_write(pending, json.dumps({"entry": entry, "sha256": hashlib.sha256(payload).hexdigest()}))
+            except OSError as exc:
+                raise GraphSaveError(str(exc), result, False) from exc
+        try:
+            atomic_write(path, payload)
+        except OSError as exc:
+            raise GraphSaveError(str(exc), result, False) from exc
+        if mirror_needed:
+            try:
+                atomic_write(default, payload)
+                result.mirrors.append(default)
+                os.unlink(pending)
+            except OSError as exc:
+                raise GraphSaveError(f"compatibility copy failed: {exc}", result, True) from exc
+        if archive:
+            history_entry = _entry_key(result.old_graph) if output is not None and result.old_graph else entry
+            _prune_history(root, history_entry, limit)
+            if result.previous and not os.path.exists(result.previous):
+                result.previous = None
+        return result
 
 
 def load_graph(path: str) -> dict:
@@ -254,6 +495,11 @@ def load_graph(path: str) -> dict:
 
 @dataclass
 class UpdateResult:
+    """One entry's update outcome, including graph, diff, prior snapshot, and error.
+
+    Inspect error even when other entries succeeded. changed is true only when a
+    diff exists and its summary reports structural differences.
+    """
     entry: str
     graph_path: str
     graph: Optional[dict] = None
@@ -270,7 +516,23 @@ class UpdateResult:
 
 def update(root: str, entries: Optional[Iterable[str]] = None, *, keep_history: Optional[int] = None,
            progress: Optional[Callable[[str], None]] = None) -> list[UpdateResult]:
-    """Re-extract tracked entries (or the given ones), snapshot the previous graph and diff against it."""
+    """Re-extract entries, snapshot prior graphs, and report structural changes.
+
+    Args:
+        root: Project root whose configuration and .hx state are used.
+        entries: Selected entry texts, or None for all tracked entries.
+        keep_history: Snapshot limit; None uses the configured history setting.
+        progress: Optional callback receiving progress message strings.
+
+    Returns:
+        One UpdateResult per entry. Entry failures populate error and do not
+        abort other entries; inspect every result. Successful runs write current
+        graphs and snapshots, and the batch writes .hx/last-diff.md.
+
+    Raises:
+        OSError: Project configuration or final report persistence fails outside
+            the per-entry error handler.
+    """
     from .api import extract
     root = os.path.abspath(root)
     cfg = load_config(root)
@@ -290,14 +552,14 @@ def update(root: str, entries: Optional[Iterable[str]] = None, *, keep_history: 
             if progress:
                 progress(f"extracting {entry} …")
             graph = extract(entry, root=root, **kwargs)
-            old = load_graph(gp) if os.path.exists(gp) else None
+            saved = save_extraction(root, entry, graph, keep_history=keep)
+            old = saved.old_graph
             if old is not None:
-                res.previous = snapshot(root, entry, gp, keep)
+                res.previous = saved.previous
                 res.diff = diff_graphs(old, graph.to_dict())
                 res.markdown = render_markdown(res.diff, graph.to_dict(), title=f"{entry}")
             else:
                 res.markdown = f"# {entry}\nfirst extraction · {len(graph.nodes)} functions, {len(graph.types)} types, {len(graph.unresolved)} unresolved\n"
-            graph.save(gp)
             res.graph = graph.to_dict()
         except Exception as e:  # noqa: BLE001 - one bad entry must not stop the others
             res.error = f"{type(e).__name__}: {e}"
@@ -345,11 +607,46 @@ def summarize(results: list[UpdateResult]) -> str:
 
 # ---------------------------------------------------------------- watch
 
-def source_signature(root: str, paths: Optional[Iterable[str]] = None, exts: Iterable[str] = SOURCE_EXTS) -> dict[str, int]:
-    """path -> mtime_ns for every source file under the watched paths (cheap enough to poll)."""
+MISSING = -1   # signature value for a dependency candidate that does not exist (its creation is a change)
+
+
+def dependency_files(root: str) -> dict[str, Optional[int]]:
+    """Files the tracked graphs depend on beyond the source walk: every file a netlist extraction read (inside or
+    outside the root) and every include candidate it probed, missing ones as `None` so that creating one, or an
+    earlier search-path candidate that would shadow the resolved file, changes the signature."""
+    out: dict[str, Optional[int]] = {}
+    gdir = os.path.join(hx_dir(root), "graphs")
+    if not os.path.isdir(gdir):
+        return out
+    for fn in os.listdir(gdir):
+        if not fn.endswith(".json"):
+            continue
+        try:
+            with open(os.path.join(gdir, fn), encoding="utf-8") as fh:
+                meta = json.load(fh).get("meta") or {}
+        except (OSError, ValueError):
+            continue
+        for dep in meta.get("deps") or []:
+            path = dep if os.path.isabs(dep) else os.path.join(root, dep)
+            out[path] = None
+        for probe in meta.get("probes") or []:
+            for c in probe.get("candidates") or []:
+                out[c["path"]] = None
+    return out
+
+
+def source_signature(root: str, paths: Optional[Iterable[str]] = None, exts: Iterable[str] = SOURCE_EXTS,
+                     extra: Optional[Iterable[str]] = None) -> dict[str, int]:
+    """path -> mtime_ns for every source file under the watched paths (cheap enough to poll); `extra` paths are
+    stat'ed too, a missing one contributing the MISSING sentinel."""
     exts = set(exts)
     bases = [os.path.join(root, p) for p in (paths or [])] or [root]
     sig: dict[str, int] = {}
+    for p in extra or ():
+        try:
+            sig[p] = os.stat(p).st_mtime_ns
+        except OSError:
+            sig[p] = MISSING
     for base in bases:
         if os.path.isfile(base):
             try:
@@ -374,20 +671,34 @@ def source_signature(root: str, paths: Optional[Iterable[str]] = None, exts: Ite
 def watch(root: str, *, interval: Optional[float] = None, debounce: Optional[float] = None, max_updates: Optional[int] = None,
           on_update: Optional[Callable[[list[UpdateResult]], None]] = None, run_first: bool = True,
           stop: Optional[Callable[[], bool]] = None) -> int:
-    """Poll sources; after a quiet period following a change, run `update`. Returns the number of updates run."""
+    """Block while polling sources and updating after changes become quiet.
+
+    Args:
+        root: Project root to watch.
+        interval: Polling seconds; None uses configuration.
+        debounce: Quiet seconds after a change; None uses configuration.
+        max_updates: Stop after this many updates, including the initial update.
+        on_update: Optional callback receiving each batch of update results.
+        run_first: Update immediately before entering the polling loop.
+        stop: Optional callback returning true to exit at the next loop check.
+
+    Returns:
+        Number of update batches performed. Each batch has update's filesystem
+        effects and error reporting. Callback and unhandled I/O errors propagate.
+    """
     root = os.path.abspath(root)
     cfg = load_config(root)
     interval = interval if interval is not None else float(cfg["watch"].get("interval", 2.0))
     debounce = debounce if debounce is not None else float(cfg["watch"].get("debounce", 1.0))
     paths = cfg["watch"].get("paths") or None
-    sig = source_signature(root, paths)
+    sig = source_signature(root, paths, extra=dependency_files(root))
     runs = 0
     if run_first:
         res = update(root)
         runs += 1
         if on_update:
             on_update(res)
-        sig = source_signature(root, paths)
+        sig = source_signature(root, paths, extra=dependency_files(root))
     pending_since: Optional[float] = None
     while True:
         if stop and stop():
@@ -395,7 +706,7 @@ def watch(root: str, *, interval: Optional[float] = None, debounce: Optional[flo
         if max_updates is not None and runs >= max_updates:
             return runs
         time.sleep(interval)
-        cur = source_signature(root, paths)
+        cur = source_signature(root, paths, extra=dependency_files(root))
         if cur != sig:
             sig = cur
             pending_since = time.time()
@@ -406,7 +717,7 @@ def watch(root: str, *, interval: Optional[float] = None, debounce: Optional[flo
             runs += 1
             if on_update:
                 on_update(res)
-            sig = source_signature(root, paths)
+            sig = source_signature(root, paths, extra=dependency_files(root))
 
 
 # ---------------------------------------------------------------- Claude Code hook
@@ -738,10 +1049,7 @@ def migrate(root: str, *, keep_history: Optional[int] = None, progress: Optional
         out["ambiguous"] = {k: sorted(v) for k, v in ambiguous.items()}
         # commit: snapshot previous graphs, move staged graphs into place, then annotations (backup first, inside)
         for entry, gp, sp, _m, _u, _a in staged:
-            if os.path.exists(gp):
-                snapshot(root, entry, gp, keep)
-            os.makedirs(os.path.dirname(gp), exist_ok=True)
-            os.replace(sp, gp)
+            save_extraction(root, entry, load_graph(sp), keep_history=keep)
         out["id_map"] = merged
         out["invalidated"] = sorted(set(invalidate))
         from_major = min((m.split("/")[-1].split(".")[0] for m in majors if "/" in m), default="2")

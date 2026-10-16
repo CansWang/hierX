@@ -1,5 +1,14 @@
 # hx — function-scoped structure extractor
 
+**Documentation:** [Start here](docs/index.md) ·
+[C/C++ tutorial](docs/tutorials/c-review.md) ·
+[Netlist quickstart](docs/tutorials/netlists.md) ·
+[Python API](docs/reference/python.md) ·
+[CLI reference](docs/reference/cli.md)
+
+Build and preview the full documentation from this checkout with
+`python -m pip install -e '.[docs]'` and `mkdocs serve`.
+
 `hx` answers one question quickly: **starting from this function, what does the
 code look like?** It walks the call hierarchy to a chosen depth and records,
 for every function reached, its signature, parameters tagged in/out, the
@@ -13,11 +22,13 @@ is designed to be regenerated after every AI-agent editing session and then
 across regeneration for the same build configuration, so notes you attach later
 survive; see [Boundaries](#boundaries) for what does and does not move them.
 
-Status: **Phase 4 + hardening (4.5, 4.6)** done — C/C++ (libclang), SystemVerilog/Verilog (verilator),
-Rust (rust-analyzer) and Python (pyright) frontends; browser viewer with
-editable annotations, live reload and diff mode; tracked entry points with
-history, `hx diff`, a watch loop, an update hook and an MCP server. The plan
-lives in `dev/ssot/single-source-of-truth.md`.
+Status: **Phase 4 + hardening (4.5–4.7) + netlists N1** done — C/C++ (libclang), SystemVerilog/Verilog (verilator),
+Rust (rust-analyzer), Python (pyright) and SPICE-family netlist (native parser,
+ngspice as an optional oracle) frontends; browser viewer with editable
+annotations, live reload and diff mode; tracked entry points with history,
+`hx diff`, a watch loop, an update hook and an MCP server. The plan lives in
+`dev/ssot/single-source-of-truth.md`; the netlist dialect coverage in
+`dev/ssot/netlist-dialect-matrix.md`.
 
 ## Install
 
@@ -44,6 +55,10 @@ commands below are Ubuntu/Debian examples; run `sudo apt-get update` first.
 | Browser automation with Playwright | `python -m pip install -e ".[dev,e2e]"`, then `python -m playwright install --with-deps chromium` |
 | C/C++ compiler, standard headers and Clang resource headers | `sudo apt-get install -y clang build-essential` |
 | SystemVerilog / Verilog extraction | `sudo apt-get install -y verilator` |
+| ngspice, the netlist oracle (`hx netlist check --oracle ngspice`; extraction itself needs no simulator) | `sudo apt-get install -y ngspice` ([download page](https://ngspice.sourceforge.io/download.html)); or `--ngspice PATH` / `HX_TOOL_NGSPICE` |
+| Xyce, the second netlist oracle (Phase N2) | installer or source build from [xyce.sandia.gov/downloads](https://xyce.sandia.gov/downloads/); `/usr/cad/xyce/parallel/bin/Xyce` and `/usr/local/Xyce/bin/Xyce` are found automatically, else `--xyce PATH` / `HX_TOOL_XYCE` |
+| XDM, the Xyce netlist translator used as a structural check (Phase N2) | the `xdm_bdl` bundle from [XDM releases](https://github.com/Xyce/XDM/releases) on PATH (`~/.local/bin/xdm_bdl` is found automatically), else `--xdm PATH` / `HX_TOOL_XDM` |
+| Spectre / HSPICE syntax checks (Phase N3) | licensed Cadence / Synopsys installs with `spectre` / `hspice` on PATH, else `--spectre` / `--hspice` |
 | Rust extraction, with Rustup installed | `rustup toolchain install stable --profile minimal`, then `rustup component add --toolchain stable rust-analyzer rust-src` |
 | Standalone JavaScript tests (`node --test tests/js`) | `sudo apt-get install -y nodejs` |
 | Optional Clang LSP profile | `sudo apt-get install -y clangd` |
@@ -75,8 +90,19 @@ Per-language project requirements:
 | SystemVerilog / Verilog | `verilator` on PATH; sources via `-f list.f`, `--sv-file GLOB`, a lone `*.f` at the root, or every `*.sv`/`*.v` under it | exact: hierarchy, ports with explicit direction, parameters, packed-struct bit layouts |
 | Rust | `rust-analyzer` (rustup component) and a `Cargo.toml` at the root | lsp: signatures from hover, struct fields without sizes, no globals |
 | Python | Pyright and its Node.js runtime are included in the base install | lsp: as above; dataclass fields from annotations |
+| SPICE-family netlists (`.sp .spi .spice .cir .ckt .net .sub .lib .inc`) | nothing: a native parser. `--dialect auto\|spice\|ngspice` (sniffed from `.control`/`.if`/`.csparam`), `--deck FILE` when the entry file is an include or library, `--search-path DIR` (repeatable). Simulators are optional oracles for `hx netlist check` only | syntax: hierarchy, device terminals, nets, scoped models and definitions, symbolic parameters (never evaluated) |
 
 The language is picked from the entry file's extension; force it with `--lang`.
+
+Without `--root`, hx resolves the entry file from the run directory and walks
+upward from the real source path, stopping at the **first `.github` directory**.
+That directory's parent becomes the project root, with `.hx` beside `.github`.
+Nested repositories/submodules with their own marker keep their own state; a
+`.git` directory/file alone is not a marker. With no `.github` above the source,
+`.hx` goes under the run directory. Explicit `--root` overrides discovery;
+`--root .` preserves run-directory extraction. Commands without an entry search
+upward from the run directory. See [project-root rules](docs/reference/configuration.md#choose-the-project-root).
+
 
 ## Use
 
@@ -89,6 +115,10 @@ hx extract rtl/top.sv:top -f files.f                 # SystemVerilog: module hie
 hx extract rtl/core.sv:top.u_core_b.u_alu --include-callers   # one instance path, parents included
 hx extract src/lib.rs:app_run                        # Rust via rust-analyzer
 hx extract pkg/main.py:app_run --lsp-timeout 120     # Python via pyright
+hx extract evals/ota.sp:. --dialect ngspice          # a SPICE deck: subcircuit instances and devices, with the circuit block
+hx extract evals/ota.sp:xdut.m_load_1 --include-callers   # one device, its instance path above it
+hx extract models/pdk.sp:@nfet_03v3 --deck evals/ota.sp   # a definition-rooted view of a subcircuit (ids reusable across decks)
+hx netlist check evals/ota.sp:. --oracle ngspice     # cross-check paths, arity, nets, models and references against the simulator
 ```
 
 ### SystemVerilog on a real project
@@ -133,6 +163,96 @@ and tasks are nodes of their own; struct and enum sizes are in bits; a module's
 every node: good call graphs and signatures, no memory layout, and calls through
 closures or function pointers are invisible to the server.
 
+### Netlists
+
+A SPICE-family deck is read by hx's own parser (`precision: syntax`); no
+simulator is needed to extract. The deck is the `module` node, every `X` line
+an `instance` node carrying its definition's ports, every primitive element a
+`device` node carrying its terminals, and `instance` edges carry the nets as
+written. The additive `circuit` block holds what call graphs have no place for
+(see [What is in graph.json](#what-is-in-graphjson)).
+
+- **Entries.** `deck.sp:.` is the whole deck; `deck.sp:xdut.m1` an instance or
+  device path (case-folded, `#<guard_id>` addresses an occurrence inside an
+  `.if` branch); `lib.sp:@opamp` (`@scope/name` for a subcircuit declared
+  inside another) a definition-rooted view, extracted on its own or with
+  `--deck` for the deck's declarations; `/name` forces the instance reading
+  when a name is both. Without `--deck`, a `@name` entry whose line 1 is a
+  dot-directive is read as a standalone library (line 1 kept, as under
+  `.include`); a prose line 1 is a deck title. A deck whose title line is
+  itself a directive gets `title-is-directive`, since ngspice ignores it. The entry's file must hold the deck, define the
+  subcircuit, or hold a statement on the path, else the error names the right
+  file and suggests near names.
+- **Scoped lookup.** Definitions, models and parameters are looked up from the
+  innermost subcircuit outward to the deck and its library sections, so a
+  local `.model` or `.subckt` shadows a global one (an info diagnostic says
+  so). Two declarations of one name in one scope are `ambiguous`, never
+  last-wins. A model that exists only as bins (`nfet_03v3.0 … .15`) resolves
+  to the family with `status: binned`.
+- **Conditionals (ngspice).** An occurrence inside `.if/.elseif/.else` carries
+  its guard (`attrs.guard`, an id derived from the conditions, never from
+  position); a `.model` declared in two exclusive branches is `alternatives`;
+  the same name in two compatible branches is `ambiguous`; the same name under
+  identical conditions twice is a `guarded-duplicate`. Declaration records
+  list every branch's declaration (one file included from both branches
+  gives two), and a controlling reference (`F`/`H`/`K`) to a source declared
+  in exclusive branches keeps every alternative (`attrs.controls[].targets`,
+  one `ref` edge each; overlapping targets are `ambiguous-reference`, a
+  missing one a ghost). Nets are canonicalised through each occurrence's own
+  enclosing instances, so two guarded `xw` lines that swap nets give their
+  nested devices different nets (`terminals[].canonical`, `ports[].net`).
+- **Includes and libraries.** `.include` resolves absolute, then against the
+  including file's directory, each `--search-path`, then the root; `.lib "f"
+  sect` reads only that section (and the sibling sections it pulls, as PDK
+  libraries do). Every candidate path tried is recorded in `meta.probes`
+  (missing ones included) and every file read in `meta.deps`, so `hx watch`
+  and the cache react to an edit, a newly created include and a candidate that
+  now shadows the resolved file. A missing include is an error diagnostic;
+  extraction continues. Files outside the root keep absolute paths in their ids.
+- **Cache.** Each file's raw statements are cached once per dialect, so a PDK
+  library parses once across decks. The summary line reads
+  `files N total, P parsed, C cached, D diagnostics (E errors)   dialect ngspice (t s)`.
+- **Hashes.** `body_hash` is a token hash over the statement (devices) or the
+  scope (deck, definitions): comments, case, whitespace, continuation layout,
+  expression spacing (`{w * 2}` is `{w*2}`) and unrelated reordering do not
+  move it; a condition edit (`.if (pick > 0)` to `(pick > 1)`) moves the hash
+  of every scope holding that conditional. Parameters stay symbolic. `hx diff`
+  reports rewiring on the line that changed (an instance's own nets, a
+  device's own terminals), never on the descendants that inherit it.
+- **Diagnostics.** `circuit.diagnostics` carries codes such as
+  `missing-include`, `include-cycle`, `duplicate-definition`,
+  `missing-definition`, `terminal-count-mismatch`, `unknown-device-family`
+  (tokens kept, `attrs.family: "?"`), `missing-model`, `ambiguous-model`,
+  `unsupported-directive` (preserved), `unparsed-statement` (text kept),
+  `encrypted-content`, `ends-name-mismatch`, `guarded-duplicate`,
+  `missing-reference`, `ambiguous-reference`, `title-is-directive`; counts are
+  in `meta.notes`, the first thirty under `-v`. Only an unreadable deck or an
+  entry that is not found aborts.
+- **`.control` blocks** are kept verbatim in `circuit.control_blocks` and never
+  executed; the oracle strips them from every file before handing ngspice the
+  rendered include closure on standard input, so an include that writes files
+  from a control block has no side effect and a search-path-only include is
+  found.
+- **Oracle.** `hx netlist check ENTRY --oracle ngspice` compares, for every
+  unguarded device, its hierarchical path, terminal count, nets, model and
+  controlling references with ngspice's `listing expand`; guarded occurrences
+  and the simulator rows they could spell are counted, not compared; a family
+  that needs a model (`M`, `Q`, `D`, `W`, …) is always compared on it, so a
+  model missing on either side is a `model` mismatch, never a skipped check;
+  an instance-path entry restricts both sides to that subtree; a
+  definition-rooted entry with deck context (`lib.inc:@cm --deck deck.sp`, or
+  a deck's own `deck.sp:@name`) is compared once per unguarded instance of the
+  definition and reports each; a deck ngspice cannot run (symbolic
+  parameters), or a definition with no unguarded instance, is "oracle
+  unavailable" with the reason quoted. Exit 0 agree, 1 mismatch, 2 tool
+  missing or unavailable. A missing tool is named with its install command:
+  `ngspice executable 'ngspice' not found (needed for the ngspice oracle (`hx netlist check --oracle ngspice`)); install it (sudo apt-get install -y ngspice, https://ngspice.sourceforge.io/download.html) or pass --ngspice PATH`.
+  In strict mode (`HX_REQUIRE_TOOLS=1`) ngspice is required; vendor tools are
+  required per `HX_REQUIRE_VENDOR_TOOLS=xyce,xdm` (or `all`).
+- **Dialects.** `spice` and `ngspice` today (`dev/ssot/netlist-dialect-matrix.md`
+  lists every construct); HSPICE and Xyce profiles arrive in Phase N2, Spectre
+  (`simulator lang=`, refused for now) in N3.
+
 Output summary:
 
 ```
@@ -145,6 +265,20 @@ output      .hx/graph.json
 Translation units are cached under `.hx/cache/` by source and header mtimes,
 so a re-run after an edit re-parses only what changed.
 
+Default extraction also keeps a stable current graph per entry under `.hx/graphs/`.
+CLI extraction, updates, MCP, and viewer re-extraction share the same save mechanism:
+before replacing a current graph, its exact bytes are archived in `.hx/history/`.
+The first extraction has no history. `.hx/graph.json` remains the latest default
+CLI selection and follows later updates of that entry. `-o FILE` writes only FILE.
+
+New graphs include `meta.provenance`: run times and ID, hx version, the entry's
+actual Git repository/commit and dirty status, plus SHA-256 fingerprints of
+observed inputs, options, and graph content. Snapshots use UTC time, commit prefix,
+and run ID in their filenames. Old graphs retain unknown provenance; input
+coverage is observed, not a complete account of every compiler/server input.
+See [storage](docs/reference/configuration.md#generated-project-state) and
+[provenance](docs/reference/graph.md#extraction-provenance).
+
 ## View
 
 ```bash
@@ -152,6 +286,14 @@ hx serve                    # http://127.0.0.1:8765/ on .hx/graph.json, annotati
 hx serve out/g.json --open  # any graph; --no-extract disables the re-extract button
 hx export -o view.html      # standalone HTML (graph + annotations + viewer inlined), no server needed
 ```
+
+Without a graph argument, `serve` and `export` choose an existing run-directory
+`.hx` first; otherwise they use `.hx` at the first `.github` found upward from the
+run directory. An empty local `.hx` or missing state at that first marked root is
+an error, with no fallback to an outer repository. Within the selected state,
+`graph.json` is preferred, then the first regular `graphs/*.json` in filename
+order. Pass a graph path to bypass discovery. `serve --root` only overrides source
+lookup. Existing `.hx` directories are not moved or merged automatically.
 
 The viewer has three panes: the hierarchy tree (callers above, callees below,
 unresolved targets grouped by reason), the graph (nodes grouped by file, depth
@@ -189,6 +331,7 @@ reloads and re-extraction and carries into exported pages.
 ```bash
 hx track src/main.c:app_run --depth 3        # remember an entry point in .hx/config.toml
 hx track rtl/top.sv:top -f files.f
+hx track evals/ota.sp:. --dialect ngspice --search-path models   # netlist options are tracked too
 hx update                                     # re-extract all tracked entries, snapshot the old graphs, print what changed
 hx update --quiet                             # one line per entry (used by the hook)
 hx diff --entry src/main.c:app_run            # current graph vs the last snapshot (or --since <ts>)
@@ -214,7 +357,10 @@ change details. Links carry `#graph=…&diff=…`.
 `hx mcp` exposes `list_graphs`, `search`, `get_function`, `callees`, `callers`,
 `get_type`, `diff_since`, `extract` and `annotate` as compact text tools, so an
 agent can ask "who calls this, with what arguments" or "what changed since the
-baseline" without re-reading files.
+baseline" without re-reading files. `extract` takes the tracked entry's options
+(depth, callers, language, dialect, deck, search paths) for anything the agent
+leaves out, an explicit value (including `depth: 3` or `include_callers: false`)
+overrides, and `track: true` persists the merged table.
 
 ## What is in graph.json
 
@@ -225,6 +371,7 @@ baseline" without re-reading files.
 | `globals` | file-scope and function-local static variables touched, with type refs |
 | `edges` | `from`/`to` + `kind` (`call`, `macro`, `fnptr`, `ref`), call-site `loc` and `args` as written |
 | `unresolved` | anything reached but not expanded, with a reason: beyond depth, no definition, system header, excluded, function pointer |
+| `circuit` | netlist graphs only: `dialect`, `deck`, `root`, `files[]` (role, section, resolver), `definitions{}` / `models{}` / `params{}` (uniform records with `status` found\|alternatives\|ambiguous\|binned\|shadowed\|missing and one declaration per guard), `nets{}` (kind, bindings, canonical), `terminals{}` (`net` in the device's scope, `canonical` the outermost net through the enclosing bindings) and `ports{}` (`outer` as written in the parent's scope, `net` canonical) keyed by graph nodes only; a definition's `instances` and a model's `used_by` may name unresolved ghost ids (an ambiguous or missing instance keeps its candidates, status `ambiguous` or `missing`); `directives[]`, `control_blocks[]`, `probes[]`, `diagnostics[]` |
 
 Stable id forms: `c:src/dma.c::dma_start`, `c:include/dma.h::struct dma_chan`,
 `c:include/dma.h::dma_chan_t`, `c:include/dma.h::union dma_chan.stat` (anonymous
@@ -236,7 +383,12 @@ other). SystemVerilog: package types keep their name
 identified by its layout, `sv:rtl/fp.sv::struct fp.fp_t@3f9a1c2e`, so the
 32-bit and 64-bit specializations of one parameterized module are two types
 and a new specialization never renames an existing one; anonymous inline types
-are named by their first declaring context, `struct top.cfg_i@…`.
+are named by their first declaring context, `struct top.cfg_i@…`. Netlists:
+occurrence ids carry the deck, `sp:evals/ota.sp::(deck) ota.sp`,
+`sp:evals/ota.sp::xdut`, `sp:evals/ota.sp::xdut.m1` (two decks sharing a
+library are two id sets); a definition-rooted view is `sp:lib/pdk.sp::@nfet`
+with children `…::@nfet.m0`, reusable across decks; a guarded occurrence adds
+`#<guard_id>`; segments are case-folded, the spelling stays in `name`.
 
 Values: an integer below 2^53 is a JSON number; anything wider is a lossless
 string in canonical hex (`17270'h1000…` with its width, `0x…` without), x/z
@@ -334,6 +486,16 @@ What the tool promises, and where the promise stops:
 - **Layout-identified types.** Editing a module-scoped struct changes its id;
   the diff pairs the old and new id through their users and reports one changed
   type, and notes attached to the old id are listed as orphaned by `hx migrate`.
+- **Netlists.** Ids are case-folded for the case-insensitive SPICE dialects
+  (Spectre's case rule, Phase N3, is documented when it lands); parameters and
+  expressions are kept as written and never evaluated, so model bins are
+  resolved to the family and not to a W/L bin, and the oracle needs a deck
+  ngspice can run numerically. Occurrences inside `.if` branches are
+  distinguished by `attrs.guard` and the `#<guard_id>` suffix only. Files
+  outside the project root keep absolute, machine-specific paths in their ids.
+  `.control` blocks are stored, never executed. Unknown device letters and
+  directives are preserved with a diagnostic, not dropped; `Y`/`A` devices,
+  `.alter`, `.func` and `.measure` are Phase N2.
 - **Viewer layout.** In hierarchy graphs a file's functions and tasks are
   grouped apart from its module instances (`file · functions`): a group that
   mixes both, joined by a call edge, makes dagre's ranker throw (CVA6 at depth
@@ -359,10 +521,13 @@ and runs the suite with `HX_REQUIRE_TOOLS=1`.
 
 Layout: `hx/model.py` (IR), `hx/ids.py` (stable ids), `hx/traverse.py` (BFS),
 `hx/cache.py`, `hx/frontends/clang_fe.py` (libclang), `hx/frontends/verilator_fe.py`
-(verilator XML), `hx/frontends/lsp_fe.py` (JSON-RPC client + call hierarchy), `hx/diff.py`,
+(verilator XML), `hx/frontends/lsp_fe.py` (JSON-RPC client + call hierarchy),
+`hx/frontends/spice_fe.py` over `hx/netlist/` (profiles, lexer, parser, grammar,
+index, resolver, hashing, ngspice oracle) with `hx/tools.py` (optional-tool
+registry) and `dev/scripts/netlist_coverage.py` (apragma and sky130 coverage run), `hx/diff.py`,
 `hx/project.py` (config, snapshots, update, watch, hook), `hx/mcp_server.py`, `hx/annotations.py`,
 `hx/serve/app.py` (FastAPI), `hx/export.py`, `hx/viewer/` (vanilla JS app +
-vendored Cytoscape/dagre, no build step), `hx/cli.py`, `tests/fixtures/{c,sv,rust,python}/`
+vendored Cytoscape/dagre, no build step), `hx/cli.py`, `tests/fixtures/{c,sv,rust,python,spice}/`
 (fixture projects; `tests/test_conformance.py` runs the same invariants over
 every frontend whose toolchain is installed). Headless check of the viewer:
 `google-chrome --headless=new --screenshot --virtual-time-budget=3000 "http://127.0.0.1:8765/?live=0"`.

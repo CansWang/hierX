@@ -40,8 +40,14 @@ class TUCache:
         return os.path.join(self.dir, self.key(file, args, extra) + ".json")
 
     @staticmethod
-    def deps_fresh(deps: dict[str, int]) -> bool:
+    def deps_fresh(deps: dict[str, Optional[int]]) -> bool:
+        """A dep with mtime `None` is a MISSING-file sentinel: the entry stays fresh only while that path is still
+        absent (a netlist include that appeared in an earlier search-path candidate must invalidate)."""
         for p, m in deps.items():
+            if m is None:
+                if os.path.exists(p):
+                    return False
+                continue
             try:
                 if os.stat(p).st_mtime_ns != m:
                     return False

@@ -74,3 +74,34 @@ def test_errors_are_messages_not_exceptions(cproj):
     assert "No graphs" in asyncio.run(_call(srv, "list_graphs", {}))
     txt = asyncio.run(_call(srv, "get_function", {"id": "x"}))
     assert "no graphs yet" in txt.lower() or "error" in txt.lower()
+
+
+def test_extract_uses_tracked_netlist_options(tmp_path):
+    """MCP `extract`: an omitted option takes the tracked entry's value; an explicit value, including depth=3 or
+    include_callers=false, overrides it; track=true persists the merged table (Phase N1, every language)."""
+    import json
+    import shutil
+    fix = os.path.join(os.path.dirname(__file__), "fixtures", "spice", "ota")
+    root = tmp_path / "sp"
+    shutil.copytree(fix, root, ignore=shutil.ignore_patterns(".hx"))
+    root = str(root)
+    entry = "ota.sp:xa.x_cm.xref"
+    project.track(root, entry, depth=1, include_callers=True, dialect="ngspice", search_paths=["lib"])
+    srv = build_server(root)
+
+    def args():
+        return json.load(open(project.graph_path(root, entry)))["meta"]["extract_args"]
+    txt = asyncio.run(_call(srv, "extract", {"entry": entry}))                                   # everything omitted
+    assert txt.startswith(f"graph {project.slug(entry)}: sp:ota.sp::xa.x_cm.xref"), txt
+    a = args()
+    assert a["dialect"] == "ngspice" and a["search_paths"] == ["lib"] and a["depth"] == 1 and a["include_callers"] is True
+    asyncio.run(_call(srv, "extract", {"entry": entry, "depth": 3}))                             # explicit 3 beats tracked 1
+    a = args()
+    assert a["depth"] == 3 and a["dialect"] == "ngspice" and a["include_callers"] is True
+    asyncio.run(_call(srv, "extract", {"entry": entry, "include_callers": False, "track": True}))   # explicit False beats tracked True
+    a = args()
+    assert a["include_callers"] is False and a["depth"] == 1 and a["dialect"] == "ngspice" and a["search_paths"] == ["lib"]
+    cfg = next(e for e in project.load_config(root)["entries"] if e["entry"] == entry)
+    assert cfg["dialect"] == "ngspice" and cfg["search_paths"] == ["lib"] and cfg["depth"] == 1 and not cfg.get("include_callers")
+    txt = asyncio.run(_call(srv, "extract", {"entry": "ota.sp:nope"}))
+    assert txt.startswith("extract failed: EntryNotFound")

@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/canswang/hx/schema/hx-3.schema.json",
   "title": "hx graph (schema hx/3)",
-  "description": "Function-scoped structure graph produced by `hx extract`. hx/3 (0.4.0) id rules: LSP qualified names include enclosing functions (`outer.inner`); Python module callers are `module` nodes spanning the file; C/C++ symbols that are not external (static functions and variables) and ALL C/C++ types are keyed by their defining file, and a type that differs between translation units carries `@<8hex>` (one fingerprint per layout/target set); file identity is symlink-resolved; a call to a Python stub overload family is one edge to one target whose `unresolved` record carries `family`. Function-scoped structure graph produced by `hx extract`. Compatibility policy: within major 2 fields may be ADDED (readers must ignore unknown fields); removing or re-typing a field, or changing an id rule, bumps the major. hx/1 and hx/2 files are upgraded in memory by hx/graphio.py (relabel + report only; ids that hx/3 derives differently need `hx migrate`, which re-extracts). Units: C/C++ `offset`/`size`/`align` are BYTES and `bit_offset`/`bit_width` describe bitfields; SystemVerilog `size`, `offset` (= bit offset, MSB first) and `bit_width` are BITS. Values: an integer whose magnitude is below 2**53 is a JSON number; wider values are lossless strings in canonical hex (`<width>'<s>h<hex>` when the width is known, `0x<hex>`/`-0x<hex>` otherwise); x/z literals are bit patterns `<width>'b<0/1/x/z\u2026>` (see hx/values.py). Precision per node: `exact` = compiler/elaborator derived (libclang, verilator); `lsp` = from a language server.",
+  "description": "Function-scoped structure graph produced by `hx extract`. hx/3 (0.4.0) id rules: LSP qualified names include enclosing functions (`outer.inner`); Python module callers are `module` nodes spanning the file; C/C++ symbols that are not external (static functions and variables) and ALL C/C++ types are keyed by their defining file, and a type that differs between translation units carries `@<8hex>` (one fingerprint per layout/target set); file identity is symlink-resolved; a call to a Python stub overload family is one edge to one target whose `unresolved` record carries `family`. Function-scoped structure graph produced by `hx extract`. Compatibility policy: within major 2 fields may be ADDED (readers must ignore unknown fields); removing or re-typing a field, or changing an id rule, bumps the major. hx/1 and hx/2 files are upgraded in memory by hx/graphio.py (relabel + report only; ids that hx/3 derives differently need `hx migrate`, which re-extracts). Units: C/C++ `offset`/`size`/`align` are BYTES and `bit_offset`/`bit_width` describe bitfields; SystemVerilog `size`, `offset` (= bit offset, MSB first) and `bit_width` are BITS. Values: an integer whose magnitude is below 2**53 is a JSON number; wider values are lossless strings in canonical hex (`<width>'<s>h<hex>` when the width is known, `0x<hex>`/`-0x<hex>` otherwise); x/z literals are bit patterns `<width>'b<0/1/x/z\u2026>` (see hx/values.py). Precision per node: `exact` = compiler/elaborator derived (libclang, verilator); `lsp` = from a language server. Precision `syntax` = native netlist parser (SPICE-family frontend, lang `sp`): nodes of kind `device` are primitive elements, `instance` nodes subcircuit occurrences, the deck or a definition-rooted view is a `module`; electrical connectivity lives in the additive top-level `circuit` block (emitted by netlist frontends only).",
   "type": "object",
   "required": [
     "schema",
@@ -36,7 +36,8 @@
         "sv",
         "rs",
         "py",
-        "go"
+        "go",
+        "sp"
       ],
       "description": "frontend language tag; new frontends add tags without a major bump"
     },
@@ -45,7 +46,10 @@
     },
     "meta": {
       "type": "object",
-      "description": "free-form: extract_args, options, index stats (warnings, warnings_by_tag, variants), notes, truncated, migration (when upgraded from hx/1)"
+      "description": "extract_args, options, index stats, notes, truncated, migration, and optional observed extraction provenance",
+      "properties": {
+        "provenance": {"$ref": "#/$defs/provenance"}
+      }
     },
     "nodes": {
       "type": "object",
@@ -76,9 +80,61 @@
       "items": {
         "$ref": "#/$defs/unresolved"
       }
+    },
+    "circuit": {
+      "$ref": "#/$defs/circuit"
     }
   },
   "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "provenance": {
+      "type": "object",
+      "required": ["version", "run_id", "started", "completed", "hx_version", "git", "inputs", "options_sha256", "graph_sha256"],
+      "properties": {
+        "version": {"const": 1},
+        "run_id": {"type": "string", "pattern": "^[0-9a-f]{32}$"},
+        "started": {"type": "string", "format": "date-time"},
+        "completed": {"type": "string", "format": "date-time"},
+        "hx_version": {"type": "string"},
+        "git": {
+          "type": "object",
+          "required": ["status", "repo_root", "commit", "dirty", "changed_during_extract"],
+          "properties": {
+            "status": {"enum": ["ok", "no-repo", "unborn", "unavailable"]},
+            "repo_root": {"type": ["string", "null"]},
+            "commit": {"type": ["string", "null"]},
+            "dirty": {"type": ["boolean", "null"]},
+            "changed_during_extract": {"type": "boolean"}
+          }
+        },
+        "inputs": {
+          "type": "object",
+          "required": ["coverage", "files", "sha256", "changed_during_extract"],
+          "properties": {
+            "coverage": {"const": "observed"},
+            "sha256": {"$ref": "#/$defs/sha256"},
+            "changed_during_extract": {"type": "boolean"},
+            "files": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["path", "sha256", "status"],
+                "properties": {
+                  "path": {"type": "string"},
+                  "sha256": {"anyOf": [{"$ref": "#/$defs/sha256"}, {"type": "null"}]},
+                  "status": {"enum": ["ok", "missing", "unreadable", "changed"]}
+                }
+              }
+            }
+          }
+        },
+        "options_sha256": {"$ref": "#/$defs/sha256"},
+        "graph_sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
     "id": {
       "type": "string",
       "pattern": "^[a-z]+:[^\\n]+::.+$",
@@ -238,7 +294,8 @@
             "method",
             "module",
             "instance",
-            "task"
+            "task",
+            "device"
           ]
         },
         "name": {
@@ -594,6 +651,321 @@
             }
           },
           "additionalProperties": false
+        }
+      }
+    },
+    "declaration": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "spelled",
+        "scope",
+        "status",
+        "declarations"
+      ],
+      "properties": {
+        "spelled": {
+          "type": "string"
+        },
+        "scope": {
+          "type": "string",
+          "description": "declaring scope path, '' for the deck"
+        },
+        "status": {
+          "enum": [
+            "found",
+            "alternatives",
+            "ambiguous",
+            "binned",
+            "shadowed",
+            "missing"
+          ]
+        },
+        "declarations": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": true,
+            "required": [
+              "guard_id",
+              "guard",
+              "file",
+              "line"
+            ],
+            "properties": {
+              "guard_id": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "guard": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "chain": {
+                      "type": "string"
+                    },
+                    "branch": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              },
+              "file": {
+                "type": "string"
+              },
+              "line": {
+                "type": "integer"
+              },
+              "end_line": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "identity": {
+                "type": "string",
+                "description": "scope/name#<guard_id>"
+              },
+              "hash": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          }
+        },
+        "bins": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "circuit": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "netlist connectivity and declarations (Phase N1): every key is additive; nets are not nodes; occurrence ids carry the owning deck, definition ids the declaring file",
+      "required": [
+        "dialect",
+        "deck",
+        "root",
+        "files",
+        "definitions",
+        "models",
+        "params",
+        "nets",
+        "terminals",
+        "ports",
+        "directives",
+        "diagnostics"
+      ],
+      "properties": {
+        "dialect": {
+          "type": "string"
+        },
+        "deck": {
+          "type": "string"
+        },
+        "root": {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "enum": [
+                "deck",
+                "definition"
+              ]
+            },
+            "id": {
+              "$ref": "#/$defs/id"
+            }
+          }
+        },
+        "files": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "path": {
+                "type": "string"
+              },
+              "role": {
+                "enum": [
+                  "deck",
+                  "include",
+                  "lib",
+                  "library"
+                ]
+              },
+              "section": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "outside_root": {
+                "type": "boolean"
+              }
+            }
+          }
+        },
+        "definitions": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/declaration"
+          }
+        },
+        "models": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/declaration"
+          }
+        },
+        "params": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/declaration"
+          }
+        },
+        "nets": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "spelled": {
+                "type": "string"
+              },
+              "scope": {
+                "type": "string"
+              },
+              "kind": {
+                "enum": [
+                  "internal",
+                  "port",
+                  "global",
+                  "ground"
+                ]
+              },
+              "bindings": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "via": {
+                      "type": "string"
+                    },
+                    "outer": {
+                      "type": "string"
+                    },
+                    "canonical": {
+                      "type": "string"
+                    }
+                  }
+                }
+              },
+              "terminals": {
+                "type": "array",
+                "items": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "minItems": 2,
+                  "maxItems": 2
+                }
+              }
+            }
+          }
+        },
+        "terminals": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "terminal",
+                "net",
+                "as_written"
+              ]
+            }
+          }
+        },
+        "ports": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "port",
+                "inner",
+                "outer",
+                "net",
+                "as_written"
+              ]
+            }
+          }
+        },
+        "directives": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "name",
+              "role",
+              "text",
+              "file",
+              "line"
+            ]
+          }
+        },
+        "control_blocks": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "file",
+              "line",
+              "end_line",
+              "text"
+            ]
+          }
+        },
+        "probes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "what",
+              "requested",
+              "candidates"
+            ]
+          }
+        },
+        "diagnostics": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "severity",
+              "code",
+              "message"
+            ],
+            "properties": {
+              "severity": {
+                "enum": [
+                  "error",
+                  "warning",
+                  "info"
+                ]
+              }
+            }
+          }
         }
       }
     }

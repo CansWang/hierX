@@ -8,6 +8,10 @@ import pytest
 
 FIXTURE_C = Path(__file__).parent / "fixtures" / "c"
 REQUIRE_TOOLS = bool(os.environ.get("HX_REQUIRE_TOOLS"))
+# Vendor tools (Xyce, XDM, Spectre, HSPICE) are not apt-installable: their tests skip when the tool is absent unless
+# HX_REQUIRE_VENDOR_TOOLS names the tool key (comma list) or says `all`.
+_vendor = os.environ.get("HX_REQUIRE_VENDOR_TOOLS", "")
+REQUIRED_VENDORS = {"ngspice", "xyce", "xdm", "spectre", "hspice"} if _vendor.strip() == "all" else {k.strip() for k in _vendor.split(",") if k.strip()}
 
 
 def require_tool(name: str, *fallbacks: str) -> str:
@@ -29,12 +33,32 @@ def require_tool(name: str, *fallbacks: str) -> str:
     pytest.skip(msg)
 
 
+def require_vendor_tool(key: str) -> str:
+    """Path of an optional vendor tool through hx's registry; skip when absent unless HX_REQUIRE_VENDOR_TOOLS lists it."""
+    from hx.tools import TOOLS, find_tool
+    p = find_tool(key)
+    if p:
+        return p
+    msg = f"{TOOLS[key].name} not installed ({TOOLS[key].install})"
+    if key in REQUIRED_VENDORS:
+        pytest.fail(f"HX_REQUIRE_VENDOR_TOOLS={_vendor}: " + msg)
+    pytest.skip(msg)
+
+
+def pytest_configure(config):
+    config.addinivalue_line("markers", "vendor_tool(key): needs an optional vendor tool; its skip becomes a failure only when HX_REQUIRE_VENDOR_TOOLS lists the key")
+
+
 @pytest.hookimpl(hookwrapper=True)
 def pytest_runtest_makereport(item, call):
-    """With HX_REQUIRE_TOOLS=1 every skip (markers, pytest.skip, importorskip) becomes a failure."""
+    """With HX_REQUIRE_TOOLS=1 every skip (markers, pytest.skip, importorskip) becomes a failure — except a test
+    marked vendor_tool(key) whose key HX_REQUIRE_VENDOR_TOOLS does not list."""
     outcome = yield
     rep = outcome.get_result()
     if REQUIRE_TOOLS and rep.skipped:
+        marker = item.get_closest_marker("vendor_tool")
+        if marker and marker.args and marker.args[0] not in REQUIRED_VENDORS:
+            return
         rep.outcome = "failed"
         rep.longrepr = f"HX_REQUIRE_TOOLS=1: skipped test treated as failure: {rep.longrepr}"
 

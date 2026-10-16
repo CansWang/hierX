@@ -1,0 +1,25 @@
+* pdk-style library: a corner section pulls sibling sections of this same file (GF180 sm141064 layout)
+.lib tt
+.lib "models.lib" nfet_tt
+.lib "models.lib" common
+.endl
+.lib ff
+.lib "models.lib" nfet_ff
+.lib "models.lib" common
+.ends stray
+.endl
+.lib common
+.param
++ rsh=100
+
++ dtemp=0
+.subckt nfet d g s b w=1u l=0.15u
+m0 d g s b nch w={w} l={l}
+.ends nfet_wrongname
+.endl
+.lib nfet_tt
+.model nch nmos level=1 vto=0.4 kp=100u
+.endl
+.lib nfet_ff
+.model nch nmos level=1 vto=0.3 kp=120u
+.endl

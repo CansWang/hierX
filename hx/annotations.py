@@ -22,6 +22,7 @@ _lock = threading.Lock()
 
 
 def empty() -> dict:
+    """Return a fresh hx-ann/1 document with empty annotation and view buckets."""
     return {"schema": SCHEMA, "nodes": {}, "types": {}, "globals": {}, "view": {"hidden": [], "pinned_positions": {}}, "meta": {}}
 
 
@@ -51,6 +52,11 @@ def normalize(doc: Any) -> dict:
 
 
 def load(path: str) -> dict:
+    """Read and normalize annotations; a missing file returns an empty document.
+
+    Invalid JSON raises ValueError; other filesystem failures raise OSError.
+    The input is not modified.
+    """
     try:
         with open(path, encoding="utf-8") as fh:
             return normalize(json.load(fh))
@@ -109,8 +115,19 @@ def _nonempty(v: Any) -> bool:
 
 
 def patch_file(path: str, patch: dict) -> dict:
-    """load → merge → save under a thread lock AND a cross-process file lock (`hx serve`, `hx mcp` and the CLI
-    may all write the same annotations.json); returns the new document."""
+    """Apply a merge patch under thread and cross-process file locks.
+
+    Args:
+        path: Annotation JSON file; created if absent.
+        patch: Recursive object patch; None deletes keys and arrays replace values.
+
+    Returns:
+        The normalized, pruned document persisted by atomic file replacement.
+
+    Raises:
+        ValueError: Existing JSON is malformed.
+        OSError: Reading, locking, or writing fails.
+    """
     with _lock, file_lock(path):
         doc = load(path)
         doc = prune_empty(merge_patch(doc, patch))
@@ -119,6 +136,11 @@ def patch_file(path: str, patch: dict) -> dict:
 
 
 def replace_file(path: str, doc: dict) -> dict:
+    """Replace annotations under thread and cross-process file locks.
+
+    Normalize and prune doc, atomically persist it at path, and return the saved
+    dictionary. Creates a missing file. Filesystem/locking errors raise OSError.
+    """
     with _lock, file_lock(path):
         doc = prune_empty(doc)
         save(path, doc)

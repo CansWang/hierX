@@ -145,3 +145,120 @@ def test_line_shift_does_not_churn_anonymous_types(extract, cproj):
     g1 = extract(depth=3).to_dict()
     d = diff_graphs(g0, g1)
     assert d["types"]["added"] == [] and d["types"]["removed"] == [] and d["summary"]["any"] is False
+
+
+# ---------------------------------------------------------------- netlist graphs (hx/3 `circuit`, Phase N1)
+def _spice_graphs(tmp_path):
+    import shutil
+    from hx.api import extract
+    fix = os.path.join(os.path.dirname(__file__), "fixtures", "spice")
+    a = tmp_path / "a"
+    shutil.copytree(os.path.join(fix, "ota"), a)
+    b = tmp_path / "b"
+    shutil.copytree(os.path.join(fix, "ota_rewired_lib"), b)
+    return (extract("ota.sp:.", root=str(a), depth=None, dialect="ngspice").to_dict(),
+            extract("ota.sp:.", root=str(b), depth=None, dialect="ngspice").to_dict())
+
+
+def test_spice_wiring_model_param_port_order(tmp_path):
+    old, new = _spice_graphs(tmp_path)
+    d = diff_graphs(old, new)
+    s = d["summary"]
+    assert any(e["from"] == "sp:ota.sp::(deck) ota.sp" and e["to"] == "sp:ota.sp::xb" for e in d["edges"]["args_changed"])   # instance rewired
+    port_wiring = {w["terminal"]: (w["old"], w["new"]) for w in d["nodes"]["changed"]["sp:ota.sp::xb"]["wiring"]}
+    assert port_wiring == {"vip": ("vin", "vip"), "vin": ("vip", "vin")}                   # the nets behind XB's ports swapped
+    assert "wiring" not in d["nodes"]["changed"].get("sp:ota.sp::xa", {})                 # XA is wired as before
+    assert "wiring" not in d["nodes"]["changed"].get("sp:ota.sp::xb.xm_in1", {})          # XB's rewiring is reported on XB only, not on its children
+    assert "wiring" not in d["nodes"]["changed"]["sp:ota.sp::xa.xm_in1"]
+    assert new["circuit"]["ports"]["sp:ota.sp::xb.xm_in1"][1]["net"] == "vip"               # the canonical net is still there to read
+    assert {w["terminal"] for w in d["nodes"]["changed"]["sp:ota.sp::xa.x_cm"]["wiring"]} == {"tail", "ibias"}   # cm's new port order rewires an unchanged X line
+    m = d["nodes"]["changed"]["sp:ota.sp::xa.m_load_1"]
+    assert m["attrs"]["model"] == {"old": "pch", "new": "pch_hv"}                          # model change
+    xin = d["nodes"]["changed"]["sp:ota.sp::xa.xm_in1"]
+    assert xin["attrs"]["parameters.w"] == {"old": "2u", "new": "3u"}                       # instance parameter change
+    cm = d["nodes"]["changed"]["sp:ota.sp::xa.x_cm"]
+    assert any(p["change"] == "reordered" for p in cm["params"])                           # port order change
+    assert s["wiring_changed"] >= 1 and s["any"]
+    md = render_markdown(d, new)
+    assert "wiring vip vin → vip" in md and "## Circuit" in md
+
+
+def test_spice_model_card_and_param_definition_changes(tmp_path):
+    old, new = _spice_graphs(tmp_path)
+    d = diff_graphs(old, new)
+    c = d["circuit"]
+    assert [x["key"] for x in c["models"]["changed"]] == ["/nch"]                           # an edited .model card, names unchanged
+    assert [x["key"] for x in c["params"]["changed"]] == ["/ibias_val"]
+    assert {x["key"] for x in c["definitions"]["changed"]} == {"/cm", "/five_t_opamp"}     # port order edits the definition
+    assert [x for x in c["models"]["added"]] == ["/pch_hv"] and d["summary"]["models_changed"] == 2 and d["summary"]["cparams_changed"] == 1
+    md = render_markdown(d, new)
+    assert "~ model /nch" in md and "~ param /ibias_val" in md
+
+
+def test_spice_edit_confined_to_one_model_branch(tmp_path):
+    import copy as _copy
+    import shutil
+    from hx.api import extract
+    fix = os.path.join(os.path.dirname(__file__), "fixtures", "spice", "conditional")
+    a = tmp_path / "a"
+    shutil.copytree(fix, a)
+    old = extract("cond.sp:.", root=str(a), depth=None, dialect="ngspice").to_dict()
+    p = a / "cond.sp"
+    p.write_text(p.read_text().replace(".model dm d is=3e-14", ".model dm d is=4e-14"))      # the .else branch only
+    new = extract("cond.sp:.", root=str(a), depth=None, dialect="ngspice", use_cache=False).to_dict()
+    d = diff_graphs(old, new)
+    changed = d["circuit"]["models"]["changed"]
+    assert len(changed) == 1 and changed[0]["key"].startswith("/dm#") and d["summary"]["models_changed"] == 1
+    assert set(d["nodes"]["changed"]) == {"sp:cond.sp::(deck) cond.sp"}                   # the deck scope's hash moved; no device or instance changed
+
+
+def test_spice_ancestor_rewiring_is_reported_once(tmp_path):
+    """Swapping the nets of the two guarded `xw` lines rewires `xw` (both occurrences) and nothing below it."""
+    import shutil
+    from hx.api import extract
+    fix = os.path.join(os.path.dirname(__file__), "fixtures", "spice", "conditional")
+    a = tmp_path / "a"
+    shutil.copytree(fix, a)
+    old = extract("nested_guard.sp:.", root=str(a), depth=None, dialect="ngspice").to_dict()
+    p = a / "nested_guard.sp"
+    p.write_text(p.read_text().replace("xw n1 n2 wrap\n.else\nxw n2 n1 wrap", "xw n2 n1 wrap\n.else\nxw n1 n2 wrap"))
+    new = extract("nested_guard.sp:.", root=str(a), depth=None, dialect="ngspice", use_cache=False).to_dict()
+    d = diff_graphs(old, new)
+    wired = sorted(nid.split("::")[1] for nid, ch in d["nodes"]["changed"].items() if "wiring" in ch)
+    assert len(wired) == 2 and all(w.startswith("xw#") for w in wired) and d["summary"]["wiring_changed"] == 2
+    assert not d["nodes"]["added"] and not d["nodes"]["removed"]
+
+
+def test_spice_else_branch_edit_of_a_per_branch_model_registers(tmp_path):
+    """A model and a definition used only inside their own branch: editing the `.else` ones moves exactly their keys."""
+    import shutil
+    from hx.api import extract
+    fix = os.path.join(os.path.dirname(__file__), "fixtures", "spice", "conditional")
+    a = tmp_path / "a"
+    shutil.copytree(fix, a)
+    old = extract("per_branch.sp:.", root=str(a), depth=None, dialect="ngspice").to_dict()
+    p = a / "per_branch.sp"
+    p.write_text(p.read_text().replace(".model dm d is=2e-14", ".model dm d is=5e-14").replace("r1 a b 2k", "r1 a b 3k"))
+    new = extract("per_branch.sp:.", root=str(a), depth=None, dialect="ngspice", use_cache=False).to_dict()
+    d = diff_graphs(old, new)
+    c = d["circuit"]
+    assert [x["key"].split("#")[0] for x in c["models"]["changed"]] == ["/dm"] and "#" in c["models"]["changed"][0]["key"]
+    assert [x["key"].split("#")[0] for x in c["definitions"]["changed"]] == ["/leaf"] and "#" in c["definitions"]["changed"][0]["key"]
+    assert d["summary"]["models_changed"] == 1 and d["summary"]["cdefs_changed"] == 1 and "params" not in c
+    gid = c["models"]["changed"][0]["key"].split("#")[1]
+    assert c["definitions"]["changed"][0]["key"].endswith("#" + gid)                         # the same (else) branch
+
+
+def test_spice_condition_edit_changes_the_enclosing_scopes(tmp_path):
+    import shutil
+    from hx.api import extract
+    fix = os.path.join(os.path.dirname(__file__), "fixtures", "spice", "conditional")
+    a = tmp_path / "a"
+    shutil.copytree(fix, a)
+    old = extract("cond.sp:.", root=str(a), depth=None, dialect="ngspice").to_dict()
+    p = a / "cond.sp"
+    p.write_text(p.read_text().replace("(pick > 0)", "(pick > 1)").replace("(pick>0)", "(pick>1)"))
+    new = extract("cond.sp:.", root=str(a), depth=None, dialect="ngspice", use_cache=False).to_dict()
+    d = diff_graphs(old, new)
+    assert {"sp:cond.sp::(deck) cond.sp", "sp:cond.sp::xw"} <= set(d["nodes"]["changed"])     # the scopes holding the conditionals
+    assert d["nodes"]["added"] and d["nodes"]["removed"]                                       # guarded occurrences carry new guard ids

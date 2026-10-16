@@ -157,7 +157,10 @@ def build_server(root: str) -> MCPServer:
         gs = store.available()
         if not gs:
             return "No graphs. Run `hx update` after `hx track <file>:<symbol>`, or call extract(entry)."
-        return "\n".join(f"{g['name']:<40} {g['entry']}  [{g['lang']}, {g['nodes']} functions, {g['generated']}]" for g in gs)
+        def revision(g):
+            git = (g.get("provenance") or {}).get("git") or {}
+            return (", " + git["commit"][:12] + (" modified" if git.get("dirty") else "")) if git.get("commit") else ""
+        return "\n".join(f"{g['name']:<40} {g['entry']}  [{g['lang']}, {g['nodes']} functions, {g['generated']}{revision(g)}]" for g in gs)
 
     @srv.tool()
     def get_function(id: str, graph: str = "") -> str:
@@ -243,7 +246,10 @@ def build_server(root: str) -> MCPServer:
         """What changed structurally in a tracked graph since a history point ('prev' = the last snapshot, or a snapshot ts / ISO time). Markdown, ~20 lines."""
         info, g = store.load(graph)
         entry_arg = info.get("entry_arg") or info.get("entry")
-        h = project.resolve_history(root, entry_arg, since)
+        try:
+            h = project.resolve_history(root, entry_arg, since)
+        except (OSError, ValueError) as e:
+            return f"history lookup failed: {e}"
         if not h:
             return f"no history for {info['name']} yet; snapshots are taken by `hx update`/`hx watch` and the viewer's baseline button"
         old = project.load_graph(h["path"])
@@ -251,20 +257,29 @@ def build_server(root: str) -> MCPServer:
         return render_markdown(d, g, title=f"{info['name']} since {h['ts']}")
 
     @srv.tool()
-    def extract(entry: str, depth: int = 3, include_callers: bool = False, track: bool = False) -> str:
-        """Index `file:function` now (any supported language) and return a summary; the graph becomes queryable by name. track=true also adds it to .hx/config.toml."""
+    def extract(entry: str, depth: Optional[int] = None, include_callers: Optional[bool] = None, track: bool = False,
+                lang: Optional[str] = None, dialect: Optional[str] = None, deck: Optional[str] = None,
+                search_paths: Optional[list[str]] = None) -> str:
+        """Index `file:function` (or `deck.sp:.` for a netlist) now and return a summary; the graph becomes queryable by name. An omitted option (null) takes the tracked entry's value, else hx's default; any given value, including depth=3 or include_callers=false, overrides. track=true persists the merged options in .hx/config.toml."""
         from .api import extract as do_extract
         t0 = time.time()
+        tracked = next((e for e in project.load_config(root)["entries"] if e.get("entry") == entry), {})
+        kwargs = {k: v for k, v in tracked.items() if k in project.EXTRACT_KEYS}
+        for k, v in (("depth", depth), ("include_callers", include_callers), ("lang", lang), ("dialect", dialect), ("deck", deck),
+                     ("search_paths", search_paths)):
+            if v is not None:
+                kwargs[k] = v
         try:
-            graph = do_extract(entry, root=root, depth=depth, include_callers=include_callers)
+            graph = do_extract(entry, root=root, **kwargs)
         except Exception as e:  # noqa: BLE001
             return f"extract failed: {type(e).__name__}: {e}"
         gp = project.graph_path(root, entry)
-        if os.path.exists(gp):
-            project.snapshot(root, entry, gp)
-        graph.save(gp)
+        try:
+            project.save_extraction(root, entry, graph)
+        except (OSError, ValueError) as e:
+            return f"save failed: {e}"
         if track:
-            project.track(root, entry, depth=depth, include_callers=include_callers or None)
+            project.track(root, entry, **{k: (v or None) if isinstance(v, bool) else v for k, v in kwargs.items()})
         name = project.slug(entry)
         return (f"graph {name}: {graph.entry}  {len(graph.nodes)} functions, {len(graph.types)} types, {len(graph.edges)} edges, "
                 f"{len(graph.unresolved)} not expanded ({round(time.time() - t0, 1)}s)\n"

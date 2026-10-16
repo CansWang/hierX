@@ -234,6 +234,11 @@ def detect_resource_dir(explicit: Optional[str] = None) -> Optional[str]:
 def find_compile_commands(root: str, explicit: Optional[str] = None) -> str:
     if explicit:
         p = os.path.abspath(explicit)
+        # Older tracked configs may store a project-relative path. CLI root
+        # discovery now permits updates from a subdirectory; keep working
+        # invocation-relative overrides first, then try the selected project.
+        if not os.path.exists(p) and not os.path.isabs(explicit):
+            p = os.path.abspath(os.path.join(root, explicit))
         if os.path.isdir(p):
             if os.path.exists(os.path.join(p, "compile_commands.json")):
                 return p
@@ -1060,6 +1065,10 @@ class ClangFrontend(Frontend):
         self.diagnostics: list[dict] = []
         self.notes: list[str] = []
         self.variants: dict[str, dict[tuple, list[str]]] = {}   # usr -> {variant signature: [TU files]} when TUs disagree
+        self._provenance_deps: dict[str, Optional[int]] = {}
+
+    def provenance_inputs(self) -> dict[str, Optional[int]]:
+        return dict(self._provenance_deps)
 
     def _cache_extra(self) -> tuple:
         """Everything besides (file, args) that shapes a summary — all of it must be in the cache key, including
@@ -1070,7 +1079,9 @@ class ClangFrontend(Frontend):
     # ------------------------------------------------------------- index
     def build_index(self) -> None:
         t0 = time.time()
+        config_deps = TUCache.snapshot_deps([os.path.join(self.cc_dir, "compile_commands.json")])
         jobs = load_jobs(self.cc_dir, self.extra_args, self.resource_dir)
+        self._provenance_deps = {**config_deps, **TUCache.snapshot_deps([j.file for j in jobs])}
         if jobs:
             self.lang = "cpp" if all(j.lang == "cpp" for j in jobs) else "c"
         summaries: list[dict] = []
@@ -1095,6 +1106,8 @@ class ClangFrontend(Frontend):
                     continue
                 self.cache.store(j["file"], j["args"], r, extra)
                 summaries.append(r)
+        for summary in summaries:
+            self._provenance_deps.update(summary.get("deps", {}))
         self._merge(summaries)
         self.stats = {"tus": len(jobs), "parsed": len(todo) - len(self.errors), "cached": len(jobs) - len(todo),
                       "tu_errors": len(self.errors), "diagnostics": sum(s.get("n_errors", 0) for s in summaries),

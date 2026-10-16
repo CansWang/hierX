@@ -9,6 +9,12 @@ import time
 
 from . import __version__
 from .frontends.base import FrontendError, EntryNotFound
+from .paths import resolve_project, select_graph
+
+_ROOT_HELP = ("project root (overrides discovery; default: first .github upward from the entry source, "
+              "or from the run directory for commands without an entry; falls back to the run directory)")
+_GRAPH_HELP = ("graph JSON file (default: run-directory .hx first, otherwise .hx at the first .github upward; "
+               "graph.json preferred, then graphs/*.json)")
 
 
 def _build_parser() -> argparse.ArgumentParser:
@@ -18,7 +24,7 @@ def _build_parser() -> argparse.ArgumentParser:
 
     e = sub.add_parser("extract", help="walk the call hierarchy from <file>:<symbol> and write graph.json")
     e.add_argument("entry", help="<file>:<symbol>, e.g. src/dma.c:dma_start")
-    e.add_argument("--root", default=".", help="project root (ids are relative to it)")
+    e.add_argument("--root", help=_ROOT_HELP)
     e.add_argument("--compile-commands", help="compile_commands.json or the directory containing it")
     g = e.add_mutually_exclusive_group()
     g.add_argument("--depth", type=int, default=3, help="callee depth to expand (default 3)")
@@ -32,19 +38,23 @@ def _build_parser() -> argparse.ArgumentParser:
     e.add_argument("--resource-dir", help="clang resource dir (auto-detected from `clang -print-resource-dir`)")
     e.add_argument("--jobs", "-j", type=int, help="parallel parse workers (default: cpus-1)")
     e.add_argument("--no-cache", action="store_true", help="ignore and do not write .hx/cache")
-    e.add_argument("--lang", default="auto", help="auto (by extension) | c | cpp | sv | rust | python | go")
+    e.add_argument("--lang", default="auto", help="auto (by extension) | c | cpp | sv | rust | python | go | spice")
     sv = e.add_argument_group("SystemVerilog (verilator)")
-    sv.add_argument("--sv-file", action="append", default=[], metavar="GLOB", help="source glob relative to root (repeatable); default: a *.f at root, else **/*.sv + **/*.v")
+    sv.add_argument("--sv-file", action="append", default=[], metavar="GLOB", help="source glob (run-relative with discovery, root-relative with --root; repeatable); default: a *.f at root, else **/*.sv + **/*.v")
     sv.add_argument("-f", "--filelist", help="verilator -f file list")
     sv.add_argument("--top", help="top module (default: inferred from the entry symbol)")
     sv.add_argument("--verilator", default="verilator", help="verilator executable")
+    nl = e.add_argument_group("SPICE-family netlists (native parser; simulators only as optional oracles)")
+    nl.add_argument("--dialect", default="auto", help="auto | spice | ngspice (hspice, xyce and spectre arrive in later phases)")
+    nl.add_argument("--deck", help="top deck when the entry file is an include or library (default: the entry file; a `@name` entry whose line 1 is a dot-directive is read as a standalone library, line 1 kept)")
+    nl.add_argument("--search-path", action="append", default=[], dest="search_paths", metavar="DIR", help="extra directory for .include/.lib resolution (repeatable)")
     lsp = e.add_argument_group("LSP languages (rust-analyzer, pyright, gopls)")
     lsp.add_argument("--lsp-cmd", help="language server command line, e.g. 'rust-analyzer' or 'pyright-langserver --stdio'")
     lsp.add_argument("--lsp-timeout", type=float, default=90.0, help="seconds to wait for the server to index (default 90)")
-    e.add_argument("-o", "--output", help="output path (default <root>/.hx/graph.json)")
+    e.add_argument("-o", "--output", help="standalone output path (default: per-entry .hx/graphs/ current file plus .hx/graph.json, with previous history)")
     e.add_argument("-v", "--verbose", action="store_true")
     sv = sub.add_parser("serve", help="open the browser viewer on a graph.json, with editable annotations")
-    sv.add_argument("graph", nargs="?", help="graph.json (default .hx/graph.json)")
+    sv.add_argument("graph", nargs="?", help=_GRAPH_HELP)
     sv.add_argument("--root", help="project root for source snippets (default: graph's root)")
     sv.add_argument("--annotations", help="annotations.json (default: next to the graph)")
     sv.add_argument("--host", default="127.0.0.1")
@@ -54,25 +64,26 @@ def _build_parser() -> argparse.ArgumentParser:
 
     tr = sub.add_parser("track", help="add an entry point to .hx/config.toml so `hx update`/`hx watch`/the hook re-extract it")
     tr.add_argument("entry", nargs="?", help="<file>:<symbol>")
-    tr.add_argument("--root", default=".")
+    tr.add_argument("--root", help=_ROOT_HELP)
     tr.add_argument("--list", action="store_true", help="list tracked entries")
     tr.add_argument("--remove", action="store_true", help="remove the entry instead of adding it")
     for flag, kw in (("--depth", dict(type=int)), ("--type-depth", dict(type=int)), ("--include-callers", dict(action="store_true")),
                      ("--include-system", dict(action="store_true")), ("--exclude", dict(action="append", default=[])),
                      ("--max-nodes", dict(type=int)), ("--extra-arg", dict(action="append", default=[])), ("--compile-commands", {}),
                      ("--lang", {}), ("--sv-file", dict(action="append", default=[])), ("-f", dict(dest="filelist")), ("--top", {}),
-                     ("--lsp-cmd", {}), ("--lsp-timeout", dict(type=float))):
+                     ("--lsp-cmd", {}), ("--lsp-timeout", dict(type=float)),
+                     ("--dialect", {}), ("--deck", {}), ("--search-path", dict(action="append", default=[], dest="search_paths"))):
         tr.add_argument(flag, **kw)
 
     up = sub.add_parser("update", help="re-extract tracked entries, snapshot the previous graphs and print what changed")
     up.add_argument("entries", nargs="*", help="only these entries (default: all tracked)")
-    up.add_argument("--root", default=".")
+    up.add_argument("--root", help=_ROOT_HELP)
     up.add_argument("--quiet", action="store_true", help="print one line per entry instead of the full diff")
     up.add_argument("--json", action="store_true", help="print the diff JSON documents")
     up.add_argument("--hook", action="store_true", help="hook mode: read and ignore stdin, never exit non-zero")
 
     wa = sub.add_parser("watch", help="poll sources and run `hx update` after each quiet period")
-    wa.add_argument("--root", default=".")
+    wa.add_argument("--root", help=_ROOT_HELP)
     wa.add_argument("--interval", type=float, help="poll interval seconds (config: watch.interval, default 2)")
     wa.add_argument("--debounce", type=float, help="quiet seconds before updating (config: watch.debounce, default 1)")
     wa.add_argument("--once", action="store_true", help="run one update and exit")
@@ -83,47 +94,57 @@ def _build_parser() -> argparse.ArgumentParser:
     df.add_argument("new", nargs="?", help="new graph.json")
     df.add_argument("--entry", help="tracked entry: diff its current graph against history")
     df.add_argument("--since", default="prev", help="history point for --entry: prev | <snapshot ts> | <ISO time>")
-    df.add_argument("--root", default=".")
+    df.add_argument("--root", help=_ROOT_HELP)
     df.add_argument("--format", choices=["md", "json"], default="md")
     df.add_argument("-o", "--output")
     df.add_argument("--exit-code", action="store_true", help="exit 1 when there are changes")
 
     hk = sub.add_parser("hook", help="Claude Code hook that runs `hx update` after each agent turn")
     hk.add_argument("action", choices=["print", "install"])
-    hk.add_argument("--root", default=".")
+    hk.add_argument("--root", help=_ROOT_HELP)
     hk.add_argument("--event", default="Stop", choices=["Stop", "PostToolUse"])
     hk.add_argument("--command", default="hx update --quiet --hook")
     hk.add_argument("--settings-dir", help="directory holding settings.json (default <root>/.claude)")
 
     mc = sub.add_parser("mcp", help="run the MCP server (stdio) so agents can query graphs instead of grepping")
-    mc.add_argument("--root", default=".")
+    mc.add_argument("--root", help=_ROOT_HELP)
     mc.add_argument("--print-config", action="store_true", help="print the .mcp.json / `claude mcp add` snippet")
 
     mg = sub.add_parser("migrate", help="upgrade a project from schema hx/1 or hx/2: re-extract every tracked entry, then rewrite annotation keys once (hx/3)")
-    mg.add_argument("--root", default=".")
+    mg.add_argument("--root", help=_ROOT_HELP)
     mg.add_argument("--keep-history", type=int, default=None)
     mg.set_defaults(func=cmd_migrate)
 
+    nl = sub.add_parser("netlist", help="SPICE-family netlist utilities (optional simulator oracles)")
+    nls = nl.add_subparsers(dest="netlist_cmd", required=True)
+    ck = nls.add_parser("check", help="cross-check a deck's structure (paths, arity, nets, models, references) with a simulator oracle")
+    ck.add_argument("entry", help="<deck>:. or <deck>:<instance path>")
+    ck.add_argument("--oracle", choices=["ngspice"], default="ngspice")
+    ck.add_argument("--ngspice", help="ngspice executable (default: PATH or HX_TOOL_NGSPICE)")
+    ck.add_argument("--root", help=_ROOT_HELP)
+    ck.add_argument("--dialect", default="auto")
+    ck.add_argument("--deck", help="top deck when the entry file is an include or library")
+    ck.add_argument("--search-path", action="append", default=[], dest="search_paths", metavar="DIR")
+    ck.add_argument("--json", action="store_true", help="print the full report as JSON (includes the rendered closure)")
+    ck.add_argument("--limit", type=int, default=20, help="mismatches to print (default 20)")
+    ck.add_argument("--timeout", type=float, default=120.0)
+
     ex = sub.add_parser("export", help="write a standalone viewer HTML with graph + annotations inlined")
-    ex.add_argument("graph", nargs="?", help="graph.json (default .hx/graph.json)")
+    ex.add_argument("graph", nargs="?", help=_GRAPH_HELP)
     ex.add_argument("--annotations", help="annotations.json (default: next to the graph)")
     ex.add_argument("-o", "--output", help="output HTML (default: <graph dir>/view.html)")
     return p
 
 
 def _default_graph(path: str | None) -> str:
-    return os.path.abspath(path or os.path.join(".hx", "graph.json"))
+    return select_graph(path)
 
 
 def cmd_serve(a: argparse.Namespace) -> int:
-    graph = _default_graph(a.graph)
-    if not os.path.exists(graph) and not a.graph:
-        gdir = os.path.join(os.path.dirname(graph), "graphs")
-        tracked = sorted(f for f in os.listdir(gdir) if f.endswith(".json")) if os.path.isdir(gdir) else []
-        if tracked:
-            graph = os.path.join(gdir, tracked[0])
-    if not os.path.exists(graph):
-        print(f"hx: {graph} does not exist; run `hx extract` (or `hx track` + `hx update`) first, or pass the graph path", file=sys.stderr)
+    try:
+        graph = _default_graph(a.graph)
+    except (ValueError, OSError) as e:
+        print(f"hx: {e}", file=sys.stderr)
         return 2
     try:
         import uvicorn
@@ -145,9 +166,10 @@ def cmd_serve(a: argparse.Namespace) -> int:
 
 def cmd_export(a: argparse.Namespace) -> int:
     from .export import export_file
-    graph = _default_graph(a.graph)
-    if not os.path.exists(graph):
-        print(f"hx: {graph} does not exist; run `hx extract` first or pass the graph path", file=sys.stderr)
+    try:
+        graph = _default_graph(a.graph)
+    except (ValueError, OSError) as e:
+        print(f"hx: {e}", file=sys.stderr)
         return 2
     out = a.output or os.path.join(os.path.dirname(graph), "view.html")
     export_file(graph, out, a.annotations)
@@ -172,7 +194,8 @@ def cmd_track(a: argparse.Namespace) -> int:
     table = project.track(root, a.entry, depth=a.depth, type_depth=a.type_depth, include_callers=a.include_callers or None,
                           include_system=a.include_system or None, exclude=a.exclude, max_nodes=a.max_nodes, extra_args=a.extra_arg,
                           compile_commands=a.compile_commands, lang=a.lang, sv_files=a.sv_file, filelist=a.filelist, top=a.top,
-                          lsp_cmd=shlex.split(a.lsp_cmd) if a.lsp_cmd else None, lsp_timeout=a.lsp_timeout)
+                          lsp_cmd=shlex.split(a.lsp_cmd) if a.lsp_cmd else None, lsp_timeout=a.lsp_timeout,
+                          dialect=a.dialect, deck=a.deck, search_paths=a.search_paths)
     print(f"tracking    {table['entry']}  ({project.config_path(root)})")
     return 0
 
@@ -235,7 +258,11 @@ def cmd_diff(a: argparse.Namespace) -> int:
         if not os.path.exists(new_path):
             print(f"hx: no graph for {a.entry}; run `hx update {a.entry}` first", file=sys.stderr)
             return 2
-        h = project.resolve_history(root, a.entry, a.since)
+        try:
+            h = project.resolve_history(root, a.entry, a.since)
+        except (OSError, ValueError) as e:
+            print(f"hx: {e}", file=sys.stderr)
+            return 2
         if not h:
             print(f"hx: no history for {a.entry} yet (snapshots appear after the second `hx update`)", file=sys.stderr)
             return 2
@@ -308,6 +335,27 @@ def cmd_mcp(a: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_netlist(a: argparse.Namespace) -> int:
+    import json
+    from .netlist.check import check_ngspice, format_report
+    root = os.path.abspath(a.root)
+    try:
+        report = check_ngspice(a.entry, root=root, exe=a.ngspice, dialect=a.dialect, deck=a.deck, search_paths=a.search_paths, timeout=a.timeout)
+    except EntryNotFound as e:
+        print(f"hx: {e}", file=sys.stderr)
+        if e.suggestions:
+            print("hx: did you mean: " + ", ".join(e.suggestions), file=sys.stderr)
+        return 2
+    except (FrontendError, ValueError) as e:
+        print(f"hx: {e}", file=sys.stderr)
+        return 2
+    if a.json:
+        print(json.dumps(report, indent=1))
+    else:
+        print(format_report(report, a.limit))
+    return {"agree": 0, "mismatch": 1}.get(report["status"], 2)
+
+
 def cmd_extract(a: argparse.Namespace) -> int:
     from .api import extract
     root = os.path.abspath(a.root)
@@ -319,7 +367,7 @@ def cmd_extract(a: argparse.Namespace) -> int:
                         resource_dir=a.resource_dir, jobs=a.jobs, use_cache=not a.no_cache,
                         verbose=a.verbose, lang=a.lang, sv_files=a.sv_file, filelist=a.filelist, top=a.top,
                         verilator=a.verilator, lsp_cmd=shlex.split(a.lsp_cmd) if a.lsp_cmd else None,
-                        lsp_timeout=a.lsp_timeout)
+                        lsp_timeout=a.lsp_timeout, dialect=a.dialect, deck=a.deck, search_paths=a.search_paths)
     except EntryNotFound as e:
         print(f"hx: {e}", file=sys.stderr)
         if e.suggestions:
@@ -329,13 +377,22 @@ def cmd_extract(a: argparse.Namespace) -> int:
         print(f"hx: {e}", file=sys.stderr)
         return 2
     out = a.output or os.path.join(root, ".hx", "graph.json")
-    graph.save(out)
+    from . import project
+    try:
+        project.save_extraction(root, a.entry, graph, output=a.output,
+                                archive=not bool(a.output), refresh_default=not bool(a.output))
+    except (OSError, ValueError) as e:
+        print(f"hx: {e}", file=sys.stderr)
+        return 2
     idx = graph.meta.get("index", {})
     print(f"entry       {graph.entry}")
     print(f"nodes       {len(graph.nodes)}   edges {len(graph.edges)}   types {len(graph.types)}   "
           f"globals {len(graph.globals)}   unresolved {len(graph.unresolved)}")
     if idx.get("server"):
         print(f"server      {idx['server']}   ready in {idx.get('ready_seconds', '?')}s   ({len(graph.nodes)} functions resolved, precision lsp)")
+    elif idx.get("dialect"):
+        print(f"files       {idx.get('files', '?')} total, {idx.get('parsed', '?')} parsed, {idx.get('cached', '?')} cached, "
+              f"{idx.get('diagnostics', 0)} diagnostics ({idx.get('errors', 0)} errors)   dialect {idx['dialect']} ({idx.get('index_seconds', '?')}s)")
     else:
         print(f"tus         {idx.get('tus', '?')} total, {idx.get('parsed', '?')} parsed, {idx.get('cached', '?')} cached, "
               f"{idx.get('tu_errors', 0)} failed, {idx.get('diagnostics', 0)} errors, {idx.get('warnings', 0)} warnings   ({idx.get('index_seconds', '?')}s)")
@@ -351,15 +408,59 @@ def cmd_extract(a: argparse.Namespace) -> int:
         for err in graph.meta.get("tu_errors", []):
             print(f"  tu-error    {err['file']}: {err['error']}")
         for d in graph.meta.get("diagnostics", [])[:30]:
-            print(f"  diag        {d.get('file')}:{d.get('line')}: {d['message']}")
+            print(f"  diag        {d.get('file')}:{d.get('line')}: {d.get('code', '') + ': ' if d.get('code') else ''}{d['message']}")
     if idx.get("tu_errors"):
         print(f"warning     {idx['tu_errors']} translation unit(s) failed to parse; rerun with -v for details", file=sys.stderr)
     return 0
 
 
+def _resolve_project_args(a: argparse.Namespace) -> None:
+    """Resolve CLI defaults once; leave programmatic roots and viewer overrides alone."""
+    if a.cmd in {"serve", "export"}:
+        return
+    entry_command = a.cmd in {"extract", "netlist", "diff"} or (a.cmd == "track" and not a.list)
+    entries = a.entries if a.cmd == "update" else ([a.entry] if entry_command and a.entry else [])
+    explicit_root = a.root is not None
+    a.root, normalized = resolve_project(a.root, entries)
+    if a.cmd == "update":
+        a.entries = normalized
+    elif entries:
+        a.entry = normalized[0]
+    if not explicit_root:
+        # Frontends interpret several options relative to root and may replay
+        # them in another process/cwd. Preserve the paths the CLI user supplied.
+        for key in ("compile_commands", "resource_dir", "filelist", "deck"):
+            value = getattr(a, key, None)
+            if value:
+                setattr(a, key, os.path.abspath(value))
+        for key in ("sv_file", "search_paths"):
+            if hasattr(a, key):
+                setattr(a, key, [os.path.abspath(value) for value in getattr(a, key)])
+        for key in ("verilator", "ngspice"):
+            value = getattr(a, key, None)
+            if value and os.path.dirname(value):
+                setattr(a, key, os.path.abspath(value))
+        if getattr(a, "lsp_cmd", None):
+            command = shlex.split(a.lsp_cmd)
+            if command and os.path.dirname(command[0]):
+                command[0] = os.path.abspath(command[0])
+                a.lsp_cmd = shlex.join(command)
+
+
 def main(argv: list[str] | None = None) -> int:
     p = _build_parser()
     a = p.parse_args(argv)
+    try:
+        _resolve_project_args(a)
+    except (ValueError, OSError) as e:
+        print(f"hx: {e}", file=sys.stderr)
+        if a.cmd == "update" and a.hook:
+            try:
+                sys.stdin.read()
+            except Exception:  # noqa: BLE001 - preserve the hook's non-failing policy
+                pass
+            return 0
+        return 2
     if a.cmd == "extract":
         return cmd_extract(a)
     if a.cmd == "serve":
@@ -380,6 +481,8 @@ def main(argv: list[str] | None = None) -> int:
         return cmd_mcp(a)
     if a.cmd == "migrate":
         return cmd_migrate(a)
+    if a.cmd == "netlist":
+        return cmd_netlist(a)
     p.error(f"unknown command {a.cmd}")
     return 2
 

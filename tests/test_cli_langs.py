@@ -64,3 +64,30 @@ def test_unknown_extension_needs_lang(tmp_path):
     (tmp_path / "x.zig").write_text("fn f() void {}\n")
     r = run(["extract", "x.zig:f"], cwd=tmp_path)
     assert r.returncode == 2 and "cannot infer the language" in r.stderr
+
+
+def test_spice_cli(tmp_path):
+    dst = tmp_path / "spice"
+    shutil.copytree(os.path.join(FIX, "spice", "ota"), dst, ignore=shutil.ignore_patterns(".hx"))
+    r = run(["extract", "ota.sp:.", "--all", "--dialect", "ngspice", "-o", "out/g.json"], cwd=dst)
+    assert r.returncode == 0, r.stderr
+    assert "entry       sp:ota.sp::(deck) ota.sp" in r.stdout and "dialect ngspice" in r.stdout
+    g = json.load(open(dst / "out" / "g.json"))
+    assert g["lang"] == "sp" and g["meta"]["extract_args"]["dialect"] == "ngspice" and g["meta"]["extract_args"]["deck"] is None   # omitted stays omitted
+    assert g["meta"]["index"]["deck"] == "ota.sp" and g["meta"]["index"]["deck_role"] == "deck"
+    assert "circuit" in g and any(n["kind"] == "device" for n in g["nodes"].values()) and all(n["precision"] == "syntax" for n in g["nodes"].values())
+    r = run(["extract", "ota.sp:xa.x_cm.xref", "--include-callers", "--depth", "3", "-o", "out/g2.json"], cwd=dst)
+    assert r.returncode == 0, r.stderr
+    g = json.load(open(dst / "out" / "g2.json"))
+    assert g["entry"] == "sp:ota.sp::xa.x_cm.xref" and g["nodes"]["sp:ota.sp::(deck) ota.sp"]["depth"] == -3
+    r = run(["extract", "lib/devices.inc:@cm", "--deck", "ota.sp", "-o", "out/g3.json"], cwd=dst)
+    assert r.returncode == 0 and "sp:lib/devices.inc::@cm" in r.stdout, r.stderr
+    r = run(["extract", "ota.sp:nope", "-o", "out/g4.json"], cwd=dst)
+    assert r.returncode == 2 and "neither an instance path" in r.stderr
+    r = run(["extract", "ota.sp:.", "--dialect", "spectre", "-o", "out/g5.json"], cwd=dst)
+    assert r.returncode == 2 and "later phase" in r.stderr
+    lib = tmp_path / "lib"
+    shutil.copytree(os.path.join(FIX, "spice", "params"), lib, ignore=shutil.ignore_patterns(".hx"))
+    r = run(["extract", "inc_first_subckt.inc:@leaf", "-o", "out/g6.json"], cwd=lib)            # a standalone library, no --deck
+    assert r.returncode == 0 and "sp:inc_first_subckt.inc::@leaf" in r.stdout, r.stderr
+    assert json.load(open(lib / "out" / "g6.json"))["meta"]["index"]["deck_role"] == "library"

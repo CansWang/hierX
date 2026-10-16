@@ -227,4 +227,7 @@ def extract_graph(fe: Frontend, entry_file: str, entry_symbol: str, opts: Traver
         "depth": opts.depth, "type_depth": opts.type_depth, "include_callers": opts.include_callers,
         "include_system": opts.include_system, "exclude": list(opts.exclude), "max_nodes": opts.max_nodes,
     }
+    finalize = getattr(fe, "finalize", None)     # duck-typed like build_index: a frontend may attach graph-level data (circuit block)
+    if finalize:
+        finalize(graph)
     return graph

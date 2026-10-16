@@ -14,10 +14,12 @@ from ..model import Loc, Node, TypeDef, GlobalVar
 
 
 class FrontendError(Exception):
+    """A frontend could not initialize, index, or extract the requested entry."""
     pass
 
 
 class EntryNotFound(FrontendError):
+    """Entry lookup failed; suggestions contains possible symbol alternatives."""
     def __init__(self, message: str, suggestions: list[str] | None = None):
         super().__init__(message)
         self.suggestions = suggestions or []
@@ -63,6 +65,14 @@ class TypeRecord:
 
 class Frontend(ABC):
     lang: str = "?"
+
+    def provenance_inputs(self) -> dict[str, Optional[int]]:
+        """Observed absolute input paths and mtimes; None represents a missing input.
+
+        This is an observed subset, including on cache hits, not a complete
+        account of inputs consumed internally by compilers or language servers.
+        """
+        return {}
 
     @abstractmethod
     def locate_entry(self, file: str, symbol: str) -> str: ...

@@ -766,6 +766,10 @@ class VerilatorFrontend(Frontend):
         self.ids: dict[str, str] = {}
         self.type_ids: dict[str, str] = {}
         self.routine_callers: dict[str, list[tuple[str, dict]]] = {}
+        self._argument_deps: dict[str, Optional[int]] = {}
+
+    def provenance_inputs(self) -> dict[str, Optional[int]]:
+        return {**self._argument_deps, **self.idx.get("deps", {})}
 
     def cache_identity(self, files: list[str], filelist: Optional[str]) -> tuple[list[str], tuple]:
         """(key args, extra): everything that shapes the elaboration. The executable is resolved FIRST (a missing
@@ -788,6 +792,7 @@ class VerilatorFrontend(Frontend):
         t0 = time.time()
         files, filelist = find_sources(self.root, self.sv_files, self.filelist)
         key_args, extra = self.cache_identity(files, filelist)
+        self._argument_deps = TUCache.snapshot_deps([path for path, _ in extra[3]])
         cached = self.cache.load("<verilator>", key_args, extra)
         if cached is not None:
             self.idx = cached

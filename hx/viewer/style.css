@@ -101,6 +101,8 @@ a:hover, .link:hover { text-decoration: underline; }
 .badge.kind-macro { border-color: var(--edge-macro); color: var(--edge-macro); }
 .badge.kind-fnptr { border-color: var(--edge-fnptr); color: var(--edge-fnptr); }
 .badge.kind-ref { border-color: var(--edge-ref); color: var(--edge-ref); }
+.badge.kind-instance { border-color: var(--ink-2); color: var(--ink-2); }
+.badge.kind-device { border-color: var(--ink-2); color: var(--ink); font-family: var(--mono); }
 .badge.d { font-family: var(--mono); }
 .badge.ok { border-color: var(--good); color: var(--good-text); }
 .badge.chg { border-color: var(--warn); color: var(--warn-text); }

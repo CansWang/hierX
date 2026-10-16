@@ -28,6 +28,7 @@ from fastapi.staticfiles import StaticFiles
 
 from .. import annotations as ann_mod
 from ..graphio import load_graph_dict
+from ..provenance import summary
 
 VIEWER_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "viewer")
 
@@ -175,7 +176,7 @@ def create_app(graph_path: str, annotations_path: Optional[str] = None, root: Op
         return {"graph_path": st.resolve(name) if (name or os.path.exists(st.graph_path)) else st.graph_path,
                 "annotations_path": st.ann_path, "root": st.effective_root(name),
                 "entry": g.get("entry") if g else None, "generated": g.get("generated") if g else None,
-                "schema": g.get("schema") if g else None,
+                "schema": g.get("schema") if g else None, "provenance": summary(g or {}),
                 "migration": ("pending" if mig.get("needs_reextract_total") else "done") if mig else None,
                 "migration_detail": mig or None,
                 "rev": st.rev, "extracting": st.extracting, "allow_extract": st.allow_extract,
@@ -192,6 +193,7 @@ def create_app(graph_path: str, annotations_path: Optional[str] = None, root: Op
             mig = (d.get("meta") or {}).get("migration") or {}
             out.append({"name": g["name"], "entry": d.get("entry"), "entry_arg": (d.get("meta") or {}).get("entry_arg"),
                         "lang": d.get("lang"), "generated": d.get("generated"), "nodes": len(d.get("nodes", {})),
+                        "provenance": summary(d),
                         "migration": ("pending" if mig.get("needs_reextract_total") else "done") if mig else None})
         return out
 
@@ -214,7 +216,12 @@ def create_app(graph_path: str, annotations_path: Optional[str] = None, root: Op
     def take_snapshot(name: Optional[str] = None) -> dict:
         from .. import project
         entry = _entry_arg(name)
-        path = project.snapshot(st.project_root(), entry, st.resolve(name))
+        try:
+            path = project.snapshot(st.project_root(), entry, st.resolve(name))
+        except ValueError as e:
+            raise HTTPException(400, str(e)) from e
+        except OSError as e:
+            raise HTTPException(500, str(e)) from e
         return {"entry": entry, "snapshot": os.path.basename(path)[:-5] if path else None, "snapshots": project.list_history(st.project_root(), entry)}
 
     @app.get("/api/diff")
@@ -223,12 +230,16 @@ def create_app(graph_path: str, annotations_path: Optional[str] = None, root: Op
         from ..diff import diff_graphs, render_markdown
         g = st.load_graph(name)
         entry = (g.get("meta") or {}).get("entry_arg") or g.get("entry") or "graph"
-        h = project.resolve_history(st.project_root(), entry, since)
+        try:
+            h = project.resolve_history(st.project_root(), entry, since)
+        except ValueError as e:
+            raise HTTPException(400, str(e)) from e
         if not h:
             raise HTTPException(404, "no history for this graph yet; take a baseline first")
         old = project.load_graph(h["path"])
         d = diff_graphs(old, g)
         d["since"] = h["ts"]
+        d["since_generated"] = h.get("generated")
         if format == "md":
             return PlainTextResponse(render_markdown(d, g, title=f"{entry} since {h['ts']}"))
         d["markdown"] = render_markdown(d, g, title=f"{entry} since {h['ts']}")
@@ -339,8 +350,10 @@ def _run_extract(st: State, args: dict, name: Optional[str] = None) -> None:
         kwargs = {k: v for k, v in args.items() if k != "entry"}
         graph = do_extract(args["entry"], **kwargs)
         path = st.resolve(name)
-        project.snapshot(st.project_root(), args["entry"], path)   # keep the previous graph so the viewer can diff
-        graph.save(path)
+        root = st.project_root()
+        managed = path in (project.graph_path(root, args["entry"]), os.path.join(project.hx_dir(root), "graph.json"))
+        project.save_extraction(root, args["entry"], graph, output=None if managed else path,
+                                refresh_default=managed and path == os.path.join(project.hx_dir(root), "graph.json"))
         st.note_written("graph", name)
         st.broadcast("extract-done", {"entry": graph.entry, "nodes": len(graph.nodes), "name": name})
         st.broadcast("graph", {"reason": "extract", "name": name})

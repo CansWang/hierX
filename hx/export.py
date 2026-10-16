@@ -19,6 +19,12 @@ def _inline_json(obj) -> str:
 
 
 def build_html(graph: dict, annotations: dict | None = None) -> str:
+    """Build standalone viewer HTML from graph and annotation dictionaries.
+
+    Returns HTML with graph data, annotation data, CSS, and scripts inlined. No
+    server is started and no output is written. Missing packaged viewer assets raise
+    OSError. The exported viewer cannot persist edits or re-extract through a server.
+    """
     html = _read("index.html")
     html = re.sub(r'<link rel="stylesheet" href="/static/style.css">', lambda m: "<style>\n" + _read("style.css") + "\n</style>", html)
     for name in ("vendor/cytoscape.min.js", "vendor/dagre.min.js", "vendor/cytoscape-dagre.js", "patch.js", "app.js"):
@@ -34,6 +40,20 @@ def build_html(graph: dict, annotations: dict | None = None) -> str:
 
 
 def export_file(graph_path: str, out_path: str, annotations_path: str | None = None) -> str:
+    """Write a standalone HTML viewer and return its output path.
+
+    Args:
+        graph_path: Graph JSON file, normalized/upgraded by the shared reader.
+        out_path: HTML destination; parent directories are created.
+        annotations_path: Annotation JSON file; defaults beside the graph.
+
+    Returns:
+        The supplied output path. A missing annotation file uses empty annotations.
+
+    Raises:
+        OSError: An input cannot be read or the destination cannot be written.
+        ValueError: Graph or annotation JSON is invalid, or the schema is unsupported.
+    """
     from . import annotations as ann_mod
     from .graphio import load_graph_dict
     graph = load_graph_dict(graph_path)

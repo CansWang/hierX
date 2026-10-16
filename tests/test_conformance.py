@@ -58,6 +58,81 @@ def _python(tmp_path):
     return fe, str(dst), "hxfix/main.py", "app_run", "py:hxfix/dma.py::dma_start"
 
 
+def _spice(tmp_path):
+    from hx.frontends.spice_fe import SpiceFrontend
+    dst = tmp_path / "spice"
+    shutil.copytree(os.path.join(FIX, "spice", "ota"), dst, ignore=shutil.ignore_patterns(".hx", "__pycache__"))
+    fe = SpiceFrontend(str(dst), deck="ota.sp", dialect="ngspice")
+    fe.build_index()
+    return fe, str(dst), "ota.sp", ".", "sp:ota.sp::xa"
+
+
+def _spice_nested(tmp_path):
+    """Guarded instances under guarded instances, references with alternatives, a ghost reference."""
+    from hx.frontends.spice_fe import SpiceFrontend
+    dst = tmp_path / "spice_nested"
+    shutil.copytree(os.path.join(FIX, "spice", "conditional"), dst, ignore=shutil.ignore_patterns(".hx", "__pycache__"))
+    fe = SpiceFrontend(str(dst), deck="nested_guard.sp", dialect="ngspice")
+    fe.build_index()
+    return fe, str(dst), "nested_guard.sp", ".", "sp:nested_guard.sp::v1"
+
+
+def _check_circuit(g, fe=None):
+    """`terminals` and `ports` are keyed by graph nodes only (a definition's `instances` and a model's `used_by` may
+    name unresolved ghost ids); every terminal's net exists with a binding or a terminal; canonical nets follow each
+    node's own ancestor chain; every occurrence's guard extends its parent's; references point at nodes or ghosts,
+    with unique targets and a diagnostic when two targets overlap; every declaration reference and every
+    ambiguous or missing instance ghost is serialised — under truncation and depth 0 too."""
+    from hx.netlist.names import guard_compatible
+    c = g.circuit
+    assert c is not None and c["root"]["id"] == g.entry and c["root"]["deck_role"] in ("deck", "library")
+    ghosts = {u.id for u in g.unresolved if u.id}
+    for nid, terms in c["terminals"].items():
+        assert nid in g.nodes, nid
+        for t in terms:
+            assert t["net"] in c["nets"] and t["canonical"] in c["nets"], (nid, t)
+            assert any(x[0] == nid for x in c["nets"][t["net"]]["terminals"]) or c["nets"][t["net"]]["kind"] in ("ground", "global"), (nid, t)
+    for nid, ports in c["ports"].items():
+        assert nid in g.nodes and g.nodes[nid].kind == "instance", nid
+        for b in ports:
+            assert b["inner"] in c["nets"] and b["outer"] in c["nets"] and b["net"] in c["nets"], b
+            if c["nets"][b["inner"]]["kind"] not in ("global", "ground"):          # a port named like a global IS the global
+                assert any(x["via"] == nid for x in c["nets"][b["inner"]]["bindings"]), b
+            if fe is not None:
+                tag, occ = fe._occ[fe._by_id[nid]]
+                assert b["net"] == fe._elabs[tag].canonical(b["outer"], occ), (nid, b)
+    idents = {k: {d["identity"] for rec in c[k].values() for d in rec["declarations"]} for k in ("definitions", "models")}
+    for n in g.nodes.values():
+        for ref in n.attrs.get("definition_refs", []):
+            assert ref["key"] in idents["definitions"], (n.id, ref)
+        for ref in n.attrs.get("model_refs", []):
+            assert ref["key"] in idents["models"], (n.id, ref)
+        if n.kind == "device":
+            assert n.id in c["terminals"] or n.attrs.get("family") == "?", n.id
+            for ctl in n.attrs.get("controls", []):
+                assert ctl["targets"] and len(set(ctl["targets"])) == len(ctl["targets"]), ctl
+                assert all(t in g.nodes or t in ghosts for t in ctl["targets"]), ctl
+                if fe is not None:
+                    real = [fe._occ[fe._by_id[t]][1] for t in ctl["targets"] if t in g.nodes]
+                    if any(guard_compatible(a.guard, b.guard) for i, a in enumerate(real) for b in real[i + 1:]):
+                        assert any(d["code"] == "ambiguous-reference" and d["node"] == n.id for d in c["diagnostics"]), (n.id, ctl)
+        for p in [x for x in g.nodes.values() if n.qualname.startswith(x.qualname.split("#")[0] + ".") and x.kind in ("instance", "module")]:
+            pg, ng = p.attrs.get("guard_id"), n.attrs.get("guard_id")
+            if pg:
+                assert ng, (p.id, n.id)      # a child under a guarded instance is guarded too
+    for rec in list(c["definitions"].values()) + list(c["models"].values()) + list(c["params"].values()):
+        assert rec["status"] in ("found", "alternatives", "ambiguous", "binned", "shadowed", "missing")
+        for d in rec["declarations"]:
+            assert d["identity"].endswith("#" + d["guard_id"]) if d["guard_id"] else "#" not in d["identity"], d
+    for e in g.edges:
+        if e.kind == "ref":
+            assert e.dst in g.nodes or e.dst in ghosts, e
+    listed = {i for rec in c["definitions"].values() for i in rec.get("instances", [])}
+    for u in g.unresolved:
+        if u.id and (u.reason.startswith("ambiguous:") or u.reason.startswith("no .subckt definition")):
+            assert u.id in listed, u
+
+
 def _symbol_of(nid: str) -> tuple[str, str]:
     """(file, symbol) to re-enter at a node id: 'c:src/dma.c::dma_start' → ('src/dma.c', 'dma_start')."""
     head, sym = nid.split("::", 1)
@@ -96,6 +171,8 @@ def _check_invariants(g, fe, opts):
         assert all(uid in g.nodes for uid in t.used_by)
     d = g.to_dict()
     assert Graph.from_dict(json.loads(json.dumps(d))).to_dict() == d
+    if g.lang == "sp":
+        _check_circuit(g, fe)
     if opts.max_nodes is not None:
         assert len(g.nodes) <= opts.max_nodes
         assert g.meta["truncated"] == (len(g.nodes) >= opts.max_nodes and any("max-nodes" in u.reason for u in g.unresolved)) or not g.meta["truncated"]
@@ -104,7 +181,7 @@ def _check_invariants(g, fe, opts):
             assert abs(n.depth) <= opts.depth
 
 
-@pytest.mark.parametrize("make", [_c, _sv, _rust, _python], ids=["c", "sv", "rust", "python"])
+@pytest.mark.parametrize("make", [_c, _sv, _rust, _python, _spice, _spice_nested], ids=["c", "sv", "rust", "python", "spice", "spice-nested"])
 def test_frontend_invariants(make, tmp_path):
     """Every frontend must satisfy the same invariants — on the happy path AND under truncation, caller expansion,
     exclusion filters and different type budgets (the review found the happy path alone proved little)."""

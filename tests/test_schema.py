@@ -72,3 +72,17 @@ def test_chain_stamps_each_step():
     final, rep2 = graphio.migrate_2_to_3(mid)
     assert final["schema"] == "hx/3" and rep2.from_schema == "hx/2"
     assert list(graphio.MIGRATIONS) == ["1", "2"]
+
+
+def test_spice_graph_validates(tmp_path):
+    import shutil
+    from hx.api import extract
+    fix = os.path.join(os.path.dirname(__file__), "fixtures", "spice", "ota")
+    dst = tmp_path / "sp"
+    shutil.copytree(fix, dst, ignore=shutil.ignore_patterns(".hx"))
+    g = extract("ota.sp:.", root=str(dst), depth=None, dialect="ngspice").to_dict()
+    errors = sorted(_validator().iter_errors(g), key=lambda e: list(e.path))
+    assert errors == [], [f"{list(e.path)}: {e.message}" for e in errors[:5]]
+    assert g["circuit"]["root"]["kind"] == "deck" and any(n["kind"] == "device" for n in g["nodes"].values())
+    g2 = extract("ota.sp:xa", root=str(dst), depth=0, dialect="ngspice").to_dict()
+    assert sorted(_validator().iter_errors(g2), key=lambda e: list(e.path)) == []

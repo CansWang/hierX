@@ -1,0 +1,5926 @@
+{
+ "schema": "hx/3",
+ "generated": "2026-10-13T00:00:00+00:00",
+ "root": "/fixture",
+ "lang": "sp",
+ "entry": "sp:ota.sp::(deck) ota.sp",
+ "meta": {
+  "truncated": false,
+  "options": {
+   "depth": null,
+   "type_depth": 2,
+   "include_callers": false,
+   "include_system": false,
+   "exclude": [],
+   "max_nodes": null
+  },
+  "deps": [
+   "lib/corners.lib",
+   "lib/devices.inc",
+   "lib/tt_models.inc",
+   "ota.sp"
+  ],
+  "probes": [
+   {
+    "requested": "lib/devices.inc",
+    "candidates": [
+     {
+      "path": "/fixture/lib/devices.inc",
+      "exists": true
+     }
+    ],
+    "resolved": "/fixture/lib/devices.inc"
+   },
+   {
+    "requested": "lib/corners.lib",
+    "candidates": [
+     {
+      "path": "/fixture/lib/corners.lib",
+      "exists": true
+     }
+    ],
+    "resolved": "/fixture/lib/corners.lib"
+   },
+   {
+    "requested": "tt_models.inc",
+    "candidates": [
+     {
+      "path": "/fixture/lib/tt_models.inc",
+      "exists": true
+     }
+    ],
+    "resolved": "/fixture/lib/tt_models.inc"
+   }
+  ],
+  "notes": [],
+  "index": {
+   "tus": 4,
+   "files": 4,
+   "parsed": 4,
+   "cached": 0,
+   "tu_errors": 0,
+   "warnings": 0,
+   "dialect": "ngspice",
+   "deck": "ota.sp",
+   "search_paths": [],
+   "sections": [
+    [
+     "lib/corners.lib",
+     "tt"
+    ]
+   ],
+   "definitions": 4,
+   "models": 3,
+   "deps": [
+    "lib/corners.lib",
+    "lib/devices.inc",
+    "lib/tt_models.inc",
+    "ota.sp"
+   ],
+   "diagnostics": 0,
+   "errors": 0,
+   "index_seconds": 0.002,
+   "diagnostics_by_code": {}
+  },
+  "entry_arg": "ota.sp:.",
+  "extract_args": {
+   "entry": "ota.sp:.",
+   "root": "/fixture",
+   "compile_commands": null,
+   "depth": null,
+   "type_depth": 2,
+   "include_callers": false,
+   "include_system": false,
+   "exclude": [],
+   "max_nodes": null,
+   "extra_args": [],
+   "resource_dir": null,
+   "lang": "spice",
+   "sv_files": [],
+   "filelist": null,
+   "top": null,
+   "verilator": "verilator",
+   "lsp_cmd": null,
+   "lsp_timeout": 90.0,
+   "dialect": "ngspice",
+   "deck": "ota.sp",
+   "search_paths": []
+  },
+  "note": "ngspice OTA graph (tests/fixtures/spice/ota) with deck, instance and device nodes plus the circuit block, for the viewer test"
+ },
+ "nodes": {
+  "sp:ota.sp::(deck) ota.sp": {
+   "id": "sp:ota.sp::(deck) ota.sp",
+   "kind": "module",
+   "name": "ota.sp",
+   "qualname": "(deck) ota.sp",
+   "lang": "sp",
+   "loc": {
+    "file": "ota.sp",
+    "line": 1,
+    "end_line": 41,
+    "col": null
+   },
+   "signature": "Five-transistor OTA test deck (ngspice)",
+   "storage": null,
+   "depth": 0,
+   "body_hash": "sha1:0e6f0d8072414d9bdbd3e5d40b92da2d9730a754",
+   "precision": "syntax",
+   "returns": null,
+   "params": [],
+   "globals": {
+    "reads": [],
+    "writes": []
+   },
+   "calls": [
+    "sp:ota.sp::xa",
+    "sp:ota.sp::xb",
+    "sp:ota.sp::vdd",
+    "sp:ota.sp::vin",
+    "sp:ota.sp::ibias",
+    "sp:ota.sp::vsense",
+    "sp:ota.sp::cl",
+    "sp:ota.sp::rl",
+    "sp:ota.sp::e1",
+    "sp:ota.sp::f1",
+    "sp:ota.sp::rf",
+    "sp:ota.sp::l1",
+    "sp:ota.sp::l2",
+    "sp:ota.sp::k1",
+    "sp:ota.sp::rx",
+    "sp:ota.sp::ry",
+    "sp:ota.sp::r_opt#92148006",
+    "sp:ota.sp::r_opt#ed312ead"
+   ],
+   "attrs": {
+    "title": "Five-transistor OTA test deck (ngspice)",
+    "dialect": "ngspice",
+    "files": 4,
+    "statements": 32,
+    "guard": null,
+    "guard_id": null
+   },
+   "runtime": null
+  },
+  "sp:ota.sp::xa": {
+   "id": "sp:ota.sp::xa",
+   "kind": "instance",
+   "name": "XA",
+   "qualname": "xa",
+   "lang": "sp",
+   "loc": {
+    "file": "ota.sp",
+    "line": 14,
+    "end_line": 14,
+    "col": null
+   },
+   "signature": "five_t_opamp XA (vip vin outa ibias vdd 0)",
+   "storage": null,
+   "depth": 1,
+   "body_hash": "sha1:e4555eb93025ff22c2c2f701621de0496c3c701d",
+   "precision": "syntax",
+   "returns": null,
+   "params": [
+    {
+     "name": "vip",
+     "type": "port",
+     "type_ref": null,
+     "dir": "inout",
+     "dir_source": "heuristic"
+    },
+    {
+     "name": "vin",
+     "type": "port",
+     "type_ref": null,
+     "dir": "inout",
+     "dir_source": "heuristic"
+    },
+    {
+     "name": "vout",
+     "type": "port",
+     "type_ref": null,
+     "dir": "inout",
+     "dir_source": "heuristic"
+    },
+    {
+     "name": "ibias",
+     "type": "port",
+     "type_ref": null,
+     "dir": "inout",
+     "dir_source": "heuristic"
+    },
+    {
+     "name": "vdd",
+     "type": "port",
+     "type_ref": null,
+     "dir": "inout",
+     "dir_source": "heuristic"
+    },
+    {
+     "name": "vss",
+     "type": "port",
+     "type_ref": null,
+     "dir": "inout",
+     "dir_source": "heuristic"
+    }
+   ],
+   "globals": {
+    "reads": [
+     "sp:ota.sp::net vdd"
+    ],
+    "writes": []
+   },
+   "calls": [
+    "sp:ota.sp::xa.xm_in1",
+    "sp:ota.sp::xa.xm_in2",
+    "sp:ota.sp::xa.m_load_1",
+    "sp:ota.sp::xa.m_load_2",
+    "sp:ota.sp::xa.x_cm"
+   ],
+   "attrs": {
+    "definition": "five_t_opamp",
+    "definition_refs": [
+     {
+      "guard_id": "",
+      "key": "/five_t_opamp"
+     }
+    ],
+    "definition_file": "ota.sp",
+    "parameters": {},
+    "defaults": {},
+    "scope": "",
+    "guard": null,
+    "guard_id": null
+   },
+   "runtime": null
+  },
+  "sp:ota.sp::xb": {
+   "id": "sp:ota.sp::xb",
+   "kind": "instance",
+   "name": "XB",
+   "qualname": "xb",
+   "lang": "sp",
+   "loc": {
+    "file": "ota.sp",
+    "line": 15,
+    "end_line": 15,
+    "col": null
+   },
+   "signature": "five_t_opamp XB (vin vip outb ibias vdd 0)",
+   "storage": null,
+   "depth": 1,
+   "body_hash": "sha1:e4555eb93025ff22c2c2f701621de0496c3c701d",
+   "precision": "syntax",
+   "returns": null,
+   "params": [
+    {
+     "name": "vip",
+     "type": "port",
+     "type_ref": null,
+     "dir": "inout",
+     "dir_source": "heuristic"
+    },
+    {
+     "name": "vin",
+     "type": "port",
+     "type_ref": null,
+     "dir": "inout",
+     "dir_source": "heuristic"
+    },
+    {
+     "name": "vout",
+     "type": "port",
+     "type_ref": null,
+     "dir": "inout",
+     "dir_source": "heuristic"
+    },
+    {
+     "name": "ibias",
+     "type": "port",
+     "type_ref": null,
+     "dir": "inout",
+     "dir_source": "heuristic"
+    },
+    {
+     "name": "vdd",
+     "type": "port",
+     "type_ref": null,
+     "dir": "inout",
+     "dir_source": "heuristic"
+    },
+    {
+     "name": "vss",
+     "type": "port",
+     "type_ref": null,
+     "dir": "inout",
+     "dir_source": "heuristic"
+    }
+   ],
+   "globals": {
+    "reads": [
+     "sp:ota.sp::net vdd"
+    ],
+    "writes": []
+   },
+   "calls": [
+    "sp:ota.sp::xb.xm_in1",
+    "sp:ota.sp::xb.xm_in2",
+    "sp:ota.sp::xb.m_load_1",
+    "sp:ota.sp::xb.m_load_2",
+    "sp:ota.sp::xb.x_cm"
+   ],
+   "attrs": {
+    "definition": "five_t_opamp",
+    "definition_refs": [
+     {
+      "guard_id": "",
+      "key": "/five_t_opamp"
+     }
+    ],
+    "definition_file": "ota.sp",
+    "parameters": {},
+    "defaults": {},
+    "scope": "",
+    "guard": null,
+    "guard_id": null
+   },
+   "runtime": null
+  },
+  "sp:ota.sp::vdd": {
+   "id": "sp:ota.sp::vdd",
+   "kind": "device",
+   "name": "VDD",
+   "qualname": "vdd",
+   "lang": "sp",
+   "loc": {
+    "file": "ota.sp",
+    "line": 16,
+    "end_line": 16,
+    "col": null
+   },
+   "signature": "VDD vdd 0 {vdd_val}",
+   "storage": null,
+   "depth": 1,
+   "body_hash": "sha1:bca7b107bba0b292eb5319fd3d40c3d656146955",
+   "precision": "syntax",
+   "returns": null,
+   "params": [
+    {
+     "name": "p",
+     "type": "terminal",
+     "type_ref": null,
+     "dir": "inout",
+     "dir_source": "explicit"
+    },
+    {
+     "name": "n",
+     "type": "terminal",
+     "type_ref": null,
+     "dir": "inout",
+     "dir_source": "explicit"
+    }
+   ],
+   "globals": {
+    "reads": [
+     "sp:ota.sp::net vdd"
+    ],
+    "writes": []
+   },
+   "calls": [],
+   "attrs": {
+    "family": "V",
+    "element": "vsource",
+    "model": null,
+    "model_refs": [],
+    "model_status": null,
+    "parameters": {},
+    "value": "{vdd_val}",
+    "scope": "",
+    "guard": null,
+    "guard_id": null,
+    "controls": [],
+    "tokens": null
+   },
+   "runtime": null
+  },
+  "sp:ota.sp::vin": {
+   "id": "sp:ota.sp::vin",
+   "kind": "device",
+   "name": "VIN",
+   "qualname": "vin",
+   "lang": "sp",
+   "loc": {
+    "file": "ota.sp",
+    "line": 17,
+    "end_line": 17,
+    "col": null
+   },
+   "signature": "VIN vip vin dc 0 ac 1",
+   "storage": null,
+   "depth": 1,
+   "body_hash": "sha1:5b01afd35563d325688c7d590a3dffe8c64e47d5",
+   "precision": "syntax",
+   "returns": null,
+   "params": [
+    {
+     "name": "p",
+     "type": "terminal",
+     "type_ref": null,
+     "dir": "inout",
+     "dir_source": "explicit"
+    },
+    {
+     "name": "n",
+     "type": "terminal",
+     "type_ref": null,
+     "dir": "inout",
+     "dir_source": "explicit"
+    }
+   ],
+   "globals": {
+    "reads": [],
+    "writes": []
+   },
+   "calls": [],
+   "attrs": {
+    "family": "V",
+    "element": "vsource",
+    "model": null,
+    "model_refs": [],
+    "model_status": null,
+    "parameters": {},
+    "value": "dc 0 ac 1",
+    "scope": "",
+    "guard": null,
+    "guard_id": null,
+    "controls": [],
+    "tokens": null
+   },
+   "runtime": null
+  },
+  "sp:ota.sp::ibias": {
+   "id": "sp:ota.sp::ibias",
+   "kind": "device",
+   "name": "IBIAS",
+   "qualname": "ibias",
+   "lang": "sp",
+   "loc": {
+    "file": "ota.sp",
+    "line": 18,
+    "end_line": 18,
+    "col": null
+   },
+   "signature": "IBIAS vdd ibias {ibias_val}",
+   "storage": null,
+   "depth": 1,
+   "body_hash": "sha1:2e634d085c88236818b4e7c4107591d1ed75d079",
+   "precision": "syntax",
+   "returns": null,
+   "params": [
+    {
+     "name": "p",
+     "type": "terminal",
+     "type_ref": null,
+     "dir": "inout",
+     "dir_source": "explicit"
+    },
+    {
+     "name": "n",
+     "type": "terminal",
+     "type_ref": null,
+     "dir": "inout",
+     "dir_source": "explicit"
+    }
+   ],
+   "globals": {
+    "reads": [
+     "sp:ota.sp::net vdd"
+    ],
+    "writes": []
+   },
+   "calls": [],
+   "attrs": {
+    "family": "I",
+    "element": "isource",
+    "model": null,
+    "model_refs": [],
+    "model_status": null,
+    "parameters": {},
+    "value": "{ibias_val}",
+    "scope": "",
+    "guard": null,
+    "guard_id": null,
+    "controls": [],
+    "tokens": null
+   },
+   "runtime": null
+  },
+  "sp:ota.sp::vsense": {
+   "id": "sp:ota.sp::vsense",
+   "kind": "device",
+   "name": "VSENSE",
+   "qualname": "vsense",
+   "lang": "sp",
+   "loc": {
+    "file": "ota.sp",
+    "line": 19,
+    "end_line": 19,
+    "col": null
+   },
+   "signature": "VSENSE outa sense 0",
+   "storage": null,
+   "depth": 1,
+   "body_hash": "sha1:9bbd093dbfe35dce9f6217220702bb57c2400bff",
+   "precision": "syntax",
+   "returns": null,
+   "params": [
+    {
+     "name": "p",
+     "type": "terminal",
+     "type_ref": null,
+     "dir": "inout",
+     "dir_source": "explicit"
+    },
+    {
+     "name": "n",
+     "type": "terminal",
+     "type_ref": null,
+     "dir": "inout",
+     "dir_source": "explicit"
+    }
+   ],
+   "globals": {
+    "reads": [],
+    "writes": []
+   },
+   "calls": [],
+   "attrs": {
+    "family": "V",
+    "element": "vsource",
+    "model": null,
+    "model_refs": [],
+    "model_status": null,
+    "parameters": {},
+    "value": "0",
+    "scope": "",
+    "guard": null,
+    "guard_id": null,
+    "controls": [],
+    "tokens": null
+   },
+   "runtime": null
+  },
+  "sp:ota.sp::cl": {
+   "id": "sp:ota.sp::cl",
+   "kind": "device",
+   "name": "CL",
+   "qualname": "cl",
+   "lang": "sp",
+   "loc": {
+    "file": "ota.sp",
+    "line": 20,
+    "end_line": 20,
+    "col": null
+   },
+   "signature": "CL outb 0 1p",
+   "storage": null,
+   "depth": 1,
+   "body_hash": "sha1:ad8c3234a2e6ecf911de3213eb82aa6b5ff453f0",
+   "precision": "syntax",
+   "returns": null,
+   "params": [
+    {
+     "name": "p",
+     "type": "terminal",
+     "type_ref": null,
+     "dir": "inout",
+     "dir_source": "explicit"
+    },
+    {
+     "name": "n",
+     "type": "terminal",
+     "type_ref": null,
+     "dir": "inout",
+     "dir_source": "explicit"
+    }
+   ],
+   "globals": {
+    "reads": [],
+    "writes": []
+   },
+   "calls": [],
+   "attrs": {
+    "family": "C",
+    "element": "capacitor",
+    "model": null,
+    "model_refs": [],
+    "model_status": null,
+    "parameters": {},
+    "value": "1p",
+    "scope": "",
+    "guard": null,
+    "guard_id": null,
+    "controls": [],
+    "tokens": null
+   },
+   "runtime": null
+  },
+  "sp:ota.sp::rl": {
+   "id": "sp:ota.sp::rl",
+   "kind": "device",
+   "name": "RL",
+   "qualname": "rl",
+   "lang": "sp",
+   "loc": {
+    "file": "ota.sp",
+    "line": 21,
+    "end_line": 21,
+    "col": null
+   },
+   "signature": "RL sense 0 10k",
+   "storage": null,
+   "depth": 1,
+   "body_hash": "sha1:91cd8a263615f1ed9f6dce2bda5f6ba8ee49f791",
+   "precision": "syntax",
+   "returns": null,
+   "params": [
+    {
+     "name": "p",
+     "type": "terminal",
+     "type_ref": null,
+     "dir": "inout",
+     "dir_source": "explicit"
+    },
+    {
+     "name": "n",
+     "type": "terminal",
+     "type_ref": null,
+     "dir": "inout",
+     "dir_source": "explicit"
+    }
+   ],
+   "globals": {
+    "reads": [],
+    "writes": []
+   },
+   "calls": [],
+   "attrs": {
+    "family": "R",
+    "element": "resistor",
+    "model": null,
+    "model_refs": [],
+    "model_status": null,
+    "parameters": {},
+    "value": "10k",
+    "scope": "",
+    "guard": null,
+    "guard_id": null,
+    "controls": [],
+    "tokens": null
+   },
+   "runtime": null
+  },
+  "sp:ota.sp::e1": {
+   "id": "sp:ota.sp::e1",
+   "kind": "device",
+   "name": "E1",
+   "qualname": "e1",
+   "lang": "sp",
+   "loc": {
+    "file": "ota.sp",
+    "line": 22,
+    "end_line": 22,
+    "col": null
+   },
+   "signature": "E1 ecopy 0 outa 0 2",
+   "storage": null,
+   "depth": 1,
+   "body_hash": "sha1:495df2c71c3aa363456d51724f456a4d135b4a7d",
+   "precision": "syntax",
+   "returns": null,
+   "params": [
+    {
+     "name": "p",
+     "type": "terminal",
+     "type_ref": null,
+     "dir": "inout",
+     "dir_source": "explicit"
+    },
+    {
+     "name": "n",
+     "type": "terminal",
+     "type_ref": null,
+     "dir": "inout",
+     "dir_source": "explicit"
+    },
+    {
+     "name": "cp",
+     "type": "terminal",
+     "type_ref": null,
+     "dir": "inout",
+     "dir_source": "explicit"
+    },
+    {
+     "name": "cn",
+     "type": "terminal",
+     "type_ref": null,
+     "dir": "inout",
+     "dir_source": "explicit"
+    }
+   ],
+   "globals": {
+    "reads": [],
+    "writes": []
+   },
+   "calls": [],
+   "attrs": {
+    "family": "E",
+    "element": "vcvs",
+    "model": null,
+    "model_refs": [],
+    "model_status": null,
+    "parameters": {},
+    "value": "2",
+    "scope": "",
+    "guard": null,
+    "guard_id": null,
+    "controls": [],
+    "tokens": null
+   },
+   "runtime": null
+  },
+  "sp:ota.sp::f1": {
+   "id": "sp:ota.sp::f1",
+   "kind": "device",
+   "name": "F1",
+   "qualname": "f1",
+   "lang": "sp",
+   "loc": {
+    "file": "ota.sp",
+    "line": 23,
+    "end_line": 23,
+    "col": null
+   },
+   "signature": "F1 fout 0 VSENSE 2",
+   "storage": null,
+   "depth": 1,
+   "body_hash": "sha1:74e7c7a516f98e856447ca4feaeb009f6295b520",
+   "precision": "syntax",
+   "returns": null,
+   "params": [
+    {
+     "name": "p",
+     "type": "terminal",
+     "type_ref": null,
+     "dir": "inout",
+     "dir_source": "explicit"
+    },
+    {
+     "name": "n",
+     "type": "terminal",
+     "type_ref": null,
+     "dir": "inout",
+     "dir_source": "explicit"
+    }
+   ],
+   "globals": {
+    "reads": [],
+    "writes": []
+   },
+   "calls": [
+    "sp:ota.sp::vsense"
+   ],
+   "attrs": {
+    "family": "F",
+    "element": "cccs",
+    "model": null,
+    "model_refs": [],
+    "model_status": null,
+    "parameters": {},
+    "value": "2",
+    "scope": "",
+    "guard": null,
+    "guard_id": null,
+    "controls": [
+     {
+      "role": "vsource",
+      "as_written": "VSENSE",
+      "target": "sp:ota.sp::vsense"
+     }
+    ],
+    "tokens": null
+   },
+   "runtime": null
+  },
+  "sp:ota.sp::rf": {
+   "id": "sp:ota.sp::rf",
+   "kind": "device",
+   "name": "RF",
+   "qualname": "rf",
+   "lang": "sp",
+   "loc": {
+    "file": "ota.sp",
+    "line": 24,
+    "end_line": 24,
+    "col": null
+   },
+   "signature": "RF fout 0 1k",
+   "storage": null,
+   "depth": 1,
+   "body_hash": "sha1:b66febfc4b4764368aa658fad9f8eda44c347916",
+   "precision": "syntax",
+   "returns": null,
+   "params": [
+    {
+     "name": "p",
+     "type": "terminal",
+     "type_ref": null,
+     "dir": "inout",
+     "dir_source": "explicit"
+    },
+    {
+     "name": "n",
+     "type": "terminal",
+     "type_ref": null,
+     "dir": "inout",
+     "dir_source": "explicit"
+    }
+   ],
+   "globals": {
+    "reads": [],
+    "writes": []
+   },
+   "calls": [],
+   "attrs": {
+    "family": "R",
+    "element": "resistor",
+    "model": null,
+    "model_refs": [],
+    "model_status": null,
+    "parameters": {},
+    "value": "1k",
+    "scope": "",
+    "guard": null,
+    "guard_id": null,
+    "controls": [],
+    "tokens": null
+   },
+   "runtime": null
+  },
+  "sp:ota.sp::l1": {
+   "id": "sp:ota.sp::l1",
+   "kind": "device",
+   "name": "L1",
+   "qualname": "l1",
+   "lang": "sp",
+   "loc": {
+    "file": "ota.sp",
+    "line": 25,
+    "end_line": 25,
+    "col": null
+   },
+   "signature": "L1 outa lx 1u",
+   "storage": null,
+   "depth": 1,
+   "body_hash": "sha1:bbcbb4719e3a85c59fc9229da5c23d957a205fc1",
+   "precision": "syntax",
+   "returns": null,
+   "params": [
+    {
+     "name": "p",
+     "type": "terminal",
+     "type_ref": null,
+     "dir": "inout",
+     "dir_source": "explicit"
+    },
+    {
+     "name": "n",
+     "type": "terminal",
+     "type_ref": null,
+     "dir": "inout",
+     "dir_source": "explicit"
+    }
+   ],
+   "globals": {
+    "reads": [],
+    "writes": []
+   },
+   "calls": [],
+   "attrs": {
+    "family": "L",
+    "element": "inductor",
+    "model": null,
+    "model_refs": [],
+    "model_status": null,
+    "parameters": {},
+    "value": "1u",
+    "scope": "",
+    "guard": null,
+    "guard_id": null,
+    "controls": [],
+    "tokens": null
+   },
+   "runtime": null
+  },
+  "sp:ota.sp::l2": {
+   "id": "sp:ota.sp::l2",
+   "kind": "device",
+   "name": "L2",
+   "qualname": "l2",
+   "lang": "sp",
+   "loc": {
+    "file": "ota.sp",
+    "line": 26,
+    "end_line": 26,
+    "col": null
+   },
+   "signature": "L2 outb ly 1u",
+   "storage": null,
+   "depth": 1,
+   "body_hash": "sha1:d97fb3cbab09959aa4639576522a03159b29f5f4",
+   "precision": "syntax",
+   "returns": null,
+   "params": [
+    {
+     "name": "p",
+     "type": "terminal",
+     "type_ref": null,
+     "dir": "inout",
+     "dir_source": "explicit"
+    },
+    {
+     "name": "n",
+     "type": "terminal",
+     "type_ref": null,
+     "dir": "inout",
+     "dir_source": "explicit"
+    }
+   ],
+   "globals": {
+    "reads": [],
+    "writes": []
+   },
+   "calls": [],
+   "attrs": {
+    "family": "L",
+    "element": "inductor",
+    "model": null,
+    "model_refs": [],
+    "model_status": null,
+    "parameters": {},
+    "value": "1u",
+    "scope": "",
+    "guard": null,
+    "guard_id": null,
+    "controls": [],
+    "tokens": null
+   },
+   "runtime": null
+  },
+  "sp:ota.sp::k1": {
+   "id": "sp:ota.sp::k1",
+   "kind": "device",
+   "name": "K1",
+   "qualname": "k1",
+   "lang": "sp",
+   "loc": {
+    "file": "ota.sp",
+    "line": 27,
+    "end_line": 27,
+    "col": null
+   },
+   "signature": "K1 L1 L2 0.5",
+   "storage": null,
+   "depth": 1,
+   "body_hash": "sha1:6f1d0f6ac86820be267f9e4b6eebd2494c62e5eb",
+   "precision": "syntax",
+   "returns": null,
+   "params": [],
+   "globals": {
+    "reads": [],
+    "writes": []
+   },
+   "calls": [
+    "sp:ota.sp::l1",
+    "sp:ota.sp::l2"
+   ],
+   "attrs": {
+    "family": "K",
+    "element": "coupling",
+    "model": null,
+    "model_refs": [],
+    "model_status": null,
+    "parameters": {},
+    "value": "0.5",
+    "scope": "",
+    "guard": null,
+    "guard_id": null,
+    "controls": [
+     {
+      "role": "inductor",
+      "as_written": "L1",
+      "target": "sp:ota.sp::l1"
+     },
+     {
+      "role": "inductor",
+      "as_written": "L2",
+      "target": "sp:ota.sp::l2"
+     }
+    ],
+    "tokens": null
+   },
+   "runtime": null
+  },
+  "sp:ota.sp::rx": {
+   "id": "sp:ota.sp::rx",
+   "kind": "device",
+   "name": "RX",
+   "qualname": "rx",
+   "lang": "sp",
+   "loc": {
+    "file": "ota.sp",
+    "line": 28,
+    "end_line": 28,
+    "col": null
+   },
+   "signature": "RX lx 0 1k",
+   "storage": null,
+   "depth": 1,
+   "body_hash": "sha1:54031d41c52f1845049479264d6d2598fc580a49",
+   "precision": "syntax",
+   "returns": null,
+   "params": [
+    {
+     "name": "p",
+     "type": "terminal",
+     "type_ref": null,
+     "dir": "inout",
+     "dir_source": "explicit"
+    },
+    {
+     "name": "n",
+     "type": "terminal",
+     "type_ref": null,
+     "dir": "inout",
+     "dir_source": "explicit"
+    }
+   ],
+   "globals": {
+    "reads": [],
+    "writes": []
+   },
+   "calls": [],
+   "attrs": {
+    "family": "R",
+    "element": "resistor",
+    "model": null,
+    "model_refs": [],
+    "model_status": null,
+    "parameters": {},
+    "value": "1k",
+    "scope": "",
+    "guard": null,
+    "guard_id": null,
+    "controls": [],
+    "tokens": null
+   },
+   "runtime": null
+  },
+  "sp:ota.sp::ry": {
+   "id": "sp:ota.sp::ry",
+   "kind": "device",
+   "name": "RY",
+   "qualname": "ry",
+   "lang": "sp",
+   "loc": {
+    "file": "ota.sp",
+    "line": 29,
+    "end_line": 29,
+    "col": null
+   },
+   "signature": "RY ly 0 1k",
+   "storage": null,
+   "depth": 1,
+   "body_hash": "sha1:129179c00f9e6fb2e642782e77c102ee6f01c7e5",
+   "precision": "syntax",
+   "returns": null,
+   "params": [
+    {
+     "name": "p",
+     "type": "terminal",
+     "type_ref": null,
+     "dir": "inout",
+     "dir_source": "explicit"
+    },
+    {
+     "name": "n",
+     "type": "terminal",
+     "type_ref": null,
+     "dir": "inout",
+     "dir_source": "explicit"
+    }
+   ],
+   "globals": {
+    "reads": [],
+    "writes": []
+   },
+   "calls": [],
+   "attrs": {
+    "family": "R",
+    "element": "resistor",
+    "model": null,
+    "model_refs": [],
+    "model_status": null,
+    "parameters": {},
+    "value": "1k",
+    "scope": "",
+    "guard": null,
+    "guard_id": null,
+    "controls": [],
+    "tokens": null
+   },
+   "runtime": null
+  },
+  "sp:ota.sp::r_opt#92148006": {
+   "id": "sp:ota.sp::r_opt#92148006",
+   "kind": "device",
+   "name": "R_opt",
+   "qualname": "r_opt#92148006",
+   "lang": "sp",
+   "loc": {
+    "file": "ota.sp",
+    "line": 31,
+    "end_line": 31,
+    "col": null
+   },
+   "signature": "R_opt vip vin 1meg",
+   "storage": null,
+   "depth": 1,
+   "body_hash": "sha1:5c84425cd77155f70614dc5979548d107e407148",
+   "precision": "syntax",
+   "returns": null,
+   "params": [
+    {
+     "name": "p",
+     "type": "terminal",
+     "type_ref": null,
+     "dir": "inout",
+     "dir_source": "explicit"
+    },
+    {
+     "name": "n",
+     "type": "terminal",
+     "type_ref": null,
+     "dir": "inout",
+     "dir_source": "explicit"
+    }
+   ],
+   "globals": {
+    "reads": [],
+    "writes": []
+   },
+   "calls": [],
+   "attrs": {
+    "family": "R",
+    "element": "resistor",
+    "model": null,
+    "model_refs": [],
+    "model_status": null,
+    "parameters": {},
+    "value": "1meg",
+    "scope": "",
+    "guard": "(vdd_val>1.5)#0",
+    "guard_id": "92148006",
+    "controls": [],
+    "tokens": null
+   },
+   "runtime": null
+  },
+  "sp:ota.sp::r_opt#ed312ead": {
+   "id": "sp:ota.sp::r_opt#ed312ead",
+   "kind": "device",
+   "name": "R_opt",
+   "qualname": "r_opt#ed312ead",
+   "lang": "sp",
+   "loc": {
+    "file": "ota.sp",
+    "line": 33,
+    "end_line": 33,
+    "col": null
+   },
+   "signature": "R_opt vip vin 10meg",
+   "storage": null,
+   "depth": 1,
+   "body_hash": "sha1:59fc0c7a5bf7c739d479b23e74a0400501c305f2",
+   "precision": "syntax",
+   "returns": null,
+   "params": [
+    {
+     "name": "p",
+     "type": "terminal",
+     "type_ref": null,
+     "dir": "inout",
+     "dir_source": "explicit"
+    },
+    {
+     "name": "n",
+     "type": "terminal",
+     "type_ref": null,
+     "dir": "inout",
+     "dir_source": "explicit"
+    }
+   ],
+   "globals": {
+    "reads": [],
+    "writes": []
+   },
+   "calls": [],
+   "attrs": {
+    "family": "R",
+    "element": "resistor",
+    "model": null,
+    "model_refs": [],
+    "model_status": null,
+    "parameters": {},
+    "value": "10meg",
+    "scope": "",
+    "guard": "(vdd_val>1.5)#1",
+    "guard_id": "ed312ead",
+    "controls": [],
+    "tokens": null
+   },
+   "runtime": null
+  },
+  "sp:ota.sp::xa.xm_in1": {
+   "id": "sp:ota.sp::xa.xm_in1",
+   "kind": "instance",
+   "name": "XM_in1",
+   "qualname": "xa.xm_in1",
+   "lang": "sp",
+   "loc": {
+    "file": "ota.sp",
+    "line": 8,
+    "end_line": 8,
+    "col": null
+   },
+   "signature": "nch_wrap XM_in1 (tail vip vmir vss)",
+   "storage": null,
+   "depth": 2,
+   "body_hash": "sha1:7ee65a6240cc16912033a2369cac4e52c9e8e7c2",
+   "precision": "syntax",
+   "returns": null,
+   "params": [
+    {
+     "name": "d",
+     "type": "port",
+     "type_ref": null,
+     "dir": "inout",
+     "dir_source": "heuristic"
+    },
+    {
+     "name": "g",
+     "type": "port",
+     "type_ref": null,
+     "dir": "inout",
+     "dir_source": "heuristic"
+    },
+    {
+     "name": "s",
+     "type": "port",
+     "type_ref": null,
+     "dir": "inout",
+     "dir_source": "heuristic"
+    },
+    {
+     "name": "b",
+     "type": "port",
+     "type_ref": null,
+     "dir": "inout",
+     "dir_source": "heuristic"
+    }
+   ],
+   "globals": {
+    "reads": [],
+    "writes": []
+   },
+   "calls": [
+    "sp:ota.sp::xa.xm_in1.m1"
+   ],
+   "attrs": {
+    "definition": "nch_wrap",
+    "definition_refs": [
+     {
+      "guard_id": "",
+      "key": "/nch_wrap"
+     }
+    ],
+    "definition_file": "lib/devices.inc",
+    "parameters": {
+     "w": "2u"
+    },
+    "defaults": {
+     "w": "1u"
+    },
+    "scope": "xa",
+    "guard": null,
+    "guard_id": null
+   },
+   "runtime": null
+  },
+  "sp:ota.sp::xa.xm_in2": {
+   "id": "sp:ota.sp::xa.xm_in2",
+   "kind": "instance",
+   "name": "XM_in2",
+   "qualname": "xa.xm_in2",
+   "lang": "sp",
+   "loc": {
+    "file": "ota.sp",
+    "line": 9,
+    "end_line": 9,
+    "col": null
+   },
+   "signature": "nch_wrap XM_in2 (tail vin vout vss)",
+   "storage": null,
+   "depth": 2,
+   "body_hash": "sha1:7ee65a6240cc16912033a2369cac4e52c9e8e7c2",
+   "precision": "syntax",
+   "returns": null,
+   "params": [
+    {
+     "name": "d",
+     "type": "port",
+     "type_ref": null,
+     "dir": "inout",
+     "dir_source": "heuristic"
+    },
+    {
+     "name": "g",
+     "type": "port",
+     "type_ref": null,
+     "dir": "inout",
+     "dir_source": "heuristic"
+    },
+    {
+     "name": "s",
+     "type": "port",
+     "type_ref": null,
+     "dir": "inout",
+     "dir_source": "heuristic"
+    },
+    {
+     "name": "b",
+     "type": "port",
+     "type_ref": null,
+     "dir": "inout",
+     "dir_source": "heuristic"
+    }
+   ],
+   "globals": {
+    "reads": [],
+    "writes": []
+   },
+   "calls": [
+    "sp:ota.sp::xa.xm_in2.m1"
+   ],
+   "attrs": {
+    "definition": "nch_wrap",
+    "definition_refs": [
+     {
+      "guard_id": "",
+      "key": "/nch_wrap"
+     }
+    ],
+    "definition_file": "lib/devices.inc",
+    "parameters": {
+     "w": "2u"
+    },
+    "defaults": {
+     "w": "1u"
+    },
+    "scope": "xa",
+    "guard": null,
+    "guard_id": null
+   },
+   "runtime": null
+  },
+  "sp:ota.sp::xa.m_load_1": {
+   "id": "sp:ota.sp::xa.m_load_1",
+   "kind": "device",
+   "name": "M_load_1",
+   "qualname": "xa.m_load_1",
+   "lang": "sp",
+   "loc": {
+    "file": "ota.sp",
+    "line": 10,
+    "end_line": 10,
+    "col": null
+   },
+   "signature": "M_load_1 vmir vmir vdd vdd pch w=4u l=0.18u",
+   "storage": null,
+   "depth": 2,
+   "body_hash": "sha1:4bb9414a8154e97cb1d00a9d23c08a3fd6a30ab6",
+   "precision": "syntax",
+   "returns": null,
+   "params": [
+    {
+     "name": "d",
+     "type": "terminal",
+     "type_ref": null,
+     "dir": "inout",
+     "dir_source": "explicit"
+    },
+    {
+     "name": "g",
+     "type": "terminal",
+     "type_ref": null,
+     "dir": "inout",
+     "dir_source": "explicit"
+    },
+    {
+     "name": "s",
+     "type": "terminal",
+     "type_ref": null,
+     "dir": "inout",
+     "dir_source": "explicit"
+    },
+    {
+     "name": "b",
+     "type": "terminal",
+     "type_ref": null,
+     "dir": "inout",
+     "dir_source": "explicit"
+    }
+   ],
+   "globals": {
+    "reads": [
+     "sp:ota.sp::net vdd",
+     "sp:ota.sp::net vdd"
+    ],
+    "writes": []
+   },
+   "calls": [],
+   "attrs": {
+    "family": "M",
+    "element": "mosfet",
+    "model": "pch",
+    "model_refs": [
+     {
+      "guard_id": "",
+      "key": "/pch"
+     }
+    ],
+    "model_status": "found",
+    "parameters": {
+     "w": "4u",
+     "l": "0.18u"
+    },
+    "value": null,
+    "scope": "xa",
+    "guard": null,
+    "guard_id": null,
+    "controls": [],
+    "tokens": null
+   },
+   "runtime": null
+  },
+  "sp:ota.sp::xa.m_load_2": {
+   "id": "sp:ota.sp::xa.m_load_2",
+   "kind": "device",
+   "name": "M_load_2",
+   "qualname": "xa.m_load_2",
+   "lang": "sp",
+   "loc": {
+    "file": "ota.sp",
+    "line": 11,
+    "end_line": 11,
+    "col": null
+   },
+   "signature": "M_load_2 vout vmir vdd vdd pch w=4u l=0.18u",
+   "storage": null,
+   "depth": 2,
+   "body_hash": "sha1:3b45b8e01867cba8db96f39762da2353095e0dfe",
+   "precision": "syntax",
+   "returns": null,
+   "params": [
+    {
+     "name": "d",
+     "type": "terminal",
+     "type_ref": null,
+     "dir": "inout",
+     "dir_source": "explicit"
+    },
+    {
+     "name": "g",
+     "type": "terminal",
+     "type_ref": null,
+     "dir": "inout",
+     "dir_source": "explicit"
+    },
+    {
+     "name": "s",
+     "type": "terminal",
+     "type_ref": null,
+     "dir": "inout",
+     "dir_source": "explicit"
+    },
+    {
+     "name": "b",
+     "type": "terminal",
+     "type_ref": null,
+     "dir": "inout",
+     "dir_source": "explicit"
+    }
+   ],
+   "globals": {
+    "reads": [
+     "sp:ota.sp::net vdd",
+     "sp:ota.sp::net vdd"
+    ],
+    "writes": []
+   },
+   "calls": [],
+   "attrs": {
+    "family": "M",
+    "element": "mosfet",
+    "model": "pch",
+    "model_refs": [
+     {
+      "guard_id": "",
+      "key": "/pch"
+     }
+    ],
+    "model_status": "found",
+    "parameters": {
+     "w": "4u",
+     "l": "0.18u"
+    },
+    "value": null,
+    "scope": "xa",
+    "guard": null,
+    "guard_id": null,
+    "controls": [],
+    "tokens": null
+   },
+   "runtime": null
+  },
+  "sp:ota.sp::xa.x_cm": {
+   "id": "sp:ota.sp::xa.x_cm",
+   "kind": "instance",
+   "name": "X_cm",
+   "qualname": "xa.x_cm",
+   "lang": "sp",
+   "loc": {
+    "file": "ota.sp",
+    "line": 12,
+    "end_line": 12,
+    "col": null
+   },
+   "signature": "cm X_cm (tail ibias vss)",
+   "storage": null,
+   "depth": 2,
+   "body_hash": "sha1:3ac0727e5f78ad6fded20c515cf96515f304eafb",
+   "precision": "syntax",
+   "returns": null,
+   "params": [
+    {
+     "name": "tail",
+     "type": "port",
+     "type_ref": null,
+     "dir": "inout",
+     "dir_source": "heuristic"
+    },
+    {
+     "name": "ibias",
+     "type": "port",
+     "type_ref": null,
+     "dir": "inout",
+     "dir_source": "heuristic"
+    },
+    {
+     "name": "vss",
+     "type": "port",
+     "type_ref": null,
+     "dir": "inout",
+     "dir_source": "heuristic"
+    }
+   ],
+   "globals": {
+    "reads": [],
+    "writes": []
+   },
+   "calls": [
+    "sp:ota.sp::xa.x_cm.xref",
+    "sp:ota.sp::xa.x_cm.xout"
+   ],
+   "attrs": {
+    "definition": "cm",
+    "definition_refs": [
+     {
+      "guard_id": "",
+      "key": "/cm"
+     }
+    ],
+    "definition_file": "lib/devices.inc",
+    "parameters": {},
+    "defaults": {},
+    "scope": "xa",
+    "guard": null,
+    "guard_id": null
+   },
+   "runtime": null
+  },
+  "sp:ota.sp::xb.xm_in1": {
+   "id": "sp:ota.sp::xb.xm_in1",
+   "kind": "instance",
+   "name": "XM_in1",
+   "qualname": "xb.xm_in1",
+   "lang": "sp",
+   "loc": {
+    "file": "ota.sp",
+    "line": 8,
+    "end_line": 8,
+    "col": null
+   },
+   "signature": "nch_wrap XM_in1 (tail vip vmir vss)",
+   "storage": null,
+   "depth": 2,
+   "body_hash": "sha1:7ee65a6240cc16912033a2369cac4e52c9e8e7c2",
+   "precision": "syntax",
+   "returns": null,
+   "params": [
+    {
+     "name": "d",
+     "type": "port",
+     "type_ref": null,
+     "dir": "inout",
+     "dir_source": "heuristic"
+    },
+    {
+     "name": "g",
+     "type": "port",
+     "type_ref": null,
+     "dir": "inout",
+     "dir_source": "heuristic"
+    },
+    {
+     "name": "s",
+     "type": "port",
+     "type_ref": null,
+     "dir": "inout",
+     "dir_source": "heuristic"
+    },
+    {
+     "name": "b",
+     "type": "port",
+     "type_ref": null,
+     "dir": "inout",
+     "dir_source": "heuristic"
+    }
+   ],
+   "globals": {
+    "reads": [],
+    "writes": []
+   },
+   "calls": [
+    "sp:ota.sp::xb.xm_in1.m1"
+   ],
+   "attrs": {
+    "definition": "nch_wrap",
+    "definition_refs": [
+     {
+      "guard_id": "",
+      "key": "/nch_wrap"
+     }
+    ],
+    "definition_file": "lib/devices.inc",
+    "parameters": {
+     "w": "2u"
+    },
+    "defaults": {
+     "w": "1u"
+    },
+    "scope": "xb",
+    "guard": null,
+    "guard_id": null
+   },
+   "runtime": null
+  },
+  "sp:ota.sp::xb.xm_in2": {
+   "id": "sp:ota.sp::xb.xm_in2",
+   "kind": "instance",
+   "name": "XM_in2",
+   "qualname": "xb.xm_in2",
+   "lang": "sp",
+   "loc": {
+    "file": "ota.sp",
+    "line": 9,
+    "end_line": 9,
+    "col": null
+   },
+   "signature": "nch_wrap XM_in2 (tail vin vout vss)",
+   "storage": null,
+   "depth": 2,
+   "body_hash": "sha1:7ee65a6240cc16912033a2369cac4e52c9e8e7c2",
+   "precision": "syntax",
+   "returns": null,
+   "params": [
+    {
+     "name": "d",
+     "type": "port",
+     "type_ref": null,
+     "dir": "inout",
+     "dir_source": "heuristic"
+    },
+    {
+     "name": "g",
+     "type": "port",
+     "type_ref": null,
+     "dir": "inout",
+     "dir_source": "heuristic"
+    },
+    {
+     "name": "s",
+     "type": "port",
+     "type_ref": null,
+     "dir": "inout",
+     "dir_source": "heuristic"
+    },
+    {
+     "name": "b",
+     "type": "port",
+     "type_ref": null,
+     "dir": "inout",
+     "dir_source": "heuristic"
+    }
+   ],
+   "globals": {
+    "reads": [],
+    "writes": []
+   },
+   "calls": [
+    "sp:ota.sp::xb.xm_in2.m1"
+   ],
+   "attrs": {
+    "definition": "nch_wrap",
+    "definition_refs": [
+     {
+      "guard_id": "",
+      "key": "/nch_wrap"
+     }
+    ],
+    "definition_file": "lib/devices.inc",
+    "parameters": {
+     "w": "2u"
+    },
+    "defaults": {
+     "w": "1u"
+    },
+    "scope": "xb",
+    "guard": null,
+    "guard_id": null
+   },
+   "runtime": null
+  },
+  "sp:ota.sp::xb.m_load_1": {
+   "id": "sp:ota.sp::xb.m_load_1",
+   "kind": "device",
+   "name": "M_load_1",
+   "qualname": "xb.m_load_1",
+   "lang": "sp",
+   "loc": {
+    "file": "ota.sp",
+    "line": 10,
+    "end_line": 10,
+    "col": null
+   },
+   "signature": "M_load_1 vmir vmir vdd vdd pch w=4u l=0.18u",
+   "storage": null,
+   "depth": 2,
+   "body_hash": "sha1:4bb9414a8154e97cb1d00a9d23c08a3fd6a30ab6",
+   "precision": "syntax",
+   "returns": null,
+   "params": [
+    {
+     "name": "d",
+     "type": "terminal",
+     "type_ref": null,
+     "dir": "inout",
+     "dir_source": "explicit"
+    },
+    {
+     "name": "g",
+     "type": "terminal",
+     "type_ref": null,
+     "dir": "inout",
+     "dir_source": "explicit"
+    },
+    {
+     "name": "s",
+     "type": "terminal",
+     "type_ref": null,
+     "dir": "inout",
+     "dir_source": "explicit"
+    },
+    {
+     "name": "b",
+     "type": "terminal",
+     "type_ref": null,
+     "dir": "inout",
+     "dir_source": "explicit"
+    }
+   ],
+   "globals": {
+    "reads": [
+     "sp:ota.sp::net vdd",
+     "sp:ota.sp::net vdd"
+    ],
+    "writes": []
+   },
+   "calls": [],
+   "attrs": {
+    "family": "M",
+    "element": "mosfet",
+    "model": "pch",
+    "model_refs": [
+     {
+      "guard_id": "",
+      "key": "/pch"
+     }
+    ],
+    "model_status": "found",
+    "parameters": {
+     "w": "4u",
+     "l": "0.18u"
+    },
+    "value": null,
+    "scope": "xb",
+    "guard": null,
+    "guard_id": null,
+    "controls": [],
+    "tokens": null
+   },
+   "runtime": null
+  },
+  "sp:ota.sp::xb.m_load_2": {
+   "id": "sp:ota.sp::xb.m_load_2",
+   "kind": "device",
+   "name": "M_load_2",
+   "qualname": "xb.m_load_2",
+   "lang": "sp",
+   "loc": {
+    "file": "ota.sp",
+    "line": 11,
+    "end_line": 11,
+    "col": null
+   },
+   "signature": "M_load_2 vout vmir vdd vdd pch w=4u l=0.18u",
+   "storage": null,
+   "depth": 2,
+   "body_hash": "sha1:3b45b8e01867cba8db96f39762da2353095e0dfe",
+   "precision": "syntax",
+   "returns": null,
+   "params": [
+    {
+     "name": "d",
+     "type": "terminal",
+     "type_ref": null,
+     "dir": "inout",
+     "dir_source": "explicit"
+    },
+    {
+     "name": "g",
+     "type": "terminal",
+     "type_ref": null,
+     "dir": "inout",
+     "dir_source": "explicit"
+    },
+    {
+     "name": "s",
+     "type": "terminal",
+     "type_ref": null,
+     "dir": "inout",
+     "dir_source": "explicit"
+    },
+    {
+     "name": "b",
+     "type": "terminal",
+     "type_ref": null,
+     "dir": "inout",
+     "dir_source": "explicit"
+    }
+   ],
+   "globals": {
+    "reads": [
+     "sp:ota.sp::net vdd",
+     "sp:ota.sp::net vdd"
+    ],
+    "writes": []
+   },
+   "calls": [],
+   "attrs": {
+    "family": "M",
+    "element": "mosfet",
+    "model": "pch",
+    "model_refs": [
+     {
+      "guard_id": "",
+      "key": "/pch"
+     }
+    ],
+    "model_status": "found",
+    "parameters": {
+     "w": "4u",
+     "l": "0.18u"
+    },
+    "value": null,
+    "scope": "xb",
+    "guard": null,
+    "guard_id": null,
+    "controls": [],
+    "tokens": null
+   },
+   "runtime": null
+  },
+  "sp:ota.sp::xb.x_cm": {
+   "id": "sp:ota.sp::xb.x_cm",
+   "kind": "instance",
+   "name": "X_cm",
+   "qualname": "xb.x_cm",
+   "lang": "sp",
+   "loc": {
+    "file": "ota.sp",
+    "line": 12,
+    "end_line": 12,
+    "col": null
+   },
+   "signature": "cm X_cm (tail ibias vss)",
+   "storage": null,
+   "depth": 2,
+   "body_hash": "sha1:3ac0727e5f78ad6fded20c515cf96515f304eafb",
+   "precision": "syntax",
+   "returns": null,
+   "params": [
+    {
+     "name": "tail",
+     "type": "port",
+     "type_ref": null,
+     "dir": "inout",
+     "dir_source": "heuristic"
+    },
+    {
+     "name": "ibias",
+     "type": "port",
+     "type_ref": null,
+     "dir": "inout",
+     "dir_source": "heuristic"
+    },
+    {
+     "name": "vss",
+     "type": "port",
+     "type_ref": null,
+     "dir": "inout",
+     "dir_source": "heuristic"
+    }
+   ],
+   "globals": {
+    "reads": [],
+    "writes": []
+   },
+   "calls": [
+    "sp:ota.sp::xb.x_cm.xref",
+    "sp:ota.sp::xb.x_cm.xout"
+   ],
+   "attrs": {
+    "definition": "cm",
+    "definition_refs": [
+     {
+      "guard_id": "",
+      "key": "/cm"
+     }
+    ],
+    "definition_file": "lib/devices.inc",
+    "parameters": {},
+    "defaults": {},
+    "scope": "xb",
+    "guard": null,
+    "guard_id": null
+   },
+   "runtime": null
+  },
+  "sp:ota.sp::xa.xm_in1.m1": {
+   "id": "sp:ota.sp::xa.xm_in1.m1",
+   "kind": "device",
+   "name": "M1",
+   "qualname": "xa.xm_in1.m1",
+   "lang": "sp",
+   "loc": {
+    "file": "lib/devices.inc",
+    "line": 3,
+    "end_line": 3,
+    "col": null
+   },
+   "signature": "M1 d g s b nch w={w} l=0.18u",
+   "storage": null,
+   "depth": 3,
+   "body_hash": "sha1:2f03b66d7abc3699adb35f35be19c23c2f631285",
+   "precision": "syntax",
+   "returns": null,
+   "params": [
+    {
+     "name": "d",
+     "type": "terminal",
+     "type_ref": null,
+     "dir": "inout",
+     "dir_source": "explicit"
+    },
+    {
+     "name": "g",
+     "type": "terminal",
+     "type_ref": null,
+     "dir": "inout",
+     "dir_source": "explicit"
+    },
+    {
+     "name": "s",
+     "type": "terminal",
+     "type_ref": null,
+     "dir": "inout",
+     "dir_source": "explicit"
+    },
+    {
+     "name": "b",
+     "type": "terminal",
+     "type_ref": null,
+     "dir": "inout",
+     "dir_source": "explicit"
+    }
+   ],
+   "globals": {
+    "reads": [],
+    "writes": []
+   },
+   "calls": [],
+   "attrs": {
+    "family": "M",
+    "element": "mosfet",
+    "model": "nch",
+    "model_refs": [
+     {
+      "guard_id": "",
+      "key": "/nch"
+     }
+    ],
+    "model_status": "found",
+    "parameters": {
+     "w": "{w}",
+     "l": "0.18u"
+    },
+    "value": null,
+    "scope": "xa.xm_in1",
+    "guard": null,
+    "guard_id": null,
+    "controls": [],
+    "tokens": null
+   },
+   "runtime": null
+  },
+  "sp:ota.sp::xa.xm_in2.m1": {
+   "id": "sp:ota.sp::xa.xm_in2.m1",
+   "kind": "device",
+   "name": "M1",
+   "qualname": "xa.xm_in2.m1",
+   "lang": "sp",
+   "loc": {
+    "file": "lib/devices.inc",
+    "line": 3,
+    "end_line": 3,
+    "col": null
+   },
+   "signature": "M1 d g s b nch w={w} l=0.18u",
+   "storage": null,
+   "depth": 3,
+   "body_hash": "sha1:2f03b66d7abc3699adb35f35be19c23c2f631285",
+   "precision": "syntax",
+   "returns": null,
+   "params": [
+    {
+     "name": "d",
+     "type": "terminal",
+     "type_ref": null,
+     "dir": "inout",
+     "dir_source": "explicit"
+    },
+    {
+     "name": "g",
+     "type": "terminal",
+     "type_ref": null,
+     "dir": "inout",
+     "dir_source": "explicit"
+    },
+    {
+     "name": "s",
+     "type": "terminal",
+     "type_ref": null,
+     "dir": "inout",
+     "dir_source": "explicit"
+    },
+    {
+     "name": "b",
+     "type": "terminal",
+     "type_ref": null,
+     "dir": "inout",
+     "dir_source": "explicit"
+    }
+   ],
+   "globals": {
+    "reads": [],
+    "writes": []
+   },
+   "calls": [],
+   "attrs": {
+    "family": "M",
+    "element": "mosfet",
+    "model": "nch",
+    "model_refs": [
+     {
+      "guard_id": "",
+      "key": "/nch"
+     }
+    ],
+    "model_status": "found",
+    "parameters": {
+     "w": "{w}",
+     "l": "0.18u"
+    },
+    "value": null,
+    "scope": "xa.xm_in2",
+    "guard": null,
+    "guard_id": null,
+    "controls": [],
+    "tokens": null
+   },
+   "runtime": null
+  },
+  "sp:ota.sp::xa.x_cm.xref": {
+   "id": "sp:ota.sp::xa.x_cm.xref",
+   "kind": "instance",
+   "name": "Xref",
+   "qualname": "xa.x_cm.xref",
+   "lang": "sp",
+   "loc": {
+    "file": "lib/devices.inc",
+    "line": 10,
+    "end_line": 10,
+    "col": null
+   },
+   "signature": "mirror_leg Xref (ibias ibias vss)",
+   "storage": null,
+   "depth": 3,
+   "body_hash": "sha1:2acfd9c469bb70a879b6524407bbec05fe025eda",
+   "precision": "syntax",
+   "returns": null,
+   "params": [
+    {
+     "name": "g",
+     "type": "port",
+     "type_ref": null,
+     "dir": "inout",
+     "dir_source": "heuristic"
+    },
+    {
+     "name": "d",
+     "type": "port",
+     "type_ref": null,
+     "dir": "inout",
+     "dir_source": "heuristic"
+    },
+    {
+     "name": "s",
+     "type": "port",
+     "type_ref": null,
+     "dir": "inout",
+     "dir_source": "heuristic"
+    }
+   ],
+   "globals": {
+    "reads": [],
+    "writes": []
+   },
+   "calls": [
+    "sp:ota.sp::xa.x_cm.xref.m1"
+   ],
+   "attrs": {
+    "definition": "mirror_leg",
+    "definition_refs": [
+     {
+      "guard_id": "",
+      "key": "cm/mirror_leg"
+     }
+    ],
+    "definition_file": "lib/devices.inc",
+    "parameters": {},
+    "defaults": {},
+    "scope": "xa.x_cm",
+    "guard": null,
+    "guard_id": null
+   },
+   "runtime": null
+  },
+  "sp:ota.sp::xa.x_cm.xout": {
+   "id": "sp:ota.sp::xa.x_cm.xout",
+   "kind": "instance",
+   "name": "Xout",
+   "qualname": "xa.x_cm.xout",
+   "lang": "sp",
+   "loc": {
+    "file": "lib/devices.inc",
+    "line": 11,
+    "end_line": 11,
+    "col": null
+   },
+   "signature": "mirror_leg Xout (ibias tail vss)",
+   "storage": null,
+   "depth": 3,
+   "body_hash": "sha1:2acfd9c469bb70a879b6524407bbec05fe025eda",
+   "precision": "syntax",
+   "returns": null,
+   "params": [
+    {
+     "name": "g",
+     "type": "port",
+     "type_ref": null,
+     "dir": "inout",
+     "dir_source": "heuristic"
+    },
+    {
+     "name": "d",
+     "type": "port",
+     "type_ref": null,
+     "dir": "inout",
+     "dir_source": "heuristic"
+    },
+    {
+     "name": "s",
+     "type": "port",
+     "type_ref": null,
+     "dir": "inout",
+     "dir_source": "heuristic"
+    }
+   ],
+   "globals": {
+    "reads": [],
+    "writes": []
+   },
+   "calls": [
+    "sp:ota.sp::xa.x_cm.xout.m1"
+   ],
+   "attrs": {
+    "definition": "mirror_leg",
+    "definition_refs": [
+     {
+      "guard_id": "",
+      "key": "cm/mirror_leg"
+     }
+    ],
+    "definition_file": "lib/devices.inc",
+    "parameters": {},
+    "defaults": {},
+    "scope": "xa.x_cm",
+    "guard": null,
+    "guard_id": null
+   },
+   "runtime": null
+  },
+  "sp:ota.sp::xb.xm_in1.m1": {
+   "id": "sp:ota.sp::xb.xm_in1.m1",
+   "kind": "device",
+   "name": "M1",
+   "qualname": "xb.xm_in1.m1",
+   "lang": "sp",
+   "loc": {
+    "file": "lib/devices.inc",
+    "line": 3,
+    "end_line": 3,
+    "col": null
+   },
+   "signature": "M1 d g s b nch w={w} l=0.18u",
+   "storage": null,
+   "depth": 3,
+   "body_hash": "sha1:2f03b66d7abc3699adb35f35be19c23c2f631285",
+   "precision": "syntax",
+   "returns": null,
+   "params": [
+    {
+     "name": "d",
+     "type": "terminal",
+     "type_ref": null,
+     "dir": "inout",
+     "dir_source": "explicit"
+    },
+    {
+     "name": "g",
+     "type": "terminal",
+     "type_ref": null,
+     "dir": "inout",
+     "dir_source": "explicit"
+    },
+    {
+     "name": "s",
+     "type": "terminal",
+     "type_ref": null,
+     "dir": "inout",
+     "dir_source": "explicit"
+    },
+    {
+     "name": "b",
+     "type": "terminal",
+     "type_ref": null,
+     "dir": "inout",
+     "dir_source": "explicit"
+    }
+   ],
+   "globals": {
+    "reads": [],
+    "writes": []
+   },
+   "calls": [],
+   "attrs": {
+    "family": "M",
+    "element": "mosfet",
+    "model": "nch",
+    "model_refs": [
+     {
+      "guard_id": "",
+      "key": "/nch"
+     }
+    ],
+    "model_status": "found",
+    "parameters": {
+     "w": "{w}",
+     "l": "0.18u"
+    },
+    "value": null,
+    "scope": "xb.xm_in1",
+    "guard": null,
+    "guard_id": null,
+    "controls": [],
+    "tokens": null
+   },
+   "runtime": null
+  },
+  "sp:ota.sp::xb.xm_in2.m1": {
+   "id": "sp:ota.sp::xb.xm_in2.m1",
+   "kind": "device",
+   "name": "M1",
+   "qualname": "xb.xm_in2.m1",
+   "lang": "sp",
+   "loc": {
+    "file": "lib/devices.inc",
+    "line": 3,
+    "end_line": 3,
+    "col": null
+   },
+   "signature": "M1 d g s b nch w={w} l=0.18u",
+   "storage": null,
+   "depth": 3,
+   "body_hash": "sha1:2f03b66d7abc3699adb35f35be19c23c2f631285",
+   "precision": "syntax",
+   "returns": null,
+   "params": [
+    {
+     "name": "d",
+     "type": "terminal",
+     "type_ref": null,
+     "dir": "inout",
+     "dir_source": "explicit"
+    },
+    {
+     "name": "g",
+     "type": "terminal",
+     "type_ref": null,
+     "dir": "inout",
+     "dir_source": "explicit"
+    },
+    {
+     "name": "s",
+     "type": "terminal",
+     "type_ref": null,
+     "dir": "inout",
+     "dir_source": "explicit"
+    },
+    {
+     "name": "b",
+     "type": "terminal",
+     "type_ref": null,
+     "dir": "inout",
+     "dir_source": "explicit"
+    }
+   ],
+   "globals": {
+    "reads": [],
+    "writes": []
+   },
+   "calls": [],
+   "attrs": {
+    "family": "M",
+    "element": "mosfet",
+    "model": "nch",
+    "model_refs": [
+     {
+      "guard_id": "",
+      "key": "/nch"
+     }
+    ],
+    "model_status": "found",
+    "parameters": {
+     "w": "{w}",
+     "l": "0.18u"
+    },
+    "value": null,
+    "scope": "xb.xm_in2",
+    "guard": null,
+    "guard_id": null,
+    "controls": [],
+    "tokens": null
+   },
+   "runtime": null
+  },
+  "sp:ota.sp::xb.x_cm.xref": {
+   "id": "sp:ota.sp::xb.x_cm.xref",
+   "kind": "instance",
+   "name": "Xref",
+   "qualname": "xb.x_cm.xref",
+   "lang": "sp",
+   "loc": {
+    "file": "lib/devices.inc",
+    "line": 10,
+    "end_line": 10,
+    "col": null
+   },
+   "signature": "mirror_leg Xref (ibias ibias vss)",
+   "storage": null,
+   "depth": 3,
+   "body_hash": "sha1:2acfd9c469bb70a879b6524407bbec05fe025eda",
+   "precision": "syntax",
+   "returns": null,
+   "params": [
+    {
+     "name": "g",
+     "type": "port",
+     "type_ref": null,
+     "dir": "inout",
+     "dir_source": "heuristic"
+    },
+    {
+     "name": "d",
+     "type": "port",
+     "type_ref": null,
+     "dir": "inout",
+     "dir_source": "heuristic"
+    },
+    {
+     "name": "s",
+     "type": "port",
+     "type_ref": null,
+     "dir": "inout",
+     "dir_source": "heuristic"
+    }
+   ],
+   "globals": {
+    "reads": [],
+    "writes": []
+   },
+   "calls": [
+    "sp:ota.sp::xb.x_cm.xref.m1"
+   ],
+   "attrs": {
+    "definition": "mirror_leg",
+    "definition_refs": [
+     {
+      "guard_id": "",
+      "key": "cm/mirror_leg"
+     }
+    ],
+    "definition_file": "lib/devices.inc",
+    "parameters": {},
+    "defaults": {},
+    "scope": "xb.x_cm",
+    "guard": null,
+    "guard_id": null
+   },
+   "runtime": null
+  },
+  "sp:ota.sp::xb.x_cm.xout": {
+   "id": "sp:ota.sp::xb.x_cm.xout",
+   "kind": "instance",
+   "name": "Xout",
+   "qualname": "xb.x_cm.xout",
+   "lang": "sp",
+   "loc": {
+    "file": "lib/devices.inc",
+    "line": 11,
+    "end_line": 11,
+    "col": null
+   },
+   "signature": "mirror_leg Xout (ibias tail vss)",
+   "storage": null,
+   "depth": 3,
+   "body_hash": "sha1:2acfd9c469bb70a879b6524407bbec05fe025eda",
+   "precision": "syntax",
+   "returns": null,
+   "params": [
+    {
+     "name": "g",
+     "type": "port",
+     "type_ref": null,
+     "dir": "inout",
+     "dir_source": "heuristic"
+    },
+    {
+     "name": "d",
+     "type": "port",
+     "type_ref": null,
+     "dir": "inout",
+     "dir_source": "heuristic"
+    },
+    {
+     "name": "s",
+     "type": "port",
+     "type_ref": null,
+     "dir": "inout",
+     "dir_source": "heuristic"
+    }
+   ],
+   "globals": {
+    "reads": [],
+    "writes": []
+   },
+   "calls": [
+    "sp:ota.sp::xb.x_cm.xout.m1"
+   ],
+   "attrs": {
+    "definition": "mirror_leg",
+    "definition_refs": [
+     {
+      "guard_id": "",
+      "key": "cm/mirror_leg"
+     }
+    ],
+    "definition_file": "lib/devices.inc",
+    "parameters": {},
+    "defaults": {},
+    "scope": "xb.x_cm",
+    "guard": null,
+    "guard_id": null
+   },
+   "runtime": null
+  },
+  "sp:ota.sp::xa.x_cm.xref.m1": {
+   "id": "sp:ota.sp::xa.x_cm.xref.m1",
+   "kind": "device",
+   "name": "M1",
+   "qualname": "xa.x_cm.xref.m1",
+   "lang": "sp",
+   "loc": {
+    "file": "lib/devices.inc",
+    "line": 8,
+    "end_line": 8,
+    "col": null
+   },
+   "signature": "M1 d g s s nch w=1u l=0.18u",
+   "storage": null,
+   "depth": 4,
+   "body_hash": "sha1:cca739b54e7689f1da928ff837b44d90ee505e11",
+   "precision": "syntax",
+   "returns": null,
+   "params": [
+    {
+     "name": "d",
+     "type": "terminal",
+     "type_ref": null,
+     "dir": "inout",
+     "dir_source": "explicit"
+    },
+    {
+     "name": "g",
+     "type": "terminal",
+     "type_ref": null,
+     "dir": "inout",
+     "dir_source": "explicit"
+    },
+    {
+     "name": "s",
+     "type": "terminal",
+     "type_ref": null,
+     "dir": "inout",
+     "dir_source": "explicit"
+    },
+    {
+     "name": "b",
+     "type": "terminal",
+     "type_ref": null,
+     "dir": "inout",
+     "dir_source": "explicit"
+    }
+   ],
+   "globals": {
+    "reads": [],
+    "writes": []
+   },
+   "calls": [],
+   "attrs": {
+    "family": "M",
+    "element": "mosfet",
+    "model": "nch",
+    "model_refs": [
+     {
+      "guard_id": "",
+      "key": "/nch"
+     }
+    ],
+    "model_status": "found",
+    "parameters": {
+     "w": "1u",
+     "l": "0.18u"
+    },
+    "value": null,
+    "scope": "xa.x_cm.xref",
+    "guard": null,
+    "guard_id": null,
+    "controls": [],
+    "tokens": null
+   },
+   "runtime": null
+  },
+  "sp:ota.sp::xa.x_cm.xout.m1": {
+   "id": "sp:ota.sp::xa.x_cm.xout.m1",
+   "kind": "device",
+   "name": "M1",
+   "qualname": "xa.x_cm.xout.m1",
+   "lang": "sp",
+   "loc": {
+    "file": "lib/devices.inc",
+    "line": 8,
+    "end_line": 8,
+    "col": null
+   },
+   "signature": "M1 d g s s nch w=1u l=0.18u",
+   "storage": null,
+   "depth": 4,
+   "body_hash": "sha1:cca739b54e7689f1da928ff837b44d90ee505e11",
+   "precision": "syntax",
+   "returns": null,
+   "params": [
+    {
+     "name": "d",
+     "type": "terminal",
+     "type_ref": null,
+     "dir": "inout",
+     "dir_source": "explicit"
+    },
+    {
+     "name": "g",
+     "type": "terminal",
+     "type_ref": null,
+     "dir": "inout",
+     "dir_source": "explicit"
+    },
+    {
+     "name": "s",
+     "type": "terminal",
+     "type_ref": null,
+     "dir": "inout",
+     "dir_source": "explicit"
+    },
+    {
+     "name": "b",
+     "type": "terminal",
+     "type_ref": null,
+     "dir": "inout",
+     "dir_source": "explicit"
+    }
+   ],
+   "globals": {
+    "reads": [],
+    "writes": []
+   },
+   "calls": [],
+   "attrs": {
+    "family": "M",
+    "element": "mosfet",
+    "model": "nch",
+    "model_refs": [
+     {
+      "guard_id": "",
+      "key": "/nch"
+     }
+    ],
+    "model_status": "found",
+    "parameters": {
+     "w": "1u",
+     "l": "0.18u"
+    },
+    "value": null,
+    "scope": "xa.x_cm.xout",
+    "guard": null,
+    "guard_id": null,
+    "controls": [],
+    "tokens": null
+   },
+   "runtime": null
+  },
+  "sp:ota.sp::xb.x_cm.xref.m1": {
+   "id": "sp:ota.sp::xb.x_cm.xref.m1",
+   "kind": "device",
+   "name": "M1",
+   "qualname": "xb.x_cm.xref.m1",
+   "lang": "sp",
+   "loc": {
+    "file": "lib/devices.inc",
+    "line": 8,
+    "end_line": 8,
+    "col": null
+   },
+   "signature": "M1 d g s s nch w=1u l=0.18u",
+   "storage": null,
+   "depth": 4,
+   "body_hash": "sha1:cca739b54e7689f1da928ff837b44d90ee505e11",
+   "precision": "syntax",
+   "returns": null,
+   "params": [
+    {
+     "name": "d",
+     "type": "terminal",
+     "type_ref": null,
+     "dir": "inout",
+     "dir_source": "explicit"
+    },
+    {
+     "name": "g",
+     "type": "terminal",
+     "type_ref": null,
+     "dir": "inout",
+     "dir_source": "explicit"
+    },
+    {
+     "name": "s",
+     "type": "terminal",
+     "type_ref": null,
+     "dir": "inout",
+     "dir_source": "explicit"
+    },
+    {
+     "name": "b",
+     "type": "terminal",
+     "type_ref": null,
+     "dir": "inout",
+     "dir_source": "explicit"
+    }
+   ],
+   "globals": {
+    "reads": [],
+    "writes": []
+   },
+   "calls": [],
+   "attrs": {
+    "family": "M",
+    "element": "mosfet",
+    "model": "nch",
+    "model_refs": [
+     {
+      "guard_id": "",
+      "key": "/nch"
+     }
+    ],
+    "model_status": "found",
+    "parameters": {
+     "w": "1u",
+     "l": "0.18u"
+    },
+    "value": null,
+    "scope": "xb.x_cm.xref",
+    "guard": null,
+    "guard_id": null,
+    "controls": [],
+    "tokens": null
+   },
+   "runtime": null
+  },
+  "sp:ota.sp::xb.x_cm.xout.m1": {
+   "id": "sp:ota.sp::xb.x_cm.xout.m1",
+   "kind": "device",
+   "name": "M1",
+   "qualname": "xb.x_cm.xout.m1",
+   "lang": "sp",
+   "loc": {
+    "file": "lib/devices.inc",
+    "line": 8,
+    "end_line": 8,
+    "col": null
+   },
+   "signature": "M1 d g s s nch w=1u l=0.18u",
+   "storage": null,
+   "depth": 4,
+   "body_hash": "sha1:cca739b54e7689f1da928ff837b44d90ee505e11",
+   "precision": "syntax",
+   "returns": null,
+   "params": [
+    {
+     "name": "d",
+     "type": "terminal",
+     "type_ref": null,
+     "dir": "inout",
+     "dir_source": "explicit"
+    },
+    {
+     "name": "g",
+     "type": "terminal",
+     "type_ref": null,
+     "dir": "inout",
+     "dir_source": "explicit"
+    },
+    {
+     "name": "s",
+     "type": "terminal",
+     "type_ref": null,
+     "dir": "inout",
+     "dir_source": "explicit"
+    },
+    {
+     "name": "b",
+     "type": "terminal",
+     "type_ref": null,
+     "dir": "inout",
+     "dir_source": "explicit"
+    }
+   ],
+   "globals": {
+    "reads": [],
+    "writes": []
+   },
+   "calls": [],
+   "attrs": {
+    "family": "M",
+    "element": "mosfet",
+    "model": "nch",
+    "model_refs": [
+     {
+      "guard_id": "",
+      "key": "/nch"
+     }
+    ],
+    "model_status": "found",
+    "parameters": {
+     "w": "1u",
+     "l": "0.18u"
+    },
+    "value": null,
+    "scope": "xb.x_cm.xout",
+    "guard": null,
+    "guard_id": null,
+    "controls": [],
+    "tokens": null
+   },
+   "runtime": null
+  }
+ },
+ "types": {},
+ "globals": {
+  "sp:ota.sp::net vdd": {
+   "id": "sp:ota.sp::net vdd",
+   "name": "vdd",
+   "type": "net",
+   "lang": "sp",
+   "type_ref": null,
+   "loc": null,
+   "storage": null,
+   "scope": "file"
+  }
+ },
+ "edges": [
+  {
+   "from": "sp:ota.sp::(deck) ota.sp",
+   "to": "sp:ota.sp::xa",
+   "kind": "instance",
+   "loc": {
+    "file": "ota.sp",
+    "line": 14,
+    "end_line": 14,
+    "col": null
+   },
+   "args": [
+    "vip",
+    "vin",
+    "outa",
+    "ibias",
+    "vdd",
+    "0"
+   ],
+   "name": "XA",
+   "macro": null,
+   "ptr_type": null
+  },
+  {
+   "from": "sp:ota.sp::(deck) ota.sp",
+   "to": "sp:ota.sp::xb",
+   "kind": "instance",
+   "loc": {
+    "file": "ota.sp",
+    "line": 15,
+    "end_line": 15,
+    "col": null
+   },
+   "args": [
+    "vin",
+    "vip",
+    "outb",
+    "ibias",
+    "vdd",
+    "0"
+   ],
+   "name": "XB",
+   "macro": null,
+   "ptr_type": null
+  },
+  {
+   "from": "sp:ota.sp::(deck) ota.sp",
+   "to": "sp:ota.sp::vdd",
+   "kind": "instance",
+   "loc": {
+    "file": "ota.sp",
+    "line": 16,
+    "end_line": 16,
+    "col": null
+   },
+   "args": [
+    "vdd",
+    "0"
+   ],
+   "name": "VDD",
+   "macro": null,
+   "ptr_type": null
+  },
+  {
+   "from": "sp:ota.sp::(deck) ota.sp",
+   "to": "sp:ota.sp::vin",
+   "kind": "instance",
+   "loc": {
+    "file": "ota.sp",
+    "line": 17,
+    "end_line": 17,
+    "col": null
+   },
+   "args": [
+    "vip",
+    "vin"
+   ],
+   "name": "VIN",
+   "macro": null,
+   "ptr_type": null
+  },
+  {
+   "from": "sp:ota.sp::(deck) ota.sp",
+   "to": "sp:ota.sp::ibias",
+   "kind": "instance",
+   "loc": {
+    "file": "ota.sp",
+    "line": 18,
+    "end_line": 18,
+    "col": null
+   },
+   "args": [
+    "vdd",
+    "ibias"
+   ],
+   "name": "IBIAS",
+   "macro": null,
+   "ptr_type": null
+  },
+  {
+   "from": "sp:ota.sp::(deck) ota.sp",
+   "to": "sp:ota.sp::vsense",
+   "kind": "instance",
+   "loc": {
+    "file": "ota.sp",
+    "line": 19,
+    "end_line": 19,
+    "col": null
+   },
+   "args": [
+    "outa",
+    "sense"
+   ],
+   "name": "VSENSE",
+   "macro": null,
+   "ptr_type": null
+  },
+  {
+   "from": "sp:ota.sp::(deck) ota.sp",
+   "to": "sp:ota.sp::cl",
+   "kind": "instance",
+   "loc": {
+    "file": "ota.sp",
+    "line": 20,
+    "end_line": 20,
+    "col": null
+   },
+   "args": [
+    "outb",
+    "0"
+   ],
+   "name": "CL",
+   "macro": null,
+   "ptr_type": null
+  },
+  {
+   "from": "sp:ota.sp::(deck) ota.sp",
+   "to": "sp:ota.sp::rl",
+   "kind": "instance",
+   "loc": {
+    "file": "ota.sp",
+    "line": 21,
+    "end_line": 21,
+    "col": null
+   },
+   "args": [
+    "sense",
+    "0"
+   ],
+   "name": "RL",
+   "macro": null,
+   "ptr_type": null
+  },
+  {
+   "from": "sp:ota.sp::(deck) ota.sp",
+   "to": "sp:ota.sp::e1",
+   "kind": "instance",
+   "loc": {
+    "file": "ota.sp",
+    "line": 22,
+    "end_line": 22,
+    "col": null
+   },
+   "args": [
+    "ecopy",
+    "0",
+    "outa",
+    "0"
+   ],
+   "name": "E1",
+   "macro": null,
+   "ptr_type": null
+  },
+  {
+   "from": "sp:ota.sp::(deck) ota.sp",
+   "to": "sp:ota.sp::f1",
+   "kind": "instance",
+   "loc": {
+    "file": "ota.sp",
+    "line": 23,
+    "end_line": 23,
+    "col": null
+   },
+   "args": [
+    "fout",
+    "0"
+   ],
+   "name": "F1",
+   "macro": null,
+   "ptr_type": null
+  },
+  {
+   "from": "sp:ota.sp::(deck) ota.sp",
+   "to": "sp:ota.sp::rf",
+   "kind": "instance",
+   "loc": {
+    "file": "ota.sp",
+    "line": 24,
+    "end_line": 24,
+    "col": null
+   },
+   "args": [
+    "fout",
+    "0"
+   ],
+   "name": "RF",
+   "macro": null,
+   "ptr_type": null
+  },
+  {
+   "from": "sp:ota.sp::(deck) ota.sp",
+   "to": "sp:ota.sp::l1",
+   "kind": "instance",
+   "loc": {
+    "file": "ota.sp",
+    "line": 25,
+    "end_line": 25,
+    "col": null
+   },
+   "args": [
+    "outa",
+    "lx"
+   ],
+   "name": "L1",
+   "macro": null,
+   "ptr_type": null
+  },
+  {
+   "from": "sp:ota.sp::(deck) ota.sp",
+   "to": "sp:ota.sp::l2",
+   "kind": "instance",
+   "loc": {
+    "file": "ota.sp",
+    "line": 26,
+    "end_line": 26,
+    "col": null
+   },
+   "args": [
+    "outb",
+    "ly"
+   ],
+   "name": "L2",
+   "macro": null,
+   "ptr_type": null
+  },
+  {
+   "from": "sp:ota.sp::(deck) ota.sp",
+   "to": "sp:ota.sp::k1",
+   "kind": "instance",
+   "loc": {
+    "file": "ota.sp",
+    "line": 27,
+    "end_line": 27,
+    "col": null
+   },
+   "args": [],
+   "name": "K1",
+   "macro": null,
+   "ptr_type": null
+  },
+  {
+   "from": "sp:ota.sp::(deck) ota.sp",
+   "to": "sp:ota.sp::rx",
+   "kind": "instance",
+   "loc": {
+    "file": "ota.sp",
+    "line": 28,
+    "end_line": 28,
+    "col": null
+   },
+   "args": [
+    "lx",
+    "0"
+   ],
+   "name": "RX",
+   "macro": null,
+   "ptr_type": null
+  },
+  {
+   "from": "sp:ota.sp::(deck) ota.sp",
+   "to": "sp:ota.sp::ry",
+   "kind": "instance",
+   "loc": {
+    "file": "ota.sp",
+    "line": 29,
+    "end_line": 29,
+    "col": null
+   },
+   "args": [
+    "ly",
+    "0"
+   ],
+   "name": "RY",
+   "macro": null,
+   "ptr_type": null
+  },
+  {
+   "from": "sp:ota.sp::(deck) ota.sp",
+   "to": "sp:ota.sp::r_opt#92148006",
+   "kind": "instance",
+   "loc": {
+    "file": "ota.sp",
+    "line": 31,
+    "end_line": 31,
+    "col": null
+   },
+   "args": [
+    "vip",
+    "vin"
+   ],
+   "name": "R_opt",
+   "macro": null,
+   "ptr_type": null
+  },
+  {
+   "from": "sp:ota.sp::(deck) ota.sp",
+   "to": "sp:ota.sp::r_opt#ed312ead",
+   "kind": "instance",
+   "loc": {
+    "file": "ota.sp",
+    "line": 33,
+    "end_line": 33,
+    "col": null
+   },
+   "args": [
+    "vip",
+    "vin"
+   ],
+   "name": "R_opt",
+   "macro": null,
+   "ptr_type": null
+  },
+  {
+   "from": "sp:ota.sp::xa",
+   "to": "sp:ota.sp::xa.xm_in1",
+   "kind": "instance",
+   "loc": {
+    "file": "ota.sp",
+    "line": 8,
+    "end_line": 8,
+    "col": null
+   },
+   "args": [
+    "tail",
+    "vip",
+    "vmir",
+    "vss"
+   ],
+   "name": "XM_in1",
+   "macro": null,
+   "ptr_type": null
+  },
+  {
+   "from": "sp:ota.sp::xa",
+   "to": "sp:ota.sp::xa.xm_in2",
+   "kind": "instance",
+   "loc": {
+    "file": "ota.sp",
+    "line": 9,
+    "end_line": 9,
+    "col": null
+   },
+   "args": [
+    "tail",
+    "vin",
+    "vout",
+    "vss"
+   ],
+   "name": "XM_in2",
+   "macro": null,
+   "ptr_type": null
+  },
+  {
+   "from": "sp:ota.sp::xa",
+   "to": "sp:ota.sp::xa.m_load_1",
+   "kind": "instance",
+   "loc": {
+    "file": "ota.sp",
+    "line": 10,
+    "end_line": 10,
+    "col": null
+   },
+   "args": [
+    "vmir",
+    "vmir",
+    "vdd",
+    "vdd"
+   ],
+   "name": "M_load_1",
+   "macro": null,
+   "ptr_type": null
+  },
+  {
+   "from": "sp:ota.sp::xa",
+   "to": "sp:ota.sp::xa.m_load_2",
+   "kind": "instance",
+   "loc": {
+    "file": "ota.sp",
+    "line": 11,
+    "end_line": 11,
+    "col": null
+   },
+   "args": [
+    "vout",
+    "vmir",
+    "vdd",
+    "vdd"
+   ],
+   "name": "M_load_2",
+   "macro": null,
+   "ptr_type": null
+  },
+  {
+   "from": "sp:ota.sp::xa",
+   "to": "sp:ota.sp::xa.x_cm",
+   "kind": "instance",
+   "loc": {
+    "file": "ota.sp",
+    "line": 12,
+    "end_line": 12,
+    "col": null
+   },
+   "args": [
+    "tail",
+    "ibias",
+    "vss"
+   ],
+   "name": "X_cm",
+   "macro": null,
+   "ptr_type": null
+  },
+  {
+   "from": "sp:ota.sp::xb",
+   "to": "sp:ota.sp::xb.xm_in1",
+   "kind": "instance",
+   "loc": {
+    "file": "ota.sp",
+    "line": 8,
+    "end_line": 8,
+    "col": null
+   },
+   "args": [
+    "tail",
+    "vip",
+    "vmir",
+    "vss"
+   ],
+   "name": "XM_in1",
+   "macro": null,
+   "ptr_type": null
+  },
+  {
+   "from": "sp:ota.sp::xb",
+   "to": "sp:ota.sp::xb.xm_in2",
+   "kind": "instance",
+   "loc": {
+    "file": "ota.sp",
+    "line": 9,
+    "end_line": 9,
+    "col": null
+   },
+   "args": [
+    "tail",
+    "vin",
+    "vout",
+    "vss"
+   ],
+   "name": "XM_in2",
+   "macro": null,
+   "ptr_type": null
+  },
+  {
+   "from": "sp:ota.sp::xb",
+   "to": "sp:ota.sp::xb.m_load_1",
+   "kind": "instance",
+   "loc": {
+    "file": "ota.sp",
+    "line": 10,
+    "end_line": 10,
+    "col": null
+   },
+   "args": [
+    "vmir",
+    "vmir",
+    "vdd",
+    "vdd"
+   ],
+   "name": "M_load_1",
+   "macro": null,
+   "ptr_type": null
+  },
+  {
+   "from": "sp:ota.sp::xb",
+   "to": "sp:ota.sp::xb.m_load_2",
+   "kind": "instance",
+   "loc": {
+    "file": "ota.sp",
+    "line": 11,
+    "end_line": 11,
+    "col": null
+   },
+   "args": [
+    "vout",
+    "vmir",
+    "vdd",
+    "vdd"
+   ],
+   "name": "M_load_2",
+   "macro": null,
+   "ptr_type": null
+  },
+  {
+   "from": "sp:ota.sp::xb",
+   "to": "sp:ota.sp::xb.x_cm",
+   "kind": "instance",
+   "loc": {
+    "file": "ota.sp",
+    "line": 12,
+    "end_line": 12,
+    "col": null
+   },
+   "args": [
+    "tail",
+    "ibias",
+    "vss"
+   ],
+   "name": "X_cm",
+   "macro": null,
+   "ptr_type": null
+  },
+  {
+   "from": "sp:ota.sp::f1",
+   "to": "sp:ota.sp::vsense",
+   "kind": "ref",
+   "loc": {
+    "file": "ota.sp",
+    "line": 23,
+    "end_line": 23,
+    "col": null
+   },
+   "args": [],
+   "name": "VSENSE",
+   "macro": null,
+   "ptr_type": null
+  },
+  {
+   "from": "sp:ota.sp::k1",
+   "to": "sp:ota.sp::l1",
+   "kind": "ref",
+   "loc": {
+    "file": "ota.sp",
+    "line": 27,
+    "end_line": 27,
+    "col": null
+   },
+   "args": [],
+   "name": "L1",
+   "macro": null,
+   "ptr_type": null
+  },
+  {
+   "from": "sp:ota.sp::k1",
+   "to": "sp:ota.sp::l2",
+   "kind": "ref",
+   "loc": {
+    "file": "ota.sp",
+    "line": 27,
+    "end_line": 27,
+    "col": null
+   },
+   "args": [],
+   "name": "L2",
+   "macro": null,
+   "ptr_type": null
+  },
+  {
+   "from": "sp:ota.sp::xa.xm_in1",
+   "to": "sp:ota.sp::xa.xm_in1.m1",
+   "kind": "instance",
+   "loc": {
+    "file": "lib/devices.inc",
+    "line": 3,
+    "end_line": 3,
+    "col": null
+   },
+   "args": [
+    "d",
+    "g",
+    "s",
+    "b"
+   ],
+   "name": "M1",
+   "macro": null,
+   "ptr_type": null
+  },
+  {
+   "from": "sp:ota.sp::xa.xm_in2",
+   "to": "sp:ota.sp::xa.xm_in2.m1",
+   "kind": "instance",
+   "loc": {
+    "file": "lib/devices.inc",
+    "line": 3,
+    "end_line": 3,
+    "col": null
+   },
+   "args": [
+    "d",
+    "g",
+    "s",
+    "b"
+   ],
+   "name": "M1",
+   "macro": null,
+   "ptr_type": null
+  },
+  {
+   "from": "sp:ota.sp::xa.x_cm",
+   "to": "sp:ota.sp::xa.x_cm.xref",
+   "kind": "instance",
+   "loc": {
+    "file": "lib/devices.inc",
+    "line": 10,
+    "end_line": 10,
+    "col": null
+   },
+   "args": [
+    "ibias",
+    "ibias",
+    "vss"
+   ],
+   "name": "Xref",
+   "macro": null,
+   "ptr_type": null
+  },
+  {
+   "from": "sp:ota.sp::xa.x_cm",
+   "to": "sp:ota.sp::xa.x_cm.xout",
+   "kind": "instance",
+   "loc": {
+    "file": "lib/devices.inc",
+    "line": 11,
+    "end_line": 11,
+    "col": null
+   },
+   "args": [
+    "ibias",
+    "tail",
+    "vss"
+   ],
+   "name": "Xout",
+   "macro": null,
+   "ptr_type": null
+  },
+  {
+   "from": "sp:ota.sp::xb.xm_in1",
+   "to": "sp:ota.sp::xb.xm_in1.m1",
+   "kind": "instance",
+   "loc": {
+    "file": "lib/devices.inc",
+    "line": 3,
+    "end_line": 3,
+    "col": null
+   },
+   "args": [
+    "d",
+    "g",
+    "s",
+    "b"
+   ],
+   "name": "M1",
+   "macro": null,
+   "ptr_type": null
+  },
+  {
+   "from": "sp:ota.sp::xb.xm_in2",
+   "to": "sp:ota.sp::xb.xm_in2.m1",
+   "kind": "instance",
+   "loc": {
+    "file": "lib/devices.inc",
+    "line": 3,
+    "end_line": 3,
+    "col": null
+   },
+   "args": [
+    "d",
+    "g",
+    "s",
+    "b"
+   ],
+   "name": "M1",
+   "macro": null,
+   "ptr_type": null
+  },
+  {
+   "from": "sp:ota.sp::xb.x_cm",
+   "to": "sp:ota.sp::xb.x_cm.xref",
+   "kind": "instance",
+   "loc": {
+    "file": "lib/devices.inc",
+    "line": 10,
+    "end_line": 10,
+    "col": null
+   },
+   "args": [
+    "ibias",
+    "ibias",
+    "vss"
+   ],
+   "name": "Xref",
+   "macro": null,
+   "ptr_type": null
+  },
+  {
+   "from": "sp:ota.sp::xb.x_cm",
+   "to": "sp:ota.sp::xb.x_cm.xout",
+   "kind": "instance",
+   "loc": {
+    "file": "lib/devices.inc",
+    "line": 11,
+    "end_line": 11,
+    "col": null
+   },
+   "args": [
+    "ibias",
+    "tail",
+    "vss"
+   ],
+   "name": "Xout",
+   "macro": null,
+   "ptr_type": null
+  },
+  {
+   "from": "sp:ota.sp::xa.x_cm.xref",
+   "to": "sp:ota.sp::xa.x_cm.xref.m1",
+   "kind": "instance",
+   "loc": {
+    "file": "lib/devices.inc",
+    "line": 8,
+    "end_line": 8,
+    "col": null
+   },
+   "args": [
+    "d",
+    "g",
+    "s",
+    "s"
+   ],
+   "name": "M1",
+   "macro": null,
+   "ptr_type": null
+  },
+  {
+   "from": "sp:ota.sp::xa.x_cm.xout",
+   "to": "sp:ota.sp::xa.x_cm.xout.m1",
+   "kind": "instance",
+   "loc": {
+    "file": "lib/devices.inc",
+    "line": 8,
+    "end_line": 8,
+    "col": null
+   },
+   "args": [
+    "d",
+    "g",
+    "s",
+    "s"
+   ],
+   "name": "M1",
+   "macro": null,
+   "ptr_type": null
+  },
+  {
+   "from": "sp:ota.sp::xb.x_cm.xref",
+   "to": "sp:ota.sp::xb.x_cm.xref.m1",
+   "kind": "instance",
+   "loc": {
+    "file": "lib/devices.inc",
+    "line": 8,
+    "end_line": 8,
+    "col": null
+   },
+   "args": [
+    "d",
+    "g",
+    "s",
+    "s"
+   ],
+   "name": "M1",
+   "macro": null,
+   "ptr_type": null
+  },
+  {
+   "from": "sp:ota.sp::xb.x_cm.xout",
+   "to": "sp:ota.sp::xb.x_cm.xout.m1",
+   "kind": "instance",
+   "loc": {
+    "file": "lib/devices.inc",
+    "line": 8,
+    "end_line": 8,
+    "col": null
+   },
+   "args": [
+    "d",
+    "g",
+    "s",
+    "s"
+   ],
+   "name": "M1",
+   "macro": null,
+   "ptr_type": null
+  }
+ ],
+ "unresolved": [],
+ "circuit": {
+  "dialect": "ngspice",
+  "deck": "ota.sp",
+  "root": {
+   "kind": "deck",
+   "id": "sp:ota.sp::(deck) ota.sp"
+  },
+  "files": [
+   {
+    "path": "ota.sp",
+    "role": "deck",
+    "section": null,
+    "from": null,
+    "resolved_by": "entry",
+    "outside_root": false
+   },
+   {
+    "path": "lib/devices.inc",
+    "role": "include",
+    "section": null,
+    "from": {
+     "file": "ota.sp",
+     "line": 3
+    },
+    "resolved_by": "search",
+    "outside_root": false
+   },
+   {
+    "path": "lib/corners.lib",
+    "role": "lib",
+    "section": "tt",
+    "from": {
+     "file": "ota.sp",
+     "line": 4
+    },
+    "resolved_by": "search",
+    "outside_root": false
+   },
+   {
+    "path": "lib/tt_models.inc",
+    "role": "include",
+    "section": "tt",
+    "from": {
+     "file": "lib/corners.lib",
+     "line": 3
+    },
+    "resolved_by": "search",
+    "outside_root": false
+   }
+  ],
+  "definitions": {
+   "/five_t_opamp": {
+    "spelled": "five_t_opamp",
+    "scope": "",
+    "status": "found",
+    "declarations": [
+     {
+      "guard_id": null,
+      "guard": [],
+      "file": "ota.sp",
+      "line": 7,
+      "end_line": 13,
+      "identity": "/five_t_opamp",
+      "ports": [
+       "vip",
+       "vin",
+       "vout",
+       "ibias",
+       "vdd",
+       "vss"
+      ],
+      "params": {},
+      "hash": "sha1:e4555eb93025ff22c2c2f701621de0496c3c701d",
+      "id": "sp:ota.sp::@five_t_opamp"
+     }
+    ],
+    "bins": [],
+    "instances": [
+     "sp:ota.sp::xa",
+     "sp:ota.sp::xb"
+    ]
+   },
+   "/nch_wrap": {
+    "spelled": "nch_wrap",
+    "scope": "",
+    "status": "found",
+    "declarations": [
+     {
+      "guard_id": null,
+      "guard": [],
+      "file": "lib/devices.inc",
+      "line": 2,
+      "end_line": 4,
+      "identity": "/nch_wrap",
+      "ports": [
+       "d",
+       "g",
+       "s",
+       "b"
+      ],
+      "params": {
+       "w": "1u"
+      },
+      "hash": "sha1:7ee65a6240cc16912033a2369cac4e52c9e8e7c2",
+      "id": "sp:lib/devices.inc::@nch_wrap"
+     }
+    ],
+    "bins": [],
+    "instances": [
+     "sp:ota.sp::xa.xm_in1",
+     "sp:ota.sp::xa.xm_in2",
+     "sp:ota.sp::xb.xm_in1",
+     "sp:ota.sp::xb.xm_in2"
+    ]
+   },
+   "/cm": {
+    "spelled": "cm",
+    "scope": "",
+    "status": "found",
+    "declarations": [
+     {
+      "guard_id": null,
+      "guard": [],
+      "file": "lib/devices.inc",
+      "line": 5,
+      "end_line": 12,
+      "identity": "/cm",
+      "ports": [
+       "tail",
+       "ibias",
+       "vss"
+      ],
+      "params": {},
+      "hash": "sha1:3ac0727e5f78ad6fded20c515cf96515f304eafb",
+      "id": "sp:lib/devices.inc::@cm"
+     }
+    ],
+    "bins": [],
+    "instances": [
+     "sp:ota.sp::xa.x_cm",
+     "sp:ota.sp::xb.x_cm"
+    ]
+   },
+   "cm/mirror_leg": {
+    "spelled": "mirror_leg",
+    "scope": "cm",
+    "status": "found",
+    "declarations": [
+     {
+      "guard_id": null,
+      "guard": [],
+      "file": "lib/devices.inc",
+      "line": 7,
+      "end_line": 9,
+      "identity": "cm/mirror_leg",
+      "ports": [
+       "g",
+       "d",
+       "s"
+      ],
+      "params": {},
+      "hash": "sha1:2acfd9c469bb70a879b6524407bbec05fe025eda",
+      "id": "sp:lib/devices.inc::@cm/mirror_leg"
+     }
+    ],
+    "bins": [],
+    "instances": [
+     "sp:ota.sp::xa.x_cm.xref",
+     "sp:ota.sp::xa.x_cm.xout",
+     "sp:ota.sp::xb.x_cm.xref",
+     "sp:ota.sp::xb.x_cm.xout"
+    ]
+   }
+  },
+  "models": {
+   "/pch": {
+    "spelled": "pch",
+    "scope": "",
+    "status": "found",
+    "declarations": [
+     {
+      "guard_id": null,
+      "guard": [],
+      "file": "lib/tt_models.inc",
+      "line": 3,
+      "end_line": 3,
+      "identity": "/pch",
+      "type": "pmos",
+      "params_text": "level=1 vto=-0.4 kp=100u",
+      "hash": "sha1:311fb0e322b512716fedcdcefe1cd056becbe138"
+     }
+    ],
+    "bins": [],
+    "used_by": [
+     "sp:ota.sp::xa.m_load_1",
+     "sp:ota.sp::xa.m_load_2",
+     "sp:ota.sp::xb.m_load_1",
+     "sp:ota.sp::xb.m_load_2"
+    ]
+   },
+   "/nch": {
+    "spelled": "nch",
+    "scope": "",
+    "status": "found",
+    "declarations": [
+     {
+      "guard_id": null,
+      "guard": [],
+      "file": "lib/tt_models.inc",
+      "line": 1,
+      "end_line": 2,
+      "identity": "/nch",
+      "type": "nmos",
+      "params_text": "level=1 vto=0.4 kp=200u",
+      "hash": "sha1:5f6bc9278012c6192bb68a84faf522cee5bf0e16"
+     }
+    ],
+    "bins": [],
+    "used_by": [
+     "sp:ota.sp::xa.xm_in1.m1",
+     "sp:ota.sp::xa.xm_in2.m1",
+     "sp:ota.sp::xb.xm_in1.m1",
+     "sp:ota.sp::xb.xm_in2.m1",
+     "sp:ota.sp::xa.x_cm.xref.m1",
+     "sp:ota.sp::xa.x_cm.xout.m1",
+     "sp:ota.sp::xb.x_cm.xref.m1",
+     "sp:ota.sp::xb.x_cm.xout.m1"
+    ]
+   }
+  },
+  "params": {
+   "/vdd_val": {
+    "spelled": "vdd_val",
+    "scope": "",
+    "status": "found",
+    "declarations": [
+     {
+      "guard_id": null,
+      "guard": [],
+      "file": "ota.sp",
+      "line": 5,
+      "end_line": 5,
+      "identity": "/vdd_val",
+      "expr": "1.8",
+      "hash": "sha1:5115b8f983d2a3c7b92e50d8c90ccc73b6ae630e"
+     }
+    ],
+    "bins": []
+   },
+   "/ibias_val": {
+    "spelled": "ibias_val",
+    "scope": "",
+    "status": "found",
+    "declarations": [
+     {
+      "guard_id": null,
+      "guard": [],
+      "file": "ota.sp",
+      "line": 5,
+      "end_line": 5,
+      "identity": "/ibias_val",
+      "expr": "10u",
+      "hash": "sha1:383daea5c8ee0c2e6393cbc244a58bcb71172e6a"
+     }
+    ],
+    "bins": []
+   }
+  },
+  "nets": {
+   "xa.vip": {
+    "spelled": "vip",
+    "scope": "xa",
+    "kind": "port",
+    "bindings": [
+     {
+      "via": "sp:ota.sp::xa",
+      "outer": "vip",
+      "canonical": "vip"
+     }
+    ],
+    "terminals": []
+   },
+   "vip": {
+    "spelled": "vip",
+    "scope": "",
+    "kind": "internal",
+    "bindings": [],
+    "terminals": [
+     [
+      "sp:ota.sp::vin",
+      "p"
+     ],
+     [
+      "sp:ota.sp::r_opt#92148006",
+      "p"
+     ],
+     [
+      "sp:ota.sp::r_opt#ed312ead",
+      "p"
+     ]
+    ]
+   },
+   "xa.vin": {
+    "spelled": "vin",
+    "scope": "xa",
+    "kind": "port",
+    "bindings": [
+     {
+      "via": "sp:ota.sp::xa",
+      "outer": "vin",
+      "canonical": "vin"
+     }
+    ],
+    "terminals": []
+   },
+   "vin": {
+    "spelled": "vin",
+    "scope": "",
+    "kind": "internal",
+    "bindings": [],
+    "terminals": [
+     [
+      "sp:ota.sp::vin",
+      "n"
+     ],
+     [
+      "sp:ota.sp::r_opt#92148006",
+      "n"
+     ],
+     [
+      "sp:ota.sp::r_opt#ed312ead",
+      "n"
+     ]
+    ]
+   },
+   "xa.vout": {
+    "spelled": "vout",
+    "scope": "xa",
+    "kind": "port",
+    "bindings": [
+     {
+      "via": "sp:ota.sp::xa",
+      "outer": "outa",
+      "canonical": "outa"
+     }
+    ],
+    "terminals": [
+     [
+      "sp:ota.sp::xa.m_load_2",
+      "d"
+     ]
+    ]
+   },
+   "outa": {
+    "spelled": "outa",
+    "scope": "",
+    "kind": "internal",
+    "bindings": [],
+    "terminals": [
+     [
+      "sp:ota.sp::vsense",
+      "p"
+     ],
+     [
+      "sp:ota.sp::e1",
+      "cp"
+     ],
+     [
+      "sp:ota.sp::l1",
+      "p"
+     ]
+    ]
+   },
+   "xa.ibias": {
+    "spelled": "ibias",
+    "scope": "xa",
+    "kind": "port",
+    "bindings": [
+     {
+      "via": "sp:ota.sp::xa",
+      "outer": "ibias",
+      "canonical": "ibias"
+     }
+    ],
+    "terminals": []
+   },
+   "ibias": {
+    "spelled": "ibias",
+    "scope": "",
+    "kind": "internal",
+    "bindings": [],
+    "terminals": [
+     [
+      "sp:ota.sp::ibias",
+      "n"
+     ]
+    ]
+   },
+   "vdd": {
+    "spelled": "vdd",
+    "scope": "",
+    "kind": "global",
+    "bindings": [],
+    "terminals": [
+     [
+      "sp:ota.sp::vdd",
+      "p"
+     ],
+     [
+      "sp:ota.sp::ibias",
+      "p"
+     ],
+     [
+      "sp:ota.sp::xa.m_load_1",
+      "s"
+     ],
+     [
+      "sp:ota.sp::xa.m_load_1",
+      "b"
+     ],
+     [
+      "sp:ota.sp::xa.m_load_2",
+      "s"
+     ],
+     [
+      "sp:ota.sp::xa.m_load_2",
+      "b"
+     ],
+     [
+      "sp:ota.sp::xb.m_load_1",
+      "s"
+     ],
+     [
+      "sp:ota.sp::xb.m_load_1",
+      "b"
+     ],
+     [
+      "sp:ota.sp::xb.m_load_2",
+      "s"
+     ],
+     [
+      "sp:ota.sp::xb.m_load_2",
+      "b"
+     ]
+    ]
+   },
+   "xa.vss": {
+    "spelled": "vss",
+    "scope": "xa",
+    "kind": "port",
+    "bindings": [
+     {
+      "via": "sp:ota.sp::xa",
+      "outer": "0",
+      "canonical": "0"
+     }
+    ],
+    "terminals": []
+   },
+   "0": {
+    "spelled": "0",
+    "scope": "",
+    "kind": "ground",
+    "bindings": [],
+    "terminals": [
+     [
+      "sp:ota.sp::vdd",
+      "n"
+     ],
+     [
+      "sp:ota.sp::cl",
+      "n"
+     ],
+     [
+      "sp:ota.sp::rl",
+      "n"
+     ],
+     [
+      "sp:ota.sp::e1",
+      "n"
+     ],
+     [
+      "sp:ota.sp::e1",
+      "cn"
+     ],
+     [
+      "sp:ota.sp::f1",
+      "n"
+     ],
+     [
+      "sp:ota.sp::rf",
+      "n"
+     ],
+     [
+      "sp:ota.sp::rx",
+      "n"
+     ],
+     [
+      "sp:ota.sp::ry",
+      "n"
+     ]
+    ]
+   },
+   "xb.vip": {
+    "spelled": "vip",
+    "scope": "xb",
+    "kind": "port",
+    "bindings": [
+     {
+      "via": "sp:ota.sp::xb",
+      "outer": "vin",
+      "canonical": "vin"
+     }
+    ],
+    "terminals": []
+   },
+   "xb.vin": {
+    "spelled": "vin",
+    "scope": "xb",
+    "kind": "port",
+    "bindings": [
+     {
+      "via": "sp:ota.sp::xb",
+      "outer": "vip",
+      "canonical": "vip"
+     }
+    ],
+    "terminals": []
+   },
+   "xb.vout": {
+    "spelled": "vout",
+    "scope": "xb",
+    "kind": "port",
+    "bindings": [
+     {
+      "via": "sp:ota.sp::xb",
+      "outer": "outb",
+      "canonical": "outb"
+     }
+    ],
+    "terminals": [
+     [
+      "sp:ota.sp::xb.m_load_2",
+      "d"
+     ]
+    ]
+   },
+   "outb": {
+    "spelled": "outb",
+    "scope": "",
+    "kind": "internal",
+    "bindings": [],
+    "terminals": [
+     [
+      "sp:ota.sp::cl",
+      "p"
+     ],
+     [
+      "sp:ota.sp::l2",
+      "p"
+     ]
+    ]
+   },
+   "xb.ibias": {
+    "spelled": "ibias",
+    "scope": "xb",
+    "kind": "port",
+    "bindings": [
+     {
+      "via": "sp:ota.sp::xb",
+      "outer": "ibias",
+      "canonical": "ibias"
+     }
+    ],
+    "terminals": []
+   },
+   "xb.vss": {
+    "spelled": "vss",
+    "scope": "xb",
+    "kind": "port",
+    "bindings": [
+     {
+      "via": "sp:ota.sp::xb",
+      "outer": "0",
+      "canonical": "0"
+     }
+    ],
+    "terminals": []
+   },
+   "sense": {
+    "spelled": "sense",
+    "scope": "",
+    "kind": "internal",
+    "bindings": [],
+    "terminals": [
+     [
+      "sp:ota.sp::vsense",
+      "n"
+     ],
+     [
+      "sp:ota.sp::rl",
+      "p"
+     ]
+    ]
+   },
+   "ecopy": {
+    "spelled": "ecopy",
+    "scope": "",
+    "kind": "internal",
+    "bindings": [],
+    "terminals": [
+     [
+      "sp:ota.sp::e1",
+      "p"
+     ]
+    ]
+   },
+   "fout": {
+    "spelled": "fout",
+    "scope": "",
+    "kind": "internal",
+    "bindings": [],
+    "terminals": [
+     [
+      "sp:ota.sp::f1",
+      "p"
+     ],
+     [
+      "sp:ota.sp::rf",
+      "p"
+     ]
+    ]
+   },
+   "lx": {
+    "spelled": "lx",
+    "scope": "",
+    "kind": "internal",
+    "bindings": [],
+    "terminals": [
+     [
+      "sp:ota.sp::l1",
+      "n"
+     ],
+     [
+      "sp:ota.sp::rx",
+      "p"
+     ]
+    ]
+   },
+   "ly": {
+    "spelled": "ly",
+    "scope": "",
+    "kind": "internal",
+    "bindings": [],
+    "terminals": [
+     [
+      "sp:ota.sp::l2",
+      "n"
+     ],
+     [
+      "sp:ota.sp::ry",
+      "p"
+     ]
+    ]
+   },
+   "xa.xm_in1.d": {
+    "spelled": "d",
+    "scope": "xa.xm_in1",
+    "kind": "port",
+    "bindings": [
+     {
+      "via": "sp:ota.sp::xa.xm_in1",
+      "outer": "xa.tail",
+      "canonical": "xa.tail"
+     }
+    ],
+    "terminals": [
+     [
+      "sp:ota.sp::xa.xm_in1.m1",
+      "d"
+     ]
+    ]
+   },
+   "xa.tail": {
+    "spelled": "tail",
+    "scope": "xa",
+    "kind": "internal",
+    "bindings": [],
+    "terminals": []
+   },
+   "xa.xm_in1.g": {
+    "spelled": "g",
+    "scope": "xa.xm_in1",
+    "kind": "port",
+    "bindings": [
+     {
+      "via": "sp:ota.sp::xa.xm_in1",
+      "outer": "xa.vip",
+      "canonical": "vip"
+     }
+    ],
+    "terminals": [
+     [
+      "sp:ota.sp::xa.xm_in1.m1",
+      "g"
+     ]
+    ]
+   },
+   "xa.xm_in1.s": {
+    "spelled": "s",
+    "scope": "xa.xm_in1",
+    "kind": "port",
+    "bindings": [
+     {
+      "via": "sp:ota.sp::xa.xm_in1",
+      "outer": "xa.vmir",
+      "canonical": "xa.vmir"
+     }
+    ],
+    "terminals": [
+     [
+      "sp:ota.sp::xa.xm_in1.m1",
+      "s"
+     ]
+    ]
+   },
+   "xa.vmir": {
+    "spelled": "vmir",
+    "scope": "xa",
+    "kind": "internal",
+    "bindings": [],
+    "terminals": [
+     [
+      "sp:ota.sp::xa.m_load_1",
+      "d"
+     ],
+     [
+      "sp:ota.sp::xa.m_load_1",
+      "g"
+     ],
+     [
+      "sp:ota.sp::xa.m_load_2",
+      "g"
+     ]
+    ]
+   },
+   "xa.xm_in1.b": {
+    "spelled": "b",
+    "scope": "xa.xm_in1",
+    "kind": "port",
+    "bindings": [
+     {
+      "via": "sp:ota.sp::xa.xm_in1",
+      "outer": "xa.vss",
+      "canonical": "0"
+     }
+    ],
+    "terminals": [
+     [
+      "sp:ota.sp::xa.xm_in1.m1",
+      "b"
+     ]
+    ]
+   },
+   "xa.xm_in2.d": {
+    "spelled": "d",
+    "scope": "xa.xm_in2",
+    "kind": "port",
+    "bindings": [
+     {
+      "via": "sp:ota.sp::xa.xm_in2",
+      "outer": "xa.tail",
+      "canonical": "xa.tail"
+     }
+    ],
+    "terminals": [
+     [
+      "sp:ota.sp::xa.xm_in2.m1",
+      "d"
+     ]
+    ]
+   },
+   "xa.xm_in2.g": {
+    "spelled": "g",
+    "scope": "xa.xm_in2",
+    "kind": "port",
+    "bindings": [
+     {
+      "via": "sp:ota.sp::xa.xm_in2",
+      "outer": "xa.vin",
+      "canonical": "vin"
+     }
+    ],
+    "terminals": [
+     [
+      "sp:ota.sp::xa.xm_in2.m1",
+      "g"
+     ]
+    ]
+   },
+   "xa.xm_in2.s": {
+    "spelled": "s",
+    "scope": "xa.xm_in2",
+    "kind": "port",
+    "bindings": [
+     {
+      "via": "sp:ota.sp::xa.xm_in2",
+      "outer": "xa.vout",
+      "canonical": "outa"
+     }
+    ],
+    "terminals": [
+     [
+      "sp:ota.sp::xa.xm_in2.m1",
+      "s"
+     ]
+    ]
+   },
+   "xa.xm_in2.b": {
+    "spelled": "b",
+    "scope": "xa.xm_in2",
+    "kind": "port",
+    "bindings": [
+     {
+      "via": "sp:ota.sp::xa.xm_in2",
+      "outer": "xa.vss",
+      "canonical": "0"
+     }
+    ],
+    "terminals": [
+     [
+      "sp:ota.sp::xa.xm_in2.m1",
+      "b"
+     ]
+    ]
+   },
+   "xa.x_cm.tail": {
+    "spelled": "tail",
+    "scope": "xa.x_cm",
+    "kind": "port",
+    "bindings": [
+     {
+      "via": "sp:ota.sp::xa.x_cm",
+      "outer": "xa.tail",
+      "canonical": "xa.tail"
+     }
+    ],
+    "terminals": []
+   },
+   "xa.x_cm.ibias": {
+    "spelled": "ibias",
+    "scope": "xa.x_cm",
+    "kind": "port",
+    "bindings": [
+     {
+      "via": "sp:ota.sp::xa.x_cm",
+      "outer": "xa.ibias",
+      "canonical": "ibias"
+     }
+    ],
+    "terminals": []
+   },
+   "xa.x_cm.vss": {
+    "spelled": "vss",
+    "scope": "xa.x_cm",
+    "kind": "port",
+    "bindings": [
+     {
+      "via": "sp:ota.sp::xa.x_cm",
+      "outer": "xa.vss",
+      "canonical": "0"
+     }
+    ],
+    "terminals": []
+   },
+   "xb.xm_in1.d": {
+    "spelled": "d",
+    "scope": "xb.xm_in1",
+    "kind": "port",
+    "bindings": [
+     {
+      "via": "sp:ota.sp::xb.xm_in1",
+      "outer": "xb.tail",
+      "canonical": "xb.tail"
+     }
+    ],
+    "terminals": [
+     [
+      "sp:ota.sp::xb.xm_in1.m1",
+      "d"
+     ]
+    ]
+   },
+   "xb.tail": {
+    "spelled": "tail",
+    "scope": "xb",
+    "kind": "internal",
+    "bindings": [],
+    "terminals": []
+   },
+   "xb.xm_in1.g": {
+    "spelled": "g",
+    "scope": "xb.xm_in1",
+    "kind": "port",
+    "bindings": [
+     {
+      "via": "sp:ota.sp::xb.xm_in1",
+      "outer": "xb.vip",
+      "canonical": "vin"
+     }
+    ],
+    "terminals": [
+     [
+      "sp:ota.sp::xb.xm_in1.m1",
+      "g"
+     ]
+    ]
+   },
+   "xb.xm_in1.s": {
+    "spelled": "s",
+    "scope": "xb.xm_in1",
+    "kind": "port",
+    "bindings": [
+     {
+      "via": "sp:ota.sp::xb.xm_in1",
+      "outer": "xb.vmir",
+      "canonical": "xb.vmir"
+     }
+    ],
+    "terminals": [
+     [
+      "sp:ota.sp::xb.xm_in1.m1",
+      "s"
+     ]
+    ]
+   },
+   "xb.vmir": {
+    "spelled": "vmir",
+    "scope": "xb",
+    "kind": "internal",
+    "bindings": [],
+    "terminals": [
+     [
+      "sp:ota.sp::xb.m_load_1",
+      "d"
+     ],
+     [
+      "sp:ota.sp::xb.m_load_1",
+      "g"
+     ],
+     [
+      "sp:ota.sp::xb.m_load_2",
+      "g"
+     ]
+    ]
+   },
+   "xb.xm_in1.b": {
+    "spelled": "b",
+    "scope": "xb.xm_in1",
+    "kind": "port",
+    "bindings": [
+     {
+      "via": "sp:ota.sp::xb.xm_in1",
+      "outer": "xb.vss",
+      "canonical": "0"
+     }
+    ],
+    "terminals": [
+     [
+      "sp:ota.sp::xb.xm_in1.m1",
+      "b"
+     ]
+    ]
+   },
+   "xb.xm_in2.d": {
+    "spelled": "d",
+    "scope": "xb.xm_in2",
+    "kind": "port",
+    "bindings": [
+     {
+      "via": "sp:ota.sp::xb.xm_in2",
+      "outer": "xb.tail",
+      "canonical": "xb.tail"
+     }
+    ],
+    "terminals": [
+     [
+      "sp:ota.sp::xb.xm_in2.m1",
+      "d"
+     ]
+    ]
+   },
+   "xb.xm_in2.g": {
+    "spelled": "g",
+    "scope": "xb.xm_in2",
+    "kind": "port",
+    "bindings": [
+     {
+      "via": "sp:ota.sp::xb.xm_in2",
+      "outer": "xb.vin",
+      "canonical": "vip"
+     }
+    ],
+    "terminals": [
+     [
+      "sp:ota.sp::xb.xm_in2.m1",
+      "g"
+     ]
+    ]
+   },
+   "xb.xm_in2.s": {
+    "spelled": "s",
+    "scope": "xb.xm_in2",
+    "kind": "port",
+    "bindings": [
+     {
+      "via": "sp:ota.sp::xb.xm_in2",
+      "outer": "xb.vout",
+      "canonical": "outb"
+     }
+    ],
+    "terminals": [
+     [
+      "sp:ota.sp::xb.xm_in2.m1",
+      "s"
+     ]
+    ]
+   },
+   "xb.xm_in2.b": {
+    "spelled": "b",
+    "scope": "xb.xm_in2",
+    "kind": "port",
+    "bindings": [
+     {
+      "via": "sp:ota.sp::xb.xm_in2",
+      "outer": "xb.vss",
+      "canonical": "0"
+     }
+    ],
+    "terminals": [
+     [
+      "sp:ota.sp::xb.xm_in2.m1",
+      "b"
+     ]
+    ]
+   },
+   "xb.x_cm.tail": {
+    "spelled": "tail",
+    "scope": "xb.x_cm",
+    "kind": "port",
+    "bindings": [
+     {
+      "via": "sp:ota.sp::xb.x_cm",
+      "outer": "xb.tail",
+      "canonical": "xb.tail"
+     }
+    ],
+    "terminals": []
+   },
+   "xb.x_cm.ibias": {
+    "spelled": "ibias",
+    "scope": "xb.x_cm",
+    "kind": "port",
+    "bindings": [
+     {
+      "via": "sp:ota.sp::xb.x_cm",
+      "outer": "xb.ibias",
+      "canonical": "ibias"
+     }
+    ],
+    "terminals": []
+   },
+   "xb.x_cm.vss": {
+    "spelled": "vss",
+    "scope": "xb.x_cm",
+    "kind": "port",
+    "bindings": [
+     {
+      "via": "sp:ota.sp::xb.x_cm",
+      "outer": "xb.vss",
+      "canonical": "0"
+     }
+    ],
+    "terminals": []
+   },
+   "xa.x_cm.xref.g": {
+    "spelled": "g",
+    "scope": "xa.x_cm.xref",
+    "kind": "port",
+    "bindings": [
+     {
+      "via": "sp:ota.sp::xa.x_cm.xref",
+      "outer": "xa.x_cm.ibias",
+      "canonical": "ibias"
+     }
+    ],
+    "terminals": [
+     [
+      "sp:ota.sp::xa.x_cm.xref.m1",
+      "g"
+     ]
+    ]
+   },
+   "xa.x_cm.xref.d": {
+    "spelled": "d",
+    "scope": "xa.x_cm.xref",
+    "kind": "port",
+    "bindings": [
+     {
+      "via": "sp:ota.sp::xa.x_cm.xref",
+      "outer": "xa.x_cm.ibias",
+      "canonical": "ibias"
+     }
+    ],
+    "terminals": [
+     [
+      "sp:ota.sp::xa.x_cm.xref.m1",
+      "d"
+     ]
+    ]
+   },
+   "xa.x_cm.xref.s": {
+    "spelled": "s",
+    "scope": "xa.x_cm.xref",
+    "kind": "port",
+    "bindings": [
+     {
+      "via": "sp:ota.sp::xa.x_cm.xref",
+      "outer": "xa.x_cm.vss",
+      "canonical": "0"
+     }
+    ],
+    "terminals": [
+     [
+      "sp:ota.sp::xa.x_cm.xref.m1",
+      "s"
+     ],
+     [
+      "sp:ota.sp::xa.x_cm.xref.m1",
+      "b"
+     ]
+    ]
+   },
+   "xa.x_cm.xout.g": {
+    "spelled": "g",
+    "scope": "xa.x_cm.xout",
+    "kind": "port",
+    "bindings": [
+     {
+      "via": "sp:ota.sp::xa.x_cm.xout",
+      "outer": "xa.x_cm.ibias",
+      "canonical": "ibias"
+     }
+    ],
+    "terminals": [
+     [
+      "sp:ota.sp::xa.x_cm.xout.m1",
+      "g"
+     ]
+    ]
+   },
+   "xa.x_cm.xout.d": {
+    "spelled": "d",
+    "scope": "xa.x_cm.xout",
+    "kind": "port",
+    "bindings": [
+     {
+      "via": "sp:ota.sp::xa.x_cm.xout",
+      "outer": "xa.x_cm.tail",
+      "canonical": "xa.tail"
+     }
+    ],
+    "terminals": [
+     [
+      "sp:ota.sp::xa.x_cm.xout.m1",
+      "d"
+     ]
+    ]
+   },
+   "xa.x_cm.xout.s": {
+    "spelled": "s",
+    "scope": "xa.x_cm.xout",
+    "kind": "port",
+    "bindings": [
+     {
+      "via": "sp:ota.sp::xa.x_cm.xout",
+      "outer": "xa.x_cm.vss",
+      "canonical": "0"
+     }
+    ],
+    "terminals": [
+     [
+      "sp:ota.sp::xa.x_cm.xout.m1",
+      "s"
+     ],
+     [
+      "sp:ota.sp::xa.x_cm.xout.m1",
+      "b"
+     ]
+    ]
+   },
+   "xb.x_cm.xref.g": {
+    "spelled": "g",
+    "scope": "xb.x_cm.xref",
+    "kind": "port",
+    "bindings": [
+     {
+      "via": "sp:ota.sp::xb.x_cm.xref",
+      "outer": "xb.x_cm.ibias",
+      "canonical": "ibias"
+     }
+    ],
+    "terminals": [
+     [
+      "sp:ota.sp::xb.x_cm.xref.m1",
+      "g"
+     ]
+    ]
+   },
+   "xb.x_cm.xref.d": {
+    "spelled": "d",
+    "scope": "xb.x_cm.xref",
+    "kind": "port",
+    "bindings": [
+     {
+      "via": "sp:ota.sp::xb.x_cm.xref",
+      "outer": "xb.x_cm.ibias",
+      "canonical": "ibias"
+     }
+    ],
+    "terminals": [
+     [
+      "sp:ota.sp::xb.x_cm.xref.m1",
+      "d"
+     ]
+    ]
+   },
+   "xb.x_cm.xref.s": {
+    "spelled": "s",
+    "scope": "xb.x_cm.xref",
+    "kind": "port",
+    "bindings": [
+     {
+      "via": "sp:ota.sp::xb.x_cm.xref",
+      "outer": "xb.x_cm.vss",
+      "canonical": "0"
+     }
+    ],
+    "terminals": [
+     [
+      "sp:ota.sp::xb.x_cm.xref.m1",
+      "s"
+     ],
+     [
+      "sp:ota.sp::xb.x_cm.xref.m1",
+      "b"
+     ]
+    ]
+   },
+   "xb.x_cm.xout.g": {
+    "spelled": "g",
+    "scope": "xb.x_cm.xout",
+    "kind": "port",
+    "bindings": [
+     {
+      "via": "sp:ota.sp::xb.x_cm.xout",
+      "outer": "xb.x_cm.ibias",
+      "canonical": "ibias"
+     }
+    ],
+    "terminals": [
+     [
+      "sp:ota.sp::xb.x_cm.xout.m1",
+      "g"
+     ]
+    ]
+   },
+   "xb.x_cm.xout.d": {
+    "spelled": "d",
+    "scope": "xb.x_cm.xout",
+    "kind": "port",
+    "bindings": [
+     {
+      "via": "sp:ota.sp::xb.x_cm.xout",
+      "outer": "xb.x_cm.tail",
+      "canonical": "xb.tail"
+     }
+    ],
+    "terminals": [
+     [
+      "sp:ota.sp::xb.x_cm.xout.m1",
+      "d"
+     ]
+    ]
+   },
+   "xb.x_cm.xout.s": {
+    "spelled": "s",
+    "scope": "xb.x_cm.xout",
+    "kind": "port",
+    "bindings": [
+     {
+      "via": "sp:ota.sp::xb.x_cm.xout",
+      "outer": "xb.x_cm.vss",
+      "canonical": "0"
+     }
+    ],
+    "terminals": [
+     [
+      "sp:ota.sp::xb.x_cm.xout.m1",
+      "s"
+     ],
+     [
+      "sp:ota.sp::xb.x_cm.xout.m1",
+      "b"
+     ]
+    ]
+   }
+  },
+  "terminals": {
+   "sp:ota.sp::vdd": [
+    {
+     "terminal": "p",
+     "net": "vdd",
+     "as_written": "vdd"
+    },
+    {
+     "terminal": "n",
+     "net": "0",
+     "as_written": "0"
+    }
+   ],
+   "sp:ota.sp::vin": [
+    {
+     "terminal": "p",
+     "net": "vip",
+     "as_written": "vip"
+    },
+    {
+     "terminal": "n",
+     "net": "vin",
+     "as_written": "vin"
+    }
+   ],
+   "sp:ota.sp::ibias": [
+    {
+     "terminal": "p",
+     "net": "vdd",
+     "as_written": "vdd"
+    },
+    {
+     "terminal": "n",
+     "net": "ibias",
+     "as_written": "ibias"
+    }
+   ],
+   "sp:ota.sp::vsense": [
+    {
+     "terminal": "p",
+     "net": "outa",
+     "as_written": "outa"
+    },
+    {
+     "terminal": "n",
+     "net": "sense",
+     "as_written": "sense"
+    }
+   ],
+   "sp:ota.sp::cl": [
+    {
+     "terminal": "p",
+     "net": "outb",
+     "as_written": "outb"
+    },
+    {
+     "terminal": "n",
+     "net": "0",
+     "as_written": "0"
+    }
+   ],
+   "sp:ota.sp::rl": [
+    {
+     "terminal": "p",
+     "net": "sense",
+     "as_written": "sense"
+    },
+    {
+     "terminal": "n",
+     "net": "0",
+     "as_written": "0"
+    }
+   ],
+   "sp:ota.sp::e1": [
+    {
+     "terminal": "p",
+     "net": "ecopy",
+     "as_written": "ecopy"
+    },
+    {
+     "terminal": "n",
+     "net": "0",
+     "as_written": "0"
+    },
+    {
+     "terminal": "cp",
+     "net": "outa",
+     "as_written": "outa"
+    },
+    {
+     "terminal": "cn",
+     "net": "0",
+     "as_written": "0"
+    }
+   ],
+   "sp:ota.sp::f1": [
+    {
+     "terminal": "p",
+     "net": "fout",
+     "as_written": "fout"
+    },
+    {
+     "terminal": "n",
+     "net": "0",
+     "as_written": "0"
+    }
+   ],
+   "sp:ota.sp::rf": [
+    {
+     "terminal": "p",
+     "net": "fout",
+     "as_written": "fout"
+    },
+    {
+     "terminal": "n",
+     "net": "0",
+     "as_written": "0"
+    }
+   ],
+   "sp:ota.sp::l1": [
+    {
+     "terminal": "p",
+     "net": "outa",
+     "as_written": "outa"
+    },
+    {
+     "terminal": "n",
+     "net": "lx",
+     "as_written": "lx"
+    }
+   ],
+   "sp:ota.sp::l2": [
+    {
+     "terminal": "p",
+     "net": "outb",
+     "as_written": "outb"
+    },
+    {
+     "terminal": "n",
+     "net": "ly",
+     "as_written": "ly"
+    }
+   ],
+   "sp:ota.sp::k1": [],
+   "sp:ota.sp::rx": [
+    {
+     "terminal": "p",
+     "net": "lx",
+     "as_written": "lx"
+    },
+    {
+     "terminal": "n",
+     "net": "0",
+     "as_written": "0"
+    }
+   ],
+   "sp:ota.sp::ry": [
+    {
+     "terminal": "p",
+     "net": "ly",
+     "as_written": "ly"
+    },
+    {
+     "terminal": "n",
+     "net": "0",
+     "as_written": "0"
+    }
+   ],
+   "sp:ota.sp::r_opt#92148006": [
+    {
+     "terminal": "p",
+     "net": "vip",
+     "as_written": "vip"
+    },
+    {
+     "terminal": "n",
+     "net": "vin",
+     "as_written": "vin"
+    }
+   ],
+   "sp:ota.sp::r_opt#ed312ead": [
+    {
+     "terminal": "p",
+     "net": "vip",
+     "as_written": "vip"
+    },
+    {
+     "terminal": "n",
+     "net": "vin",
+     "as_written": "vin"
+    }
+   ],
+   "sp:ota.sp::xa.m_load_1": [
+    {
+     "terminal": "d",
+     "net": "xa.vmir",
+     "as_written": "vmir"
+    },
+    {
+     "terminal": "g",
+     "net": "xa.vmir",
+     "as_written": "vmir"
+    },
+    {
+     "terminal": "s",
+     "net": "vdd",
+     "as_written": "vdd"
+    },
+    {
+     "terminal": "b",
+     "net": "vdd",
+     "as_written": "vdd"
+    }
+   ],
+   "sp:ota.sp::xa.m_load_2": [
+    {
+     "terminal": "d",
+     "net": "xa.vout",
+     "as_written": "vout"
+    },
+    {
+     "terminal": "g",
+     "net": "xa.vmir",
+     "as_written": "vmir"
+    },
+    {
+     "terminal": "s",
+     "net": "vdd",
+     "as_written": "vdd"
+    },
+    {
+     "terminal": "b",
+     "net": "vdd",
+     "as_written": "vdd"
+    }
+   ],
+   "sp:ota.sp::xb.m_load_1": [
+    {
+     "terminal": "d",
+     "net": "xb.vmir",
+     "as_written": "vmir"
+    },
+    {
+     "terminal": "g",
+     "net": "xb.vmir",
+     "as_written": "vmir"
+    },
+    {
+     "terminal": "s",
+     "net": "vdd",
+     "as_written": "vdd"
+    },
+    {
+     "terminal": "b",
+     "net": "vdd",
+     "as_written": "vdd"
+    }
+   ],
+   "sp:ota.sp::xb.m_load_2": [
+    {
+     "terminal": "d",
+     "net": "xb.vout",
+     "as_written": "vout"
+    },
+    {
+     "terminal": "g",
+     "net": "xb.vmir",
+     "as_written": "vmir"
+    },
+    {
+     "terminal": "s",
+     "net": "vdd",
+     "as_written": "vdd"
+    },
+    {
+     "terminal": "b",
+     "net": "vdd",
+     "as_written": "vdd"
+    }
+   ],
+   "sp:ota.sp::xa.xm_in1.m1": [
+    {
+     "terminal": "d",
+     "net": "xa.xm_in1.d",
+     "as_written": "d"
+    },
+    {
+     "terminal": "g",
+     "net": "xa.xm_in1.g",
+     "as_written": "g"
+    },
+    {
+     "terminal": "s",
+     "net": "xa.xm_in1.s",
+     "as_written": "s"
+    },
+    {
+     "terminal": "b",
+     "net": "xa.xm_in1.b",
+     "as_written": "b"
+    }
+   ],
+   "sp:ota.sp::xa.xm_in2.m1": [
+    {
+     "terminal": "d",
+     "net": "xa.xm_in2.d",
+     "as_written": "d"
+    },
+    {
+     "terminal": "g",
+     "net": "xa.xm_in2.g",
+     "as_written": "g"
+    },
+    {
+     "terminal": "s",
+     "net": "xa.xm_in2.s",
+     "as_written": "s"
+    },
+    {
+     "terminal": "b",
+     "net": "xa.xm_in2.b",
+     "as_written": "b"
+    }
+   ],
+   "sp:ota.sp::xb.xm_in1.m1": [
+    {
+     "terminal": "d",
+     "net": "xb.xm_in1.d",
+     "as_written": "d"
+    },
+    {
+     "terminal": "g",
+     "net": "xb.xm_in1.g",
+     "as_written": "g"
+    },
+    {
+     "terminal": "s",
+     "net": "xb.xm_in1.s",
+     "as_written": "s"
+    },
+    {
+     "terminal": "b",
+     "net": "xb.xm_in1.b",
+     "as_written": "b"
+    }
+   ],
+   "sp:ota.sp::xb.xm_in2.m1": [
+    {
+     "terminal": "d",
+     "net": "xb.xm_in2.d",
+     "as_written": "d"
+    },
+    {
+     "terminal": "g",
+     "net": "xb.xm_in2.g",
+     "as_written": "g"
+    },
+    {
+     "terminal": "s",
+     "net": "xb.xm_in2.s",
+     "as_written": "s"
+    },
+    {
+     "terminal": "b",
+     "net": "xb.xm_in2.b",
+     "as_written": "b"
+    }
+   ],
+   "sp:ota.sp::xa.x_cm.xref.m1": [
+    {
+     "terminal": "d",
+     "net": "xa.x_cm.xref.d",
+     "as_written": "d"
+    },
+    {
+     "terminal": "g",
+     "net": "xa.x_cm.xref.g",
+     "as_written": "g"
+    },
+    {
+     "terminal": "s",
+     "net": "xa.x_cm.xref.s",
+     "as_written": "s"
+    },
+    {
+     "terminal": "b",
+     "net": "xa.x_cm.xref.s",
+     "as_written": "s"
+    }
+   ],
+   "sp:ota.sp::xa.x_cm.xout.m1": [
+    {
+     "terminal": "d",
+     "net": "xa.x_cm.xout.d",
+     "as_written": "d"
+    },
+    {
+     "terminal": "g",
+     "net": "xa.x_cm.xout.g",
+     "as_written": "g"
+    },
+    {
+     "terminal": "s",
+     "net": "xa.x_cm.xout.s",
+     "as_written": "s"
+    },
+    {
+     "terminal": "b",
+     "net": "xa.x_cm.xout.s",
+     "as_written": "s"
+    }
+   ],
+   "sp:ota.sp::xb.x_cm.xref.m1": [
+    {
+     "terminal": "d",
+     "net": "xb.x_cm.xref.d",
+     "as_written": "d"
+    },
+    {
+     "terminal": "g",
+     "net": "xb.x_cm.xref.g",
+     "as_written": "g"
+    },
+    {
+     "terminal": "s",
+     "net": "xb.x_cm.xref.s",
+     "as_written": "s"
+    },
+    {
+     "terminal": "b",
+     "net": "xb.x_cm.xref.s",
+     "as_written": "s"
+    }
+   ],
+   "sp:ota.sp::xb.x_cm.xout.m1": [
+    {
+     "terminal": "d",
+     "net": "xb.x_cm.xout.d",
+     "as_written": "d"
+    },
+    {
+     "terminal": "g",
+     "net": "xb.x_cm.xout.g",
+     "as_written": "g"
+    },
+    {
+     "terminal": "s",
+     "net": "xb.x_cm.xout.s",
+     "as_written": "s"
+    },
+    {
+     "terminal": "b",
+     "net": "xb.x_cm.xout.s",
+     "as_written": "s"
+    }
+   ]
+  },
+  "ports": {
+   "sp:ota.sp::xa": [
+    {
+     "port": "vip",
+     "inner": "xa.vip",
+     "outer": "vip",
+     "net": "vip",
+     "as_written": "vip"
+    },
+    {
+     "port": "vin",
+     "inner": "xa.vin",
+     "outer": "vin",
+     "net": "vin",
+     "as_written": "vin"
+    },
+    {
+     "port": "vout",
+     "inner": "xa.vout",
+     "outer": "outa",
+     "net": "outa",
+     "as_written": "outa"
+    },
+    {
+     "port": "ibias",
+     "inner": "xa.ibias",
+     "outer": "ibias",
+     "net": "ibias",
+     "as_written": "ibias"
+    },
+    {
+     "port": "vdd",
+     "inner": "vdd",
+     "outer": "vdd",
+     "net": "vdd",
+     "as_written": "vdd"
+    },
+    {
+     "port": "vss",
+     "inner": "xa.vss",
+     "outer": "0",
+     "net": "0",
+     "as_written": "0"
+    }
+   ],
+   "sp:ota.sp::xb": [
+    {
+     "port": "vip",
+     "inner": "xb.vip",
+     "outer": "vin",
+     "net": "vin",
+     "as_written": "vin"
+    },
+    {
+     "port": "vin",
+     "inner": "xb.vin",
+     "outer": "vip",
+     "net": "vip",
+     "as_written": "vip"
+    },
+    {
+     "port": "vout",
+     "inner": "xb.vout",
+     "outer": "outb",
+     "net": "outb",
+     "as_written": "outb"
+    },
+    {
+     "port": "ibias",
+     "inner": "xb.ibias",
+     "outer": "ibias",
+     "net": "ibias",
+     "as_written": "ibias"
+    },
+    {
+     "port": "vdd",
+     "inner": "vdd",
+     "outer": "vdd",
+     "net": "vdd",
+     "as_written": "vdd"
+    },
+    {
+     "port": "vss",
+     "inner": "xb.vss",
+     "outer": "0",
+     "net": "0",
+     "as_written": "0"
+    }
+   ],
+   "sp:ota.sp::xa.xm_in1": [
+    {
+     "port": "d",
+     "inner": "xa.xm_in1.d",
+     "outer": "xa.tail",
+     "net": "xa.tail",
+     "as_written": "tail"
+    },
+    {
+     "port": "g",
+     "inner": "xa.xm_in1.g",
+     "outer": "xa.vip",
+     "net": "vip",
+     "as_written": "vip"
+    },
+    {
+     "port": "s",
+     "inner": "xa.xm_in1.s",
+     "outer": "xa.vmir",
+     "net": "xa.vmir",
+     "as_written": "vmir"
+    },
+    {
+     "port": "b",
+     "inner": "xa.xm_in1.b",
+     "outer": "xa.vss",
+     "net": "0",
+     "as_written": "vss"
+    }
+   ],
+   "sp:ota.sp::xa.xm_in2": [
+    {
+     "port": "d",
+     "inner": "xa.xm_in2.d",
+     "outer": "xa.tail",
+     "net": "xa.tail",
+     "as_written": "tail"
+    },
+    {
+     "port": "g",
+     "inner": "xa.xm_in2.g",
+     "outer": "xa.vin",
+     "net": "vin",
+     "as_written": "vin"
+    },
+    {
+     "port": "s",
+     "inner": "xa.xm_in2.s",
+     "outer": "xa.vout",
+     "net": "outa",
+     "as_written": "vout"
+    },
+    {
+     "port": "b",
+     "inner": "xa.xm_in2.b",
+     "outer": "xa.vss",
+     "net": "0",
+     "as_written": "vss"
+    }
+   ],
+   "sp:ota.sp::xa.x_cm": [
+    {
+     "port": "tail",
+     "inner": "xa.x_cm.tail",
+     "outer": "xa.tail",
+     "net": "xa.tail",
+     "as_written": "tail"
+    },
+    {
+     "port": "ibias",
+     "inner": "xa.x_cm.ibias",
+     "outer": "xa.ibias",
+     "net": "ibias",
+     "as_written": "ibias"
+    },
+    {
+     "port": "vss",
+     "inner": "xa.x_cm.vss",
+     "outer": "xa.vss",
+     "net": "0",
+     "as_written": "vss"
+    }
+   ],
+   "sp:ota.sp::xb.xm_in1": [
+    {
+     "port": "d",
+     "inner": "xb.xm_in1.d",
+     "outer": "xb.tail",
+     "net": "xb.tail",
+     "as_written": "tail"
+    },
+    {
+     "port": "g",
+     "inner": "xb.xm_in1.g",
+     "outer": "xb.vip",
+     "net": "vin",
+     "as_written": "vip"
+    },
+    {
+     "port": "s",
+     "inner": "xb.xm_in1.s",
+     "outer": "xb.vmir",
+     "net": "xb.vmir",
+     "as_written": "vmir"
+    },
+    {
+     "port": "b",
+     "inner": "xb.xm_in1.b",
+     "outer": "xb.vss",
+     "net": "0",
+     "as_written": "vss"
+    }
+   ],
+   "sp:ota.sp::xb.xm_in2": [
+    {
+     "port": "d",
+     "inner": "xb.xm_in2.d",
+     "outer": "xb.tail",
+     "net": "xb.tail",
+     "as_written": "tail"
+    },
+    {
+     "port": "g",
+     "inner": "xb.xm_in2.g",
+     "outer": "xb.vin",
+     "net": "vip",
+     "as_written": "vin"
+    },
+    {
+     "port": "s",
+     "inner": "xb.xm_in2.s",
+     "outer": "xb.vout",
+     "net": "outb",
+     "as_written": "vout"
+    },
+    {
+     "port": "b",
+     "inner": "xb.xm_in2.b",
+     "outer": "xb.vss",
+     "net": "0",
+     "as_written": "vss"
+    }
+   ],
+   "sp:ota.sp::xb.x_cm": [
+    {
+     "port": "tail",
+     "inner": "xb.x_cm.tail",
+     "outer": "xb.tail",
+     "net": "xb.tail",
+     "as_written": "tail"
+    },
+    {
+     "port": "ibias",
+     "inner": "xb.x_cm.ibias",
+     "outer": "xb.ibias",
+     "net": "ibias",
+     "as_written": "ibias"
+    },
+    {
+     "port": "vss",
+     "inner": "xb.x_cm.vss",
+     "outer": "xb.vss",
+     "net": "0",
+     "as_written": "vss"
+    }
+   ],
+   "sp:ota.sp::xa.x_cm.xref": [
+    {
+     "port": "g",
+     "inner": "xa.x_cm.xref.g",
+     "outer": "xa.x_cm.ibias",
+     "net": "ibias",
+     "as_written": "ibias"
+    },
+    {
+     "port": "d",
+     "inner": "xa.x_cm.xref.d",
+     "outer": "xa.x_cm.ibias",
+     "net": "ibias",
+     "as_written": "ibias"
+    },
+    {
+     "port": "s",
+     "inner": "xa.x_cm.xref.s",
+     "outer": "xa.x_cm.vss",
+     "net": "0",
+     "as_written": "vss"
+    }
+   ],
+   "sp:ota.sp::xa.x_cm.xout": [
+    {
+     "port": "g",
+     "inner": "xa.x_cm.xout.g",
+     "outer": "xa.x_cm.ibias",
+     "net": "ibias",
+     "as_written": "ibias"
+    },
+    {
+     "port": "d",
+     "inner": "xa.x_cm.xout.d",
+     "outer": "xa.x_cm.tail",
+     "net": "xa.tail",
+     "as_written": "tail"
+    },
+    {
+     "port": "s",
+     "inner": "xa.x_cm.xout.s",
+     "outer": "xa.x_cm.vss",
+     "net": "0",
+     "as_written": "vss"
+    }
+   ],
+   "sp:ota.sp::xb.x_cm.xref": [
+    {
+     "port": "g",
+     "inner": "xb.x_cm.xref.g",
+     "outer": "xb.x_cm.ibias",
+     "net": "ibias",
+     "as_written": "ibias"
+    },
+    {
+     "port": "d",
+     "inner": "xb.x_cm.xref.d",
+     "outer": "xb.x_cm.ibias",
+     "net": "ibias",
+     "as_written": "ibias"
+    },
+    {
+     "port": "s",
+     "inner": "xb.x_cm.xref.s",
+     "outer": "xb.x_cm.vss",
+     "net": "0",
+     "as_written": "vss"
+    }
+   ],
+   "sp:ota.sp::xb.x_cm.xout": [
+    {
+     "port": "g",
+     "inner": "xb.x_cm.xout.g",
+     "outer": "xb.x_cm.ibias",
+     "net": "ibias",
+     "as_written": "ibias"
+    },
+    {
+     "port": "d",
+     "inner": "xb.x_cm.xout.d",
+     "outer": "xb.x_cm.tail",
+     "net": "xb.tail",
+     "as_written": "tail"
+    },
+    {
+     "port": "s",
+     "inner": "xb.x_cm.xout.s",
+     "outer": "xb.x_cm.vss",
+     "net": "0",
+     "as_written": "vss"
+    }
+   ]
+  },
+  "directives": [
+   {
+    "name": ".op",
+    "role": "analysis",
+    "text": ".op",
+    "file": "ota.sp",
+    "line": 35,
+    "end_line": 35,
+    "scope": "",
+    "guard": ""
+   },
+   {
+    "name": ".ac",
+    "role": "analysis",
+    "text": ".ac dec 10 1 1g",
+    "file": "ota.sp",
+    "line": 36,
+    "end_line": 36,
+    "scope": "",
+    "guard": ""
+   },
+   {
+    "name": ".end",
+    "role": "end",
+    "text": ".end",
+    "file": "ota.sp",
+    "line": 41,
+    "end_line": 41,
+    "scope": "",
+    "guard": ""
+   }
+  ],
+  "control_blocks": [
+   {
+    "file": "ota.sp",
+    "line": 37,
+    "end_line": 40,
+    "text": ".control\nrun\nwrdata out.txt v(outa)\n.endc",
+    "scope": ""
+   }
+  ],
+  "probes": [
+   {
+    "what": "include",
+    "requested": "lib/devices.inc",
+    "from": {
+     "file": "ota.sp",
+     "line": 3
+    },
+    "candidates": [
+     {
+      "path": "/fixture/lib/devices.inc",
+      "exists": true
+     }
+    ],
+    "resolved": "/fixture/lib/devices.inc"
+   },
+   {
+    "what": "lib",
+    "requested": "lib/corners.lib",
+    "from": {
+     "file": "ota.sp",
+     "line": 4
+    },
+    "candidates": [
+     {
+      "path": "/fixture/lib/corners.lib",
+      "exists": true
+     }
+    ],
+    "resolved": "/fixture/lib/corners.lib"
+   },
+   {
+    "what": "include",
+    "requested": "tt_models.inc",
+    "from": {
+     "file": "lib/corners.lib",
+     "line": 3
+    },
+    "candidates": [
+     {
+      "path": "/fixture/lib/tt_models.inc",
+      "exists": true
+     }
+    ],
+    "resolved": "/fixture/lib/tt_models.inc"
+   }
+  ],
+  "diagnostics": []
+ }
+}
