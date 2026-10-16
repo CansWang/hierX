@@ -1,5 +1,9 @@
 # hx — function-scoped structure extractor
 
+[![Regression status](https://img.shields.io/github/actions/workflow/status/CansWang/hierX/ci.yml?branch=main&label=regression)](https://github.com/CansWang/hierX/actions/workflows/ci.yml)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue)](#install)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+
 **Documentation:** [Start here](docs/index.md) ·
 [C/C++ tutorial](docs/tutorials/c-review.md) ·
 [Netlist quickstart](docs/tutorials/netlists.md) ·
@@ -557,3 +561,7 @@ vendored Cytoscape/dagre, no build step), `hx/cli.py`, `tests/fixtures/{c,sv,rus
 (fixture projects; `tests/test_conformance.py` runs the same invariants over
 every frontend whose toolchain is installed). Headless check of the viewer:
 `google-chrome --headless=new --screenshot --virtual-time-budget=3000 "http://127.0.0.1:8765/?live=0"`.
+
+## License
+
+This project is licensed under the [MIT License](LICENSE).
