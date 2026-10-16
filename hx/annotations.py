@@ -5,20 +5,93 @@ annotations.json (schema hx-ann/1):
   types{id: {note, fields{name: {note}}}}
   globals{id: {note}}
   view{hidden[], pinned_positions{id: {x, y}}}
-One file per project (next to graph.json), shared by every entry point, keyed
-by stable ids so it survives regeneration.
+Managed graphs share .hx/annotations.json; standalone graphs use an adjacent
+file. Explicit overrides win. Stable ids let notes survive regeneration.
 """
 from __future__ import annotations
 
 import json
 import os
+from pathlib import Path
 import threading
 from typing import Any, Optional
 
-from .fsutil import file_lock
+from .fsutil import atomic_create, file_lock
+from .paths import ANNOTATIONS_NAME, state_dir_for_graph
 
 SCHEMA = "hx-ann/1"
 _lock = threading.Lock()
+
+
+def resolve_path(graph_path: str, explicit: Optional[str] = None) -> str:
+    """Return the annotation destination without reading or writing state.
+
+    An explicit path is invocation-relative. Managed graphs (including history)
+    share their owning .hx/annotations.json. Standalone files use adjacent notes.
+    Source lookup overrides and graph.root do not affect this choice.
+    """
+    if explicit is not None:
+        return os.path.abspath(explicit)
+    state = state_dir_for_graph(graph_path)
+    return os.path.join(state or os.path.dirname(os.path.abspath(graph_path)), ANNOTATIONS_NAME)
+
+
+def _legacy_source(graph_path: str, state: str, canonical: str) -> Optional[str]:
+    candidates = [Path(state) / "graphs" / ANNOTATIONS_NAME,
+                  Path(os.path.abspath(graph_path)).parent / ANNOTATIONS_NAME]
+    candidates.extend((Path(state) / "history").glob("*/" + ANNOTATIONS_NAME))
+    excluded = {os.path.realpath(canonical), os.path.realpath(graph_path)}
+    distinct = {os.path.realpath(path): str(path) for path in candidates
+                if os.path.lexists(path) and os.path.realpath(path) not in excluded}
+    if len(distinct) > 1:
+        paths = ", ".join(sorted(distinct.values()))
+        raise ValueError(f"multiple legacy annotation files: {paths}; choose --annotations FILE for serve/export, "
+                         f"or copy the chosen file to {canonical} before starting MCP; no files were imported")
+    return next(iter(distinct.values()), None)
+
+
+def _legacy_payload(path: str) -> bytes:
+    try:
+        with open(path, "rb") as fh:
+            payload = fh.read()
+        doc = json.loads(payload)
+        if not isinstance(doc, dict) or doc.get("schema") not in (None, SCHEMA):
+            raise ValueError(f"expected an annotation object with schema {SCHEMA!r} (or an unversioned legacy object)")
+        return payload
+    except (OSError, ValueError) as exc:
+        raise ValueError(f"cannot read legacy annotations {path}: {exc}; original file retained; "
+                         "fix the file or choose --annotations FILE explicitly") from exc
+
+
+def prepare_file(graph_path: str, explicit: Optional[str] = None, *, import_legacy: bool = False) -> str:
+    """Select annotations and optionally import one unambiguous legacy sidecar.
+
+    Existing canonical files and explicit overrides always win. Read-only callers
+    return the single legacy path without modifying source state. Initializers
+    use import_legacy=True to atomically copy original bytes to the shared path,
+    under its write lock, leaving the legacy source intact. Missing notes create
+    nothing. Multiple, invalid, or unreadable sources raise ValueError.
+    """
+    canonical = resolve_path(graph_path, explicit)
+    state = state_dir_for_graph(graph_path)
+    if explicit is not None or state is None or os.path.lexists(canonical):
+        return canonical
+    source = _legacy_source(graph_path, state, canonical)
+    if source is None:
+        return canonical
+    if not import_legacy:
+        _legacy_payload(source)
+        return source
+    with file_lock(canonical):
+        if not os.path.lexists(canonical):
+            source = _legacy_source(graph_path, state, canonical)
+            if source is not None:
+                payload = _legacy_payload(source)
+                try:
+                    atomic_create(canonical, payload)
+                except FileExistsError:  # another, non-cooperating writer owns the new file
+                    pass
+    return canonical
 
 
 def empty() -> dict:

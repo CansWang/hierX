@@ -27,6 +27,7 @@ except ModuleNotFoundError:  # pragma: no cover
 
 from .diff import diff_graphs, render_markdown
 from .fsutil import atomic_create, atomic_write, file_lock
+from .paths import ANNOTATIONS_NAME
 
 HX_DIR = ".hx"
 SOURCE_EXTS = {".c", ".h", ".cc", ".cpp", ".cxx", ".hpp", ".hh", ".sv", ".svh", ".v", ".vh", ".rs", ".py", ".pyi", ".go", ".f",
@@ -197,7 +198,7 @@ def find_graphs(root: str) -> list[dict]:
     gdir = os.path.join(hx_dir(root), "graphs")
     paths = []
     if os.path.isdir(gdir):
-        paths += sorted(os.path.join(gdir, f) for f in os.listdir(gdir) if f.endswith(".json"))
+        paths += sorted(os.path.join(gdir, f) for f in os.listdir(gdir) if f.endswith(".json") and f != ANNOTATIONS_NAME)
     default = os.path.join(hx_dir(root), "graph.json")
     if os.path.exists(default):
         paths.append(default)
@@ -317,7 +318,7 @@ def list_history(root: str, entry: str) -> list[dict]:
     from .provenance import summary
     out = []
     for f in os.listdir(hdir):
-        if f.endswith(".json"):
+        if f.endswith(".json") and f != ANNOTATIONS_NAME:
             path = os.path.join(hdir, f)
             try:
                 graph = load_graph(path)
@@ -619,7 +620,7 @@ def dependency_files(root: str) -> dict[str, Optional[int]]:
     if not os.path.isdir(gdir):
         return out
     for fn in os.listdir(gdir):
-        if not fn.endswith(".json"):
+        if not fn.endswith(".json") or fn == ANNOTATIONS_NAME:
             continue
         try:
             with open(os.path.join(gdir, fn), encoding="utf-8") as fh:
@@ -968,7 +969,9 @@ def migrate(root: str, *, keep_history: Optional[int] = None, progress: Optional
     """The one persistent older-schema -> current-schema operation (hx/1 or hx/2 -> hx/3). Every tracked entry is
     re-extracted into a staging directory; only
     when ALL succeed are the graphs committed (previous ones snapshotted), and annotations rewritten once under the
-    file lock with a one-time backup. Any failure leaves graphs, history, annotations and backups byte-for-byte unchanged."""
+    file lock with a one-time backup. Extraction or annotation-preflight failures
+    leave current graphs, history, annotations and backups byte-for-byte unchanged;
+    commit writes are atomic per file."""
     import shutil
     from . import annotations as ann_mod
     from .api import extract
@@ -1033,6 +1036,20 @@ def migrate(root: str, *, keep_history: Optional[int] = None, progress: Optional
         if out["failed"]:
             out["status"] = "failed"
             return out
+        annotation_graph = os.path.join(hx_dir(root), "graph.json")
+        # Resolve and validate notes without importing them during extraction staging.
+        # A legacy conflict must be reported before any current graph is replaced.
+        if staged:
+            try:
+                annotation_source = ann_mod.prepare_file(annotation_graph)
+                if os.path.lexists(annotation_source):
+                    if not os.path.isfile(annotation_source):
+                        raise ValueError(f"annotation source is not a regular file: {annotation_source}")
+                    ann_mod.load(annotation_source)
+            except (ValueError, OSError) as exc:
+                out["failed"].append({"entry": "annotations", "error": str(exc)})
+                out["status"] = "failed"
+                return out
         merged: dict = {}
         ambiguous: dict = {}
         for entry, gp, sp, id_map, unmapped, entry_ambiguous in staged:
@@ -1053,7 +1070,8 @@ def migrate(root: str, *, keep_history: Optional[int] = None, progress: Optional
         out["id_map"] = merged
         out["invalidated"] = sorted(set(invalidate))
         from_major = min((m.split("/")[-1].split(".")[0] for m in majors if "/" in m), default="2")
-        ann_path = os.path.join(hx_dir(root), "annotations.json")
+        ann_path = (ann_mod.prepare_file(annotation_graph, import_legacy=True) if staged
+                    else os.path.join(hx_dir(root), "annotations.json"))
         if os.path.exists(ann_path):
             if merged or invalidate:
                 out["annotations"] = ann_mod.migrate_file(ann_path, merged, from_schema=f"hx/{from_major}",

@@ -14,7 +14,8 @@ from .paths import resolve_project, select_graph
 _ROOT_HELP = ("project root (overrides discovery; default: first .github upward from the entry source, "
               "or from the run directory for commands without an entry; falls back to the run directory)")
 _GRAPH_HELP = ("graph JSON file (default: run-directory .hx first, otherwise .hx at the first .github upward; "
-               "graph.json preferred, then graphs/*.json)")
+               "graph.json preferred, then graphs/*.json excluding annotations.json)")
+_ANNOTATIONS_HELP = "annotation file override (default: shared .hx/annotations.json for managed graphs; beside standalone graphs)"
 
 
 def _build_parser() -> argparse.ArgumentParser:
@@ -56,7 +57,7 @@ def _build_parser() -> argparse.ArgumentParser:
     sv = sub.add_parser("serve", help="open the browser viewer on a graph.json, with editable annotations")
     sv.add_argument("graph", nargs="?", help=_GRAPH_HELP)
     sv.add_argument("--root", help="project root for source snippets (default: graph's root)")
-    sv.add_argument("--annotations", help="annotations.json (default: next to the graph)")
+    sv.add_argument("--annotations", help=_ANNOTATIONS_HELP)
     sv.add_argument("--host", default="127.0.0.1")
     sv.add_argument("--port", type=int, default=8765)
     sv.add_argument("--open", action="store_true", help="open the browser")
@@ -131,7 +132,7 @@ def _build_parser() -> argparse.ArgumentParser:
 
     ex = sub.add_parser("export", help="write a standalone viewer HTML with graph + annotations inlined")
     ex.add_argument("graph", nargs="?", help=_GRAPH_HELP)
-    ex.add_argument("--annotations", help="annotations.json (default: next to the graph)")
+    ex.add_argument("--annotations", help=_ANNOTATIONS_HELP)
     ex.add_argument("-o", "--output", help="output HTML (default: <graph dir>/view.html)")
     return p
 
@@ -152,7 +153,11 @@ def cmd_serve(a: argparse.Namespace) -> int:
     except ImportError as e:
         print(f"hx: serve needs fastapi and uvicorn ({e}); pip install 'fastapi uvicorn'", file=sys.stderr)
         return 2
-    app = create_app(graph, a.annotations, a.root, allow_extract=not a.no_extract)
+    try:
+        app = create_app(graph, a.annotations, a.root, allow_extract=not a.no_extract)
+    except (ValueError, OSError) as e:
+        print(f"hx: {e}", file=sys.stderr)
+        return 2
     url = f"http://{a.host}:{a.port}/"
     print(f"hx viewer   {url}")
     print(f"graph       {graph}")
@@ -172,7 +177,11 @@ def cmd_export(a: argparse.Namespace) -> int:
         print(f"hx: {e}", file=sys.stderr)
         return 2
     out = a.output or os.path.join(os.path.dirname(graph), "view.html")
-    export_file(graph, out, a.annotations)
+    try:
+        export_file(graph, out, a.annotations)
+    except (ValueError, OSError) as e:
+        print(f"hx: {e}", file=sys.stderr)
+        return 2
     print(f"output      {out}  ({os.path.getsize(out) // 1024} KB)")
     return 0
 
@@ -331,7 +340,12 @@ def cmd_mcp(a: argparse.Namespace) -> int:
     except ImportError as e:
         print(f"hx: the MCP server needs the `mcp` package ({e}); pip install 'mcp>=2'", file=sys.stderr)
         return 2
-    build_server(root).run(transport="stdio")
+    try:
+        server = build_server(root)
+    except (ValueError, OSError) as e:
+        print(f"hx: {e}", file=sys.stderr)
+        return 2
+    server.run(transport="stdio")
     return 0
 
 

@@ -53,18 +53,25 @@ previous extraction's source path or continue to an outer marker when the first
 marked project lacks state.
 
 Inside the selected directory, `graph.json` takes priority; otherwise the first
-regular `graphs/*.json` file in filename order is selected. Existing local state
-shadows repository state even when empty or invalid. Missing state or graphs
+regular `graphs/*.json` file in filename order is selected, excluding reserved
+`annotations.json` sidecars. Existing local state shadows repository state even
+when empty or invalid. Missing state or graphs
 produce exit status 2; lookup does not create a directory or start a server.
 
 An explicit graph path is invocation-relative and bypasses discovery, with no
 fallback on failure. `serve --root` only overrides source lookup; it does not
-change graph selection. Annotation defaults remain beside the selected graph;
-`--annotations` overrides that path. The graph picker and history stay attached
-to the selected state directory.
+change graph selection. Graphs within `.hx`, including historical snapshots,
+share that state directory's `annotations.json`. Standalone graphs use adjacent
+notes; `--annotations` overrides either default. Symlinks follow the graph's
+owning state location, independently of its embedded source root.
+The graph picker and history stay attached to the selected state directory.
 
-Existing state is never moved or merged automatically. A legacy local `.hx` can
-therefore shadow a newer repository graph. Pass that graph explicitly to select
+Viewer/MCP initialization imports one unambiguous legacy sidecar when the shared
+file is absent. Export reads it without creating the shared file. See
+[annotation compatibility](annotations.md#legacy-sidecars) for selection and errors.
+
+Existing `.hx` directories are not relocated or merged automatically. A legacy
+local `.hx` can therefore shadow a newer repository graph. Pass that graph explicitly to select
 it, or use `--root .` when extracting to maintain the local workflow. See
 [troubleshooting](../troubleshooting.md#state-is-in-an-unexpected-directory).
 

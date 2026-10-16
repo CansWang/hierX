@@ -38,15 +38,15 @@ source lookup. See [graph selection](configuration.md#find-a-graph-for-serve-or-
 | Command | Output or effect | Exit status |
 |---|---|---|
 | `extract` | Per-entry current graph, compatibility `.hx/graph.json`, and previous history; `-o` writes only FILE | 0 on completion, including graphs with diagnostics; 2 for handled extraction or save failures |
-| `serve` | Browser viewer and HTTP API, default `127.0.0.1:8765` | Long-running; Ctrl-C stops it |
-| `export` | HTML next to the graph unless `-o` is supplied | 0 on completion; 2 for missing/invalid state or graph selection; other I/O failures propagate |
+| `serve` | Browser viewer and HTTP API, default `127.0.0.1:8765` | Long-running; Ctrl-C stops it; 2 for handled initialization failures |
+| `export` | HTML next to the graph unless `-o` is supplied | 0 on completion; 2 for handled graph, annotation, or I/O errors |
 | `track` | Replaces/removes one tracked entry table, or lists entries | 0 for normal operations |
 | `update` | Tracked graphs, previous snapshots, and `.hx/last-diff.md` | Per-entry errors are reported in results; inspect the report even with exit 0 |
 | `watch` | Repeated updates after a quiet period | Long-running; `--once` runs one update |
 | `diff` | Markdown or JSON to stdout or `-o` | Normally 0; `--exit-code` returns 1 for differences; handled missing entry/history returns 2 |
 | `migrate` | Re-extracted tracked graphs and migrated annotations | 0 on success/noop; 2 on reported extraction failure |
 | `hook` | Configuration snippet or settings-file merge | `--hook` update mode deliberately suppresses failures |
-| `mcp` | stdio protocol, or JSON configuration with `--print-config` | Long-running server; 2 for a handled missing MCP import |
+| `mcp` | stdio protocol, or JSON configuration with `--print-config` | Long-running server; 2 for handled dependency/annotation initialization failures |
 | `netlist check` | Oracle report; `--json` includes rendered closure | 0 agree, 1 mismatch, 2 oracle unavailable or handled extraction failure |
 
 These are command-specific statuses, not a guarantee that every possible I/O

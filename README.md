@@ -56,9 +56,6 @@ commands below are Ubuntu/Debian examples; run `sudo apt-get update` first.
 | C/C++ compiler, standard headers and Clang resource headers | `sudo apt-get install -y clang build-essential` |
 | SystemVerilog / Verilog extraction | `sudo apt-get install -y verilator` |
 | ngspice, the netlist oracle (`hx netlist check --oracle ngspice`; extraction itself needs no simulator) | `sudo apt-get install -y ngspice` ([download page](https://ngspice.sourceforge.io/download.html)); or `--ngspice PATH` / `HX_TOOL_NGSPICE` |
-| Xyce, the second netlist oracle (Phase N2) | installer or source build from [xyce.sandia.gov/downloads](https://xyce.sandia.gov/downloads/); `/usr/cad/xyce/parallel/bin/Xyce` and `/usr/local/Xyce/bin/Xyce` are found automatically, else `--xyce PATH` / `HX_TOOL_XYCE` |
-| XDM, the Xyce netlist translator used as a structural check (Phase N2) | the `xdm_bdl` bundle from [XDM releases](https://github.com/Xyce/XDM/releases) on PATH (`~/.local/bin/xdm_bdl` is found automatically), else `--xdm PATH` / `HX_TOOL_XDM` |
-| Spectre / HSPICE syntax checks (Phase N3) | licensed Cadence / Synopsys installs with `spectre` / `hspice` on PATH, else `--spectre` / `--hspice` |
 | Rust extraction, with Rustup installed | `rustup toolchain install stable --profile minimal`, then `rustup component add --toolchain stable rust-analyzer rust-src` |
 | Standalone JavaScript tests (`node --test tests/js`) | `sudo apt-get install -y nodejs` |
 | Optional Clang LSP profile | `sudo apt-get install -y clangd` |
@@ -81,6 +78,20 @@ navigation, note deletion through the DOM, wide parameter display); install its
 Chromium with `python -m playwright install chromium`. That installation is
 separate from Pyright's Node.js runtime. The JavaScript unit tests need a
 standalone `node` executable on PATH.
+
+### Planned netlist integrations
+
+The current `hx netlist check` CLI supports ngspice only. The following
+integrations are planned; their CLI flags are not available yet:
+
+| planned integration | installation guidance |
+|---|---|
+| Xyce oracle (Phase N2) | installer or source build from [Xyce downloads](https://xyce.sandia.gov/downloads/) |
+| XDM structural check (Phase N2) | `xdm_bdl` bundle from [XDM releases](https://github.com/Xyce/XDM/releases) |
+| HSPICE integration (Phase N2) | licensed Synopsys installation |
+| Spectre integration (Phase N3) | licensed Cadence installation |
+
+### Project requirements
 
 Per-language project requirements:
 
@@ -292,8 +303,9 @@ Without a graph argument, `serve` and `export` choose an existing run-directory
 run directory. An empty local `.hx` or missing state at that first marked root is
 an error, with no fallback to an outer repository. Within the selected state,
 `graph.json` is preferred, then the first regular `graphs/*.json` in filename
-order. Pass a graph path to bypass discovery. `serve --root` only overrides source
-lookup. Existing `.hx` directories are not moved or merged automatically.
+order, excluding the reserved `annotations.json` file. Pass a graph path to
+bypass discovery. `serve --root` only overrides source lookup. Existing `.hx`
+directories are not moved or merged automatically.
 
 The viewer has three panes: the hierarchy tree (callers above, callees below,
 unresolved targets grouped by reason), the graph (nodes grouped by file, depth
@@ -309,6 +321,18 @@ server watches `graph.json` and `annotations.json`; when either changes on disk
 (for example an agent ran `hx extract`), every open tab reloads via
 Server-Sent Events. The **re-extract** button re-runs the last `hx extract`
 arguments recorded in `graph.meta.extract_args`.
+
+Graphs under the same `.hx`, including saved historical snapshots, share
+`.hx/annotations.json` with MCP. Standalone graphs outside `.hx` use an adjacent
+annotation file; `serve` and `export` accept `--annotations FILE` to override it.
+Source lookup overrides do not change annotation selection.
+
+When the shared file is absent, viewer/MCP startup copies one unambiguous legacy
+sidecar from the graph/history directories, preserving its original bytes and
+file. Export can read that same legacy file without importing it. Multiple legacy
+files require explicit selection; no files are merged automatically. Use
+`--annotations FILE` for serve/export, or copy your chosen file to
+`.hx/annotations.json` before starting MCP. An existing shared file takes precedence.
 
 Keyboard: `/` search · `f` fit · `Esc` clear selection · `Backspace` back.
 URL hash carries selection, depth and layout, so links are shareable;
@@ -369,7 +393,7 @@ overrides, and `track: true` persists the merged table.
 | `nodes` | functions: id, signature, `params[].dir` (in/out/inout + source of that judgement), `returns`, `globals.reads/writes`, `calls`, `body_hash`, `depth` |
 | `types` | structs/unions/enums/typedefs reached from signatures and globals: `size`, `align`, `fields[]` with byte `offset`, `size`, bitfield `bit_offset`/`bit_width`, `underlying_ref` for typedefs |
 | `globals` | file-scope and function-local static variables touched, with type refs |
-| `edges` | `from`/`to` + `kind` (`call`, `macro`, `fnptr`, `ref`), call-site `loc` and `args` as written |
+| `edges` | `from`/`to` + `kind` (`call`, `macro`, `fnptr`, `ref`, `instance`), call-site `loc` and `args` as written |
 | `unresolved` | anything reached but not expanded, with a reason: beyond depth, no definition, system header, excluded, function pointer |
 | `circuit` | netlist graphs only: `dialect`, `deck`, `root`, `files[]` (role, section, resolver), `definitions{}` / `models{}` / `params{}` (uniform records with `status` found\|alternatives\|ambiguous\|binned\|shadowed\|missing and one declaration per guard), `nets{}` (kind, bindings, canonical), `terminals{}` (`net` in the device's scope, `canonical` the outermost net through the enclosing bindings) and `ports{}` (`outer` as written in the parent's scope, `net` canonical) keyed by graph nodes only; a definition's `instances` and a model's `used_by` may name unresolved ghost ids (an ambiguous or missing instance keeps its candidates, status `ambiguous` or `missing`); `directives[]`, `control_blocks[]`, `probes[]`, `diagnostics[]` |
 
@@ -464,9 +488,10 @@ What the tool promises, and where the promise stops:
   `build`, `target`, `.venv` and similar, but still watching a
   `compile_commands.json`, `Cargo.toml` or `pyrightconfig.json` placed inside
   them. There is no inotify backend.
-- **Persistence.** Graphs, snapshots, config, `last-diff.md` and annotations are
-  written atomically (temp file + rename). Annotation read-modify-write takes a
-  cross-process file lock, so `hx serve`, `hx mcp` and the CLI can share one
+- **Persistence.** Graphs, config, `last-diff.md` and annotation edits use atomic
+  replacement; snapshots and legacy-note imports use exclusive atomic creation.
+  Annotation read-modify-write takes a cross-process file lock, so `hx serve`,
+  `hx mcp` and the CLI can share one
   `annotations.json`; two servers on different machines sharing a network
   drive are not supported.
 - **Schema.** Readers must ignore unknown fields; `hx/3.x` only adds fields.
@@ -508,16 +533,17 @@ What the tool promises, and where the promise stops:
 
 ```bash
 python -m pytest -q                      # skips tests whose toolchain is missing
-HX_REQUIRE_TOOLS=1 python -m pytest -q   # CI mode: a missing toolchain is a failure, never a skip
+HX_REQUIRE_TOOLS=1 python -m pytest -q   # missing required toolchains fail; vendor checks are separately opt-in
 node --test tests/js                     # viewer merge-patch unit tests (also run from pytest)
 pip install -e ".[e2e]" && python -m playwright install chromium   # browser workflow tests (tests/test_e2e_viewer.py)
 ```
 
-`.github/workflows/ci.yml` installs every toolchain (verilator, clang,
-rust-analyzer, node) on Python 3.10 and 3.12, checks a clean base
+`.github/workflows/ci.yml` installs the required toolchains (verilator, clang,
+ngspice, rust-analyzer, node) on Python 3.10 and 3.12, checks a clean base
 `python -m pip install .` before adding developer dependencies, and verifies
-MCP imports, Pyright and dependency consistency. It then installs `.[dev]`
-and runs the suite with `HX_REQUIRE_TOOLS=1`.
+MCP imports, Pyright and dependency consistency. It then installs `.[dev,e2e]`
+and Chromium and runs the suite with `HX_REQUIRE_TOOLS=1`. Optional vendor checks
+remain skippable unless named in `HX_REQUIRE_VENDOR_TOOLS`.
 
 Layout: `hx/model.py` (IR), `hx/ids.py` (stable ids), `hx/traverse.py` (BFS),
 `hx/cache.py`, `hx/frontends/clang_fe.py` (libclang), `hx/frontends/verilator_fe.py`

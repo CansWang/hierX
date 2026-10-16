@@ -75,9 +75,16 @@ Use locked file operations for shared annotation updates. `patch_file` applies
 JSON merge patch semantics; a Python `None` deletes a key. See
 [annotation format](annotations.md).
 
+`resolve_path(graph_path, explicit=None)` selects the destination without reading
+annotation files or writing state.
+`prepare_file` can select a legacy source for read-only use; its
+`import_legacy=True` initializer copies one unambiguous source to the shared path
+without overwriting existing notes. Viewer/MCP use import mode; export uses the
+read-only mode. Standalone and explicit paths retain their existing defaults.
+
 ::: hx.annotations
     options:
-      members: [empty, load, patch_file, replace_file]
+      members: [resolve_path, prepare_file, empty, load, patch_file, replace_file]
 
 ## Exceptions
 

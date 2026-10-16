@@ -192,7 +192,8 @@ def _tree_hashes(root):
 
 
 @needs_verilator
-def test_migrate_maps_unique_types_and_yields_an_empty_diff(tmp_path):
+@pytest.mark.parametrize("annotation_location", ["annotations.json", "graphs/annotations.json"])
+def test_migrate_maps_unique_types_and_yields_an_empty_diff(tmp_path, annotation_location):
     from hx.diff import diff_graphs
     root = _adv_project(tmp_path, drop_fp64=True)
     res = project.update(str(root))
@@ -202,8 +203,10 @@ def test_migrate_maps_unique_types_and_yields_an_empty_diff(tmp_path):
     open(gp, "w").write(legacy_txt)
     old_fp = [t for t in json.loads(legacy_txt, parse_int=lambda s: 0)["types"] if "fp.fp_t" in t][0]
     old_anon = [t for t in json.loads(legacy_txt, parse_int=lambda s: 0)["types"] if "anon@L" in t][0]
-    A.save(str(root / ".hx" / "annotations.json"), {"types": {old_fp: {"note": "fp"}, old_anon: {"note": "cfg"}},
+    annotation_source = root / ".hx" / annotation_location
+    A.save(str(annotation_source), {"types": {old_fp: {"note": "fp"}, old_anon: {"note": "cfg"}},
                                                      "nodes": {"sv:rtl/lane.sv::top_adv.gen_lane__BRA__0__KET__.u_lane": {"note": "lane0"}}})
+    original_notes = annotation_source.read_bytes()
     # before: the loader reports what it cannot settle
     _, rep = graphio.load_graph_with_report(gp)
     assert {x["id"] for x in rep.needs_reextract} == {old_fp, old_anon}
@@ -216,6 +219,9 @@ def test_migrate_maps_unique_types_and_yields_an_empty_diff(tmp_path):
     ann = A.load(str(root / ".hx" / "annotations.json"))
     assert ann["types"][new_fp]["note"] == "fp" and ann["types"][new_anon]["note"] == "cfg" and ann["nodes"]["sv:rtl/lane.sv::top_adv.gen_lane[0].u_lane"]["note"] == "lane0"
     assert (root / ".hx" / "annotations.json.bak-hx1").exists()
+    if annotation_location.startswith("graphs/"):
+        assert annotation_source.read_bytes() == original_notes
+    assert (root / ".hx" / "annotations.json.bak-hx1").read_bytes() == original_notes
     # the committed graph is the fresh one; the legacy graph went to history; migrated legacy vs fresh is an empty diff
     assert project.load_graph(gp)["schema"] == "hx/3" and len(project.list_history(str(root), "rtl/top_adv.sv:top_adv")) >= 1
     legacy_doc = graphio.load_graph_text(legacy_txt)
@@ -248,14 +254,15 @@ def test_migrate_leaves_collapsed_types_unmapped(tmp_path):
 
 
 @needs_verilator
-def test_migrate_writes_nothing_when_an_entry_fails(tmp_path):
+@pytest.mark.parametrize("annotation_location", ["annotations.json", "graphs/annotations.json"])
+def test_migrate_writes_nothing_when_an_entry_fails(tmp_path, annotation_location):
     root = _adv_project(tmp_path)
     project.track(str(root), "rtl/lane.sv:top_adv.gen_lane[0].u_lane", filelist="files.f", top="top_adv", depth=1)     # second entry
     project.update(str(root))
     gp = project.graph_path(str(root), "rtl/top_adv.sv:top_adv")
     legacy_txt = _legacyize(project.load_graph(gp))        # read BEFORE opening for write (truncation)
     open(gp, "w").write(legacy_txt)
-    A.save(str(root / ".hx" / "annotations.json"), {"nodes": {"sv:rtl/top_adv.sv::top_adv": {"note": "n"}}})
+    A.save(str(root / ".hx" / annotation_location), {"nodes": {"sv:rtl/top_adv.sv::top_adv": {"note": "n"}}})
     lane = root / "rtl" / "lane.sv"
     good = lane.read_text()
     lane.write_text(good.replace("endmodule", "endmodul"))          # the SECOND entry's extraction now fails
@@ -264,6 +271,8 @@ def test_migrate_writes_nothing_when_an_entry_fails(tmp_path):
     assert out["status"] == "failed" and len(out["failed"]) >= 1
     assert _tree_hashes(root) == before
     assert not (root / ".hx" / "annotations.json.bak-hx1").exists() and not any(d.startswith("staging-") for d in os.listdir(root / ".hx"))
+    if annotation_location.startswith("graphs/"):
+        assert not (root / ".hx/annotations.json").exists()
     r = subprocess.run([sys.executable, "-m", "hx.cli", "migrate", "--root", str(root)], capture_output=True, text=True)
     assert r.returncode == 2 and "nothing was written" in r.stderr
     lane.write_text(good)

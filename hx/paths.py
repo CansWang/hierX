@@ -12,6 +12,22 @@ from typing import Sequence
 
 from .api import split_entry
 
+ANNOTATIONS_NAME = "annotations.json"
+
+
+def state_dir_for_graph(path: str) -> str | None:
+    """Locate the graph's owning .hx by location, independently of source roots.
+
+    Follow graph-file symlinks, retaining a lexical .hx when the state directory
+    itself is a symlink whose target has another name. No files are read/written.
+    """
+    absolute = Path(os.path.abspath(path))
+    for location in (absolute.resolve(), absolute):
+        for parent in location.parents:
+            if parent.name == ".hx":
+                return str(parent)
+    return None
+
 
 def find_repo_root(start: Path) -> Path | None:
     """Find the nearest ancestor (including start) containing a .github directory."""
@@ -86,7 +102,7 @@ def select_graph(path: str | None, *, cwd: Path | None = None) -> str:
         raise ValueError(f"{graph} is not a regular graph file; pass an existing graph path")
     graphs = state / "graphs"
     if graphs.is_dir():
-        candidates = sorted(p for p in graphs.glob("*.json") if p.is_file())
+        candidates = sorted(p for p in graphs.glob("*.json") if p.name != ANNOTATIONS_NAME and p.is_file())
         if candidates:
             return str(candidates[0])
     raise ValueError(f"no graph in {state} (expected graph.json or graphs/*.json); "

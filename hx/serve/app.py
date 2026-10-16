@@ -29,6 +29,7 @@ from fastapi.staticfiles import StaticFiles
 from .. import annotations as ann_mod
 from ..graphio import load_graph_dict
 from ..provenance import summary
+from ..paths import ANNOTATIONS_NAME, state_dir_for_graph
 
 VIEWER_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "viewer")
 
@@ -63,7 +64,7 @@ class State:
         if self.graphs_dir and os.path.isdir(self.graphs_dir):
             for f in sorted(os.listdir(self.graphs_dir)):
                 p = os.path.join(self.graphs_dir, f)
-                if f.endswith(".json") and p not in seen:
+                if f.endswith(".json") and f != ANNOTATIONS_NAME and p not in seen:
                     out.append({"name": f[:-5], "path": p})
         return out
 
@@ -101,6 +102,9 @@ class State:
 
     def project_root(self) -> str:
         """Directory that holds .hx (history/snapshots live there)."""
+        state = state_dir_for_graph(self.graph_path)
+        if state:
+            return os.path.dirname(state)
         d = os.path.dirname(self.graph_path)
         if os.path.basename(d) == "graphs":
             d = os.path.dirname(d)
@@ -140,7 +144,7 @@ class State:
 
 def create_app(graph_path: str, annotations_path: Optional[str] = None, root: Optional[str] = None,
                allow_extract: bool = True, poll_interval: float = 1.0) -> FastAPI:
-    ann_path = annotations_path or os.path.join(os.path.dirname(os.path.abspath(graph_path)), "annotations.json")
+    ann_path = ann_mod.prepare_file(graph_path, annotations_path, import_legacy=True)
     st = State(graph_path, ann_path, root, allow_extract)
 
     @asynccontextmanager

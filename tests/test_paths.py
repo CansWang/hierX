@@ -251,8 +251,7 @@ def test_tracked_graph_selection_is_sorted_and_keeps_its_state(tmp_path, monkeyp
     assert state.graph_path == str(chosen)
     assert state.project_root() == str(root)
     assert [g["name"] for g in state.graph_list()] == ["a", "z"]
-    # Existing annotation behavior remains relative to the selected graph.
-    assert state.ann_path == str(root / ".hx/graphs/annotations.json")
+    assert state.ann_path == str(root / ".hx/annotations.json")
     direct = saved_graph(root / ".hx/graph.json", root)
     assert select_graph(None) == str(direct)
 

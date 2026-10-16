@@ -45,7 +45,9 @@ def export_file(graph_path: str, out_path: str, annotations_path: str | None = N
     Args:
         graph_path: Graph JSON file, normalized/upgraded by the shared reader.
         out_path: HTML destination; parent directories are created.
-        annotations_path: Annotation JSON file; defaults beside the graph.
+        annotations_path: Override annotation JSON file. Managed graphs use shared
+            project notes; standalone graphs use adjacent notes. One unambiguous
+            legacy sidecar can be read without importing it or modifying state.
 
     Returns:
         The supplied output path. A missing annotation file uses empty annotations.
@@ -57,7 +59,7 @@ def export_file(graph_path: str, out_path: str, annotations_path: str | None = N
     from . import annotations as ann_mod
     from .graphio import load_graph_dict
     graph = load_graph_dict(graph_path)
-    ann_path = annotations_path or os.path.join(os.path.dirname(os.path.abspath(graph_path)), "annotations.json")
+    ann_path = ann_mod.prepare_file(graph_path, annotations_path)
     ann = ann_mod.load(ann_path) if os.path.exists(ann_path) else ann_mod.empty()
     html = build_html(graph, ann)
     os.makedirs(os.path.dirname(os.path.abspath(out_path)) or ".", exist_ok=True)

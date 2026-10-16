@@ -9,6 +9,11 @@ With no graph argument, CLI startup follows the
 [local-first state lookup](configuration.md#find-a-graph-for-serve-or-export).
 `serve --root` changes the source-lookup root, not which graph is served.
 
+Managed current/history graphs share `.hx/annotations.json`; standalone files
+use adjacent notes, with `--annotations` overriding either default. Startup can
+import one unambiguous legacy sidecar; conflicts fail before the server starts.
+See [annotation compatibility](annotations.md#legacy-sidecars).
+
 Graph-specific endpoints accept an optional `name` query parameter from
 `GET /api/graphs`. Omit it for the server's primary graph. An unknown name returns
 404. Annotations are shared across the server's graphs and do not take `name`.

@@ -97,6 +97,11 @@ prefixes and modified status.
 
 ## `annotate`
 
+MCP initialization uses the project's shared `.hx/annotations.json` and imports
+one unambiguous legacy sidecar if needed, preserving the original. Competing or
+invalid sources fail startup with stderr diagnostics. Select a legacy source by
+copying it to the shared path before startup; no automatic merge is performed.
+
 Arguments: required `id`, optional `note=""`, `tags=""`. `tags` is a
 comma-separated string, not a JSON array. Nonempty values replace that field;
 empty values leave it untouched. Returns the saved annotation as text, or

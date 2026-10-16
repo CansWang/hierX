@@ -144,6 +144,7 @@ def fmt_type(t: dict, g: dict, depth: int = 0, seen: Optional[set] = None) -> st
 
 def build_server(root: str) -> MCPServer:
     root = os.path.abspath(root)
+    ann_path = ann_mod.prepare_file(os.path.join(project.hx_dir(root), "graph.json"), import_legacy=True)
     store = GraphStore(root)
     srv = MCPServer("hx", instructions=(
         "hx holds pre-extracted structure of this project's code: per function the signature, parameters with in/out, "
@@ -175,7 +176,7 @@ def build_server(root: str) -> MCPServer:
                 return "ambiguous; candidates:\n" + "\n".join("  " + x["id"] for x in hits)
             else:
                 return f"not in graph {info['name']}: {id}. Try search(query) or extract(entry)."
-        ann = ann_mod.load(os.path.join(project.hx_dir(root), "annotations.json"))
+        ann = ann_mod.load(ann_path)
         return fmt_node(n, g, ann)
 
     @srv.tool()
@@ -288,7 +289,7 @@ def build_server(root: str) -> MCPServer:
     @srv.tool()
     def annotate(id: str, note: str = "", tags: str = "") -> str:
         """Attach a note and/or comma-separated tags to a function/type id in annotations.json (shared with the viewer). Empty values are left untouched."""
-        path = os.path.join(project.hx_dir(root), "annotations.json")
+        path = ann_path
         sym = id.split("::")[-1]
         bucket = "types" if sym.startswith(("struct ", "union ", "enum ", "class ", "anon@")) else "nodes"
         patch: dict = {}

@@ -12,6 +12,54 @@ for *what is intended*.
 - **One IR, five frontends**: language-neutral intermediate representation; frontends for C/C++ (libclang), SystemVerilog (verilator XML), Rust + Python (generic LSP client) and SPICE-family circuit netlists (native parser, simulators only as optional oracles). C/C++ first.
 - **Decisions made**: metadata format = JSON (schema-versioned; SQLite only if repo-scale indexing is later needed). Tool = Python package. Viewer = browser app bundled into one HTML with vendored libraries (Cytoscape.js + dagre), served by FastAPI. Static structure only; runtime capture reserved for a later phase.
 
+## Current status (2026-10-16)
+
+The package is **0.4.0**, emitting graph schema **hx/3** and annotation schema
+**hx-ann/1**. Supported frontends are C/C++, SystemVerilog/Verilog, Rust, Python,
+and SPICE/ngspice netlists. `instance` is a supported edge kind. Xyce/XDM oracle
+integration, HSPICE profiles and Spectre grammar remain future work; their tool
+registry entries do not imply working CLI flags. The [README](../../README.md)
+and [tutorials/API references](../../docs/index.md) describe the current interface.
+
+- **State placement.** Default CLI extraction walks upward from the real source
+  file and selects the first directory containing `.github`, including nested
+  repositories; `.hx` sits beside it. Without that marker it uses the invocation
+  directory. Explicit `--root` takes precedence. Serve/export use invocation-local
+  `.hx` first, otherwise the nearest `.github` owner's `.hx`, and error if the
+  selected state has no graph. `graph.json` precedes sorted `graphs/*.json`;
+  reserved `annotations.json` is excluded. Explicit graph paths bypass discovery.
+- **Persistence and provenance.** CLI extraction, updates, MCP, viewer extraction
+  and migration share `project.save_extraction`. Stable per-entry current files
+  under `.hx/graphs/` coexist with the selected-entry mirror `.hx/graph.json`.
+  Previous bytes become immutable history under `.hx/history/<slug>/`, with
+  configurable retention (default 20). Time/revision/run-ID filenames distinguish
+  extractions within the same commit; `meta.provenance` records Git/source state,
+  observed inputs and option/result fingerprints. Explicit CLI `-o` selects
+  standalone output. See [storage rules](../../docs/reference/configuration.md).
+- **Annotations.** All managed graphs, including history, share their owning
+  `.hx/annotations.json`; standalone graphs use adjacent notes. Serve/export
+  `--annotations` overrides win, independently of source lookup. Viewer/MCP startup
+  atomically copies one unambiguous legacy sidecar only when shared notes are
+  absent, preserving its original bytes and file. Export can read that sidecar
+  without importing. Competing or invalid legacy files require explicit
+  selection or correction; no automatic merge occurs. Migration preflights notes
+  before replacing graphs, then imports and maps IDs with the existing backup
+  mechanism. See [legacy sidecars](../../docs/reference/annotations.md#legacy-sidecars).
+- **Viewer and CI.** Browser workflow tests and hide/show UI are implemented;
+  hidden state persists in annotations and exports. CI installs ngspice alongside
+  the required language toolchains, Playwright and Chromium on Python 3.10/3.12.
+  `HX_REQUIRE_TOOLS=1` fails required-tool skips; optional vendor checks remain
+  opt-in through `HX_REQUIRE_VENDOR_TOOLS`. Documentation has a strict MkDocs
+  build, interface coverage tests and executable tutorials.
+- **Remaining boundaries.** Runtime capture, inotify watching, C++ template
+  instantiation expansion, LSP disk caching, and per-always-block SV signal
+  reads/writes remain outside the implemented scope. Netlist N2–N5 remain planned.
+
+Phase descriptions below preserve design history, including superseded schemas,
+IDs and test counts. Dated benchmark results describe their original runs; they
+are not claims of validation against today's checkout. Use this status section
+and the linked reference documentation for current behavior.
+
 ## Glossary
 - **IR** — intermediate representation, the language-neutral data model in `hx/model.py`.
 - **Call graph** — who-calls-whom.
@@ -32,7 +80,7 @@ for *what is intended*.
 
 ## Principles
 1. **Never drop silently.** Anything reached but not expanded goes into `unresolved[]` with a reason (beyond depth, no definition, system header, excluded, function pointer, truncated).
-2. **IDs are a contract.** `<lang>:<relpath>::<qualname>` forms are stable across regeneration; overload hashes are added only on collision; a C/C++ type that differs between translation units carries `@<8hex>` (hx/3). Annotations key on them, and an id rule change bumps the schema major with a migration.
+2. **IDs are a contract.** `<lang>:<relpath>::<qualname>` forms are stable across regeneration of the same build configuration; C++ IDs include parameter types to distinguish overloads, with hashes for residual collisions. A C/C++ type that differs between translation units carries `@<8hex>` (hx/3). Annotations key on IDs, and an identity rule change bumps the schema major with a migration.
 3. **Exactness is labelled.** Every node carries `precision` (`exact` | `lsp` | `syntax`); every param carries `dir_source` (`explicit` | `heuristic` | `user`). The viewer never pretends.
 4. **Regeneration is cheap.** Per-TU cache keyed by source+header mtimes; a re-run after an agent edit re-parses only what changed.
 5. **Frontends emit IR, nothing else.** `hx/traverse.py` never looks inside a frontend key.
@@ -53,7 +101,7 @@ for *what is intended*.
 
 ## Phase 1 — Core + C/C++ frontend (done)
 
-### Layout
+### Historical layout (Phase 1)
 ```
 hx/
   pyproject.toml              # package "hx", console script "hx"; deps: libclang (+ fastapi/uvicorn from Phase 2)
@@ -72,7 +120,11 @@ hx/
     test_ids.py  test_traverse.py (fake frontend)  test_clang_fe.py (real libclang)  test_cli.py
 ```
 
-### IR — `graph.json`, schema `hx/1`
+### Historical IR — `graph.json`, schema `hx/1`
+
+This is the Phase 1 shape, retained for context. Current readers/writers use
+`hx/3`; see the [graph reference](../../docs/reference/graph.md).
+
 - Top level: `schema`, `generated`, `root`, `lang`, `entry`, `meta`, `nodes{}`, `types{}`, `globals{}`, `edges[]`, `unresolved[]`.
 - **Node**: `id`, `kind`, `name`, `qualname`, `lang`, `loc{file,line,end_line,col}`, `signature`, `storage`, `depth` (negative = caller side), `body_hash`, `precision`, `returns{type,type_ref}`, `params[]{name,type,type_ref,dir,dir_source}`, `globals{reads[],writes[]}`, `calls[]`, `runtime: null`.
 - **Type**: `id`, `kind` (`struct|union|class|enum|typedef|…`), `name`, `loc`, `size`, `align`, `fields[]{name,type,type_ref,offset,size,bit_offset,bit_width}`, `enumerators[]`, `underlying`, `underlying_ref`, `anonymous`, `system`, `used_by[]`.
@@ -80,7 +132,11 @@ hx/
 - **Edge**: `from`, `to` (null for function-pointer calls), `kind` (`call|macro|fnptr|ref|instance`), `loc`, `args[]` (as written), `name`, `macro`, `ptr_type`.
 - **Unresolved**: `name`, `from`, `reason`, `loc`, `id`.
 
-### Stable IDs
+### Historical stable IDs (Phase 1)
+
+These examples predate the C/C++ and SystemVerilog identity revisions. Current
+rules and migration boundaries are in the [graph reference](../../docs/reference/graph.md).
+
 - Functions `c:src/dma.c::dma_start`; C++ overloads `cpp:src/bus.cpp::Bus::write#a1b2c3d4` (hash only on collision).
 - Types `c:include/dma.h::struct dma_chan`, typedefs `c:include/dma.h::dma_chan_t`, anonymous `c:include/dma.h::anon@L23`.
 - Globals `c:src/dma.c::g_dma_active`; function-local statics `c:src/main.c::app_run.ch`.
@@ -109,7 +165,7 @@ hx/
 - **Layout**: left = hierarchy tree (entry → callees by depth, collapsible, search, callers group); center = graph (optional compound nodes grouped by file, dagre layout LR/TB, depth slider, double-click collapses a subtree, hover edge shows call-site args); right = detail (signature, params table with editable `dir` chip, click type → nested struct/field tree with offsets, source snippet, notes/tags, "verified" checkbox that pins the body hash and flags later changes).
 - URL hash holds selection/layout so views are linkable. Unresolved calls render as dashed ghost nodes.
 - **API**: `GET /api/graph`, `GET|PUT|PATCH /api/annotations` (PATCH = JSON merge patch, `null` deletes), `POST /api/extract` (re-run with the args stored in `graph.meta`), `GET /api/source?file&line&span` (root-confined), `GET /events` (SSE: `graph`, `annotations`, `extract-start`, `extract-error`, `ping`).
-- **annotations.json** schema `hx-ann/1`: `nodes{id:{note, tags[], verified_body_hash, collapsed, params{name:{dir,note}}}}`, `types{id:{note, fields{name:{note}}}}`, `view{hidden[], pinned_positions{}}`. One file per project (`.hx/annotations.json`), shared across entry points.
+- **annotations.json** schema `hx-ann/1`: `nodes{id:{note, tags[], verified_body_hash, collapsed, params{name:{dir,note}}}}`, `types{id:{note, fields{name:{note}}}}`, `view{hidden[], pinned_positions{}}`. Managed graphs share `.hx/annotations.json` across entry points and snapshots; standalone graphs use adjacent notes unless explicitly overridden.
 - **Export** mode has no server: edits stay in memory and a "download annotations" button yields the file.
 
 ## Phase 3 — More frontends (done)
@@ -144,7 +200,7 @@ Default CLI extraction, updates, MCP, viewer re-extraction, and migration commit
   - H8 `abspath` boundary → `realpath` on both sides.
 - **Tests**: tautologies removed; conformance runs the invariants under depth 0, type depth 0/99, max-nodes, callers and exclusion, and asserts the caller round trip; new fixtures `tests/fixtures/c_variants` (build variants) and `tests/fixtures/cpp` (overloads, template, const method); `HX_REQUIRE_TOOLS=1` turns every skip into a failure (`tests/conftest.py`); `.github/workflows/ci.yml` installs all toolchains on Python 3.10/3.12; `tests/test_schema.py` validates graphs against `hx/schema/hx-1.schema.json`.
 - **Docs/packaging/persistence**: base dependencies include `tomli` (py<3.11), MCP and Pyright with packaged Node.js; extras `dev` (including `jsonschema`), `e2e` and the compatibility `mcp` extra; README "Boundaries" and optional toolchain install commands; `Graph.from_dict` enforces the schema major (`SchemaError`); `hx/fsutil.py` atomic writes everywhere + `flock` around annotation read-modify-write; watch also tracks `compile_commands.json`, `Cargo.toml`, `pyrightconfig.json`, `CMakeLists.txt` even inside skipped build dirs.
-- **Not done (deliberately)**: Playwright browser workflow tests (extra `e2e` reserved, no test written: the delete path is covered at the patch-composition and API levels); inotify watching; template instantiation expansion.
+- **Deferred at Phase 4.5 completion (historical)**: Playwright browser workflow tests were added in Phase 4.6; inotify watching and template instantiation expansion remain deferred.
 
 ## Phase 4.6 — Real-project hardening, CVA6 review (done)
 - **TLDR**: a second external review ran hx on CVA6 (403 cells, generate blocks, a parameterized FPU, a 17,270-bit packed configuration parameter). All eleven findings reproduced; the plan went through six review rounds before approval (each round's corrections are recorded in the plan file); everything is fixed with regressions that failed on the previous code. Schema major bumped to `hx/2`, package 0.3.0. Terms: specialization = one module elaborated with specific parameters; JS-safe integer = below 2^53.
@@ -209,7 +265,7 @@ Default CLI extraction, updates, MCP, viewer re-extraction, and migration commit
 - **2026-10-09** — Phase 2 done. `hx serve` (FastAPI + uvicorn, lifespan watcher polling graph/annotations mtimes, SSE), `hx export`, `hx/annotations.py` (merge patch, recursive prune), viewer in `hx/viewer/` (vanilla JS, Cytoscape 3.34.3 + dagre 0.8.5 vendored). 42 tests (SSE tests run a real uvicorn thread because Starlette's TestClient buffers whole responses). Verified with headless Chrome screenshots in light and dark mode, console clean. Viewer extras beyond plan: `?theme=`, `?live=0`, caller side in tree, per-reason unresolved groups, global read/write panel, edge detail page.
 - **2026-10-09** — Phase 3 done. SystemVerilog (verilator 5.020), Rust (rust-analyzer 1.99, installed via rustup `--profile minimal --no-modify-path`, binaries in `~/.cargo/bin`) and Python (pyright 1.1.414 via pip) frontends; fixtures under `tests/fixtures/{sv,rust,python}`; 62 tests green including a cross-frontend conformance test; viewer shows instance edges, bit-sized HDL layouts and node attrs (verified by headless Chrome).
 - **2026-10-09** — Phase 4 done. `hx diff`, tracked entries with snapshots/history, `hx update`/`hx watch`, update hook installer, viewer diff mode and graph picker, MCP server (mcp 2.3.0). 76 tests green. Verified end to end on the C fixture (last-diff.md and viewer diff screenshot) and MCP tools through the in-memory client.
-- **Open items carried forward**: viewer has no automated browser tests (only syntax check + headless render in dev loop); `annotations.view.hidden` is reserved but not yet used by the UI; export mode keeps edits in memory until downloaded; LSP frontends have no on-disk cache (each extraction restarts the server, ~2–4 s on the fixtures), so `hx update` on Rust/Python entries costs seconds per entry; SV internal-signal reads/writes per always block are not extracted (signals are listed in `attrs` only); Go profile (`gopls`) exists but is untested; `hx watch` polls (no inotify) — fine up to tens of thousands of files; MCP `extract` tool is synchronous (a slow extraction blocks that tool call); Phase 5 (runtime capture) remains reserved.
+- **Open items at Phase 4 completion (historical)**: browser workflow tests and the reserved `annotations.view.hidden` UI were still pending then; both were implemented on 2026-10-10 (see Phase 4.6 and the hide/show entry below). Export mode keeps edits in memory until downloaded; LSP frontends have no on-disk cache (the historical fixture runs took ~2–4 s per extraction); SV internal-signal reads/writes per always block are not extracted (signals are listed in `attrs` only); Go profile (`gopls`) exists but is untested; `hx watch` polls (no inotify); MCP `extract` tool is synchronous; Phase 5 (runtime capture) remains reserved.
 - **2026-10-10** — Phase 4.5 (hardening) done. External review verified line by line (8/8 findings reproduced, plus one worse than reported: pyright body hashes covered only the function name). Token-based `body_hash(text, lang)`, SV source-slice hashes, deterministic cache merge with complete keys, viewer patch FIFO with `composePatch`, C++ parameter-list ids, hashed slugs with legacy migration, traversal truncation/caller-globals/type-order fixes, broader diff, realpath confinement, JSON schema + loader check, atomic writes + file lock, CI workflow with `HX_REQUIRE_TOOLS=1`. Version bumped to 0.2.0 (cache `SUMMARY_VERSION` 2 invalidates old `.hx/cache`).
 - **2026-10-09** — Dependency installation follow-up: MCP and Pyright with its packaged Node.js runtime now install with the base package; Python 3.10 retains its conditional `tomli` dependency. Preserved the compatibility `mcp` extra and documented developer/browser extras plus optional language toolchains. CI checks base installation before developer dependencies on Python 3.10/3.12. Verified clean wheel installs, dependency consistency and Pyright without system Node on both Python versions; 97 tests passed on each with no skips, plus all 4 standalone JavaScript tests.
 - **2026-10-10** — Viewer edges switched from bezier to orthogonal routing (`curve-style: round-taxi`, 8px corner radius, direction follows the layout, turn 22px after the source so the cross run stays in the inter-rank gap, parallel edges staggered by 10px via `data.pi`, self-loops stay bezier). Taxi edges do not avoid obstacles; that is a known limit. Verified by headless screenshots in both layouts.
@@ -219,3 +275,22 @@ Default CLI extraction, updates, MCP, viewer re-extraction, and migration commit
 - **2026-10-14** — Phase N1.1 done (review fixes; the critique's six defects and two test gaps all reproduced, plan reviewed three rounds). Canonical nets through each occurrence's ancestor chain and immediate-binding wiring diffs; merged declaration records with ghosts listed; reference alternatives; switch grammar with an oracle that never skips a required model and filters both sides by subtree; guard-aware scope hashes; standalone library entries (deck role, omitted deck replayed as omitted); expression canonicaliser; definition-rooted oracle checks per instance. Strict suite green; coverage rerun `~/hx-review-artifacts/netlists/review-fixes-20261014/` unchanged (GF180 18/18, sky130 within thresholds). Not committed (user commits).
 - **2026-10-13** — Phase N1 done (circuit netlists: SPICE + ngspice end to end; plan reviewed fifteen rounds). Native parser under `hx/netlist/` with data-only dialect profiles, scoped guard-aware lookup, include/library closure with probes, the `circuit` block (schema hx/3, additive), `sp:` ids owned by the deck with definition-rooted views, device/instance nodes in viewer, diff (wiring, models, definitions, params), track/watch over dependencies and probes, MCP `extract` option merging, the optional-tool registry (`hx/tools.py`) and `hx netlist check --oracle ngspice`. Coverage run (`~/hx-review-artifacts/netlists/apragma-20261013/`): the three apragma decks parse with 0 unparsed statements and 0 unknown families; the numeric GF180 sample agrees with ngspice on all 18 devices with 0 mismatches (raw deck exit 0 confirmed first); the symbolic template is "oracle unavailable" (`Undefined parameter [m_load_1_w]`) and its six `missing-model` diagnostics are genuine (`pch_lvt`/`nch_lvt` are not in the GF180 library); the IHP sweep's six OSDI `N` devices are recognised and its oracle is unavailable because ngspice has no PSP OSDI model loaded; the sky130 `tt` wrapper extracts cold in 5.5 s and warm in 2.1 s from the cache (171 files, 188 subckts, 1,019 models, 14,060 params) with a definition view of `sky130_fd_pr__nfet_01v8` through its defining file in 1.4 s. The first coverage run exposed four GF180 library constructs (sibling-section `.lib` references, `+` continuations across blank lines, `.ends othername`, diagnostics in unselected sections) and the OSDI letter; all fixed with fixtures and ngspice-verified rules. Strict suite green (`HX_REQUIRE_TOOLS=1 HX_REQUIRE_VENDOR_TOOLS=xyce,xdm`). Not committed (user commits).
 - **2026-10-10** — Viewer: hide/show modules (eye on tree rows, detail-pane button, `h`). Hidden nodes are walls in `visibleSet()`: the node, its edges and everything only reachable through it disappear; shared routines stay. State in `annotations.view.hidden` (the slot reserved since Phase 2), so it persists, migrates with ids and carries into exports. Four Playwright tests (C fixture, export page, SV subtree).
+- **2026-10-16** — Current-state amendment: recorded first-`.github` root
+  discovery, invocation-local graph lookup, stable per-entry current files,
+  immutable history and provenance, and the tutorials/API reference site. Managed
+  viewer/export graphs now use the same shared annotation path as MCP, including
+  historical snapshots; standalone and explicit overrides retain their defaults.
+  Initialization imports one unambiguous legacy sidecar atomically without
+  replacing shared notes or altering the source; export only reads it. Migration
+  preflights selection before graph commits and preserves the existing ID-mapping
+  backups. Reserved annotation filenames are excluded from graph selection,
+  history retention and dependency scanning. README/reference docs now distinguish
+  supported CLI flags from planned netlist integrations, include `instance`
+  edges, and explain strict/vendor test policy. CI installs and checks ngspice.
+  Superseded schema/ID examples and closed browser/hide-UI items are labelled
+  historical; original dated benchmark claims are retained.
+  Validation: 366 tests passed with `HX_REQUIRE_TOOLS=1` and the virtualenv's
+  executables on PATH, including browser workflows and the live ngspice oracle;
+  strict MkDocs build passed; 27 README CLI examples parse and README/SSOT local
+  file links resolve. Existing project graph/annotation files remained unchanged,
+  and no `.hx` directories were created under the test cases.

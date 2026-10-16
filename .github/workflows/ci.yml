@@ -1,6 +1,6 @@
 name: ci
-# Every toolchain is installed on purpose and HX_REQUIRE_TOOLS=1 turns any skipped test into a failure:
-# optional dependencies must not make the suite look green by skipping.
+# Required toolchains are installed and HX_REQUIRE_TOOLS=1 makes their skips fail.
+# Vendor checks remain opt-in through HX_REQUIRE_VENDOR_TOOLS.
 on:
   push:
   pull_request:
@@ -36,10 +36,10 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
-      - name: toolchains (verilator, clang, rust-analyzer)
+      - name: toolchains (verilator, clang, ngspice, rust-analyzer)
         run: |
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends verilator clang gcc
+          sudo apt-get install -y --no-install-recommends verilator clang gcc ngspice
           rustup toolchain install stable --profile minimal
           rustup component add --toolchain stable rust-analyzer rust-src
           echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
@@ -68,6 +68,7 @@ jobs:
           HX_REQUIRE_TOOLS: "1"
         run: |
           rust-analyzer --version
+          ngspice --version
           python -m pytest -q -ra
       - name: node unit tests for the viewer
         run: node --test tests/js
