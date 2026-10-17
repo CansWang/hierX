@@ -1,13 +1,15 @@
 #!/usr/bin/env bash
-# Installed-wheel smoke test OUTSIDE the checkout: build the wheel, install it into a fresh venv, then from an
-# unrelated directory extract a copied netlist deck, query a net, export a page, and assert the package data
-# (Xyce inventory, schemas, viewer assets) is present. Exit non-zero on the first failure.
+# Installed-wheel smoke test OUTSIDE the checkout: build the wheel, install it into a fresh venv, then from the
+# work directory (never the checkout) assert with isolated Python (-I: no cwd on sys.path) that the IMPORTED hx is
+# the venv's copy and carries its package data (Xyce inventory, schemas, viewer assets); then from unrelated
+# directories extract a copied netlist deck, query a net and export a page. Exit non-zero on the first failure.
 # Usage: dev/scripts/wheel_smoke.sh [WORKDIR]   (default: a fresh mktemp directory; printed at the end)
 set -euo pipefail
 REPO="$(cd "$(dirname "$0")/../.." && pwd)"
 WORK="${1:-$(mktemp -d /tmp/hx-wheel-smoke.XXXXXX)}"
 PY="${PYTHON:-python3}"
 mkdir -p "$WORK"
+WORK="$(cd "$WORK" && pwd)"                        # absolute: the package-data check below changes directory into it
 echo "== build wheel"
 "$PY" -m pip wheel --no-deps --no-build-isolation -w "$WORK/wheels" "$REPO" >/dev/null 2>&1 || "$PY" -m pip wheel --no-deps -w "$WORK/wheels" "$REPO" >/dev/null
 WHEEL="$(ls "$WORK"/wheels/hx-*.whl | head -1)"
@@ -17,9 +19,15 @@ echo "== fresh venv"
 "$WORK/venv/bin/python" -m pip install --quiet --upgrade pip
 "$WORK/venv/bin/python" -m pip install --quiet "$WHEEL"
 HX="$WORK/venv/bin/hx"
-echo "== package data present"
-"$WORK/venv/bin/python" - <<'PY'
-import importlib.resources as r, sys
+echo "== package data present (hx imported from the fresh venv, not the checkout)"
+cd "$WORK"
+"$WORK/venv/bin/python" -I - <<'PY'
+import importlib.resources as r, os, sys
+import hx
+where = os.path.realpath(os.path.dirname(hx.__file__))
+venv = os.path.realpath(sys.prefix)
+if not where.startswith(venv + os.sep):
+    sys.exit(f"hx imported from {where}, not from the fresh venv {venv}")
 pkg = r.files("hx")
 need = ["netlist/xyce_devices.json", "schema/hx-1.schema.json", "schema/hx-2.schema.json", "schema/hx-3.schema.json",
         "schema/hx-4.schema.json", "viewer/app.js", "viewer/circuit.js", "viewer/patch.js", "viewer/index.html", "viewer/style.css"]
@@ -27,7 +35,7 @@ missing = [n for n in need if not pkg.joinpath(n).is_file()]
 vendor = [p.name for p in pkg.joinpath("viewer/vendor").iterdir()] if pkg.joinpath("viewer/vendor").is_dir() else []
 if missing or not vendor:
     sys.exit(f"missing package data: {missing or 'viewer/vendor/*'}")
-print("   ok:", len(need), "files +", len(vendor), "vendored viewer libraries")
+print("   ok:", len(need), "files +", len(vendor), "vendored viewer libraries, imported from", where)
 PY
 echo "== commands from an unrelated directory"
 cp -r "$REPO/tests/fixtures/spice/ota" "$WORK/ota"

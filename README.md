@@ -259,7 +259,8 @@ written. The additive `circuit` block holds what call graphs have no place for
   and the simulator rows they could spell are counted, not compared; a family
   that needs a model (`M`, `Q`, `D`, `W`, …) is always compared on it, so a
   model missing on either side is a `model` mismatch, never a skipped check;
-  an instance-path entry restricts both sides to that subtree (ngspice only:
+  an instance-path entry restricts both sides to that subtree and a device
+  entry both sides to that one device (ngspice only:
   `--oracle xyce|xdm` always check the whole deck and read `--dialect auto` as
   `xyce`, and every report prints `scope` and `dialect` lines saying what was
   compared); a definition-rooted entry with deck context (`lib.inc:@cm --deck deck.sp`, or

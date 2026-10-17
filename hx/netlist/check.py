@@ -54,15 +54,17 @@ def check_ngspice(entry: str, *, root: str, exe: Optional[str] = None, dialect: 
             report["reason"] = (f"oracle unavailable: definition '{definition.name}' has no unguarded instance in deck {dgraph.circuit['deck']}"
                                 + (f" ({len(insts)} guarded; ngspice lists the active branch only)" if insts else ""))
             return report
-    subtree = None
+    subtree = None                                           # instance path both sides are restricted to (None = whole deck)
+    device = None                                            # with `subtree`: the one device both sides narrow to
     if definition is None and symbol != ".":
         entry_node = graph.nodes[graph.entry]
+        occ = fe._occ[fe._by_id[graph.entry]][1]             # the raw folded path; the display qualname escapes dots (`r\.foo`)
         if entry_node.kind == "instance":
-            subtree = entry_node.qualname.split("#")[0].split(".")
+            subtree = list(occ.path)
             report["scope"] = f"instance {entry_node.qualname}"
         elif entry_node.kind == "device":
-            subtree = entry_node.qualname.split("#")[0].split(".")[:-1]
-            report["scope"] = f"device {entry_node.qualname} (its enclosing instance " + (path_str(subtree) if subtree else "(deck)") + ")"
+            subtree, device = list(occ.path[:-1]), occ.path[-1]
+            report["scope"] = f"device {entry_node.qualname}"
     if report["scope"] is None:
         report["scope"] = "whole deck"
     render = render_closure(fe.index)
@@ -100,7 +102,7 @@ def check_ngspice(entry: str, *, root: str, exe: Optional[str] = None, dialect: 
         report["summary"] = summary
         report["status"] = "agree" if summary["agree"] else "mismatch"
         return report
-    res = compare(devices, listing, fe.profile, hx_models, subtree)
+    res = compare(devices, listing, fe.profile, hx_models, subtree, device=device)
     report.update(res)
     report["status"] = "agree" if res["summary"]["agree"] else "mismatch"
     return report

@@ -413,6 +413,29 @@ Default CLI extraction, updates, MCP, viewer re-extraction, and migration commit
   builds the wheel, installs it into a fresh venv and runs extraction, queries and export from
   outside the checkout (passed locally: 10 data files + 4 vendored libraries, netlist, Xyce and
   Rust extractions); CI runs it after the clean base install; `coverage` joins the `dev` extra.
+- **2026-10-16** — Review follow-ups 1.3 (the two P2 findings the reviewer left open on 1.2; both
+  were in committed code). Packaging: `dev/scripts/wheel_smoke.sh` ran its package-data check with
+  `python -` from the caller's directory, so from the checkout root (locally and in the CI step)
+  `import hx` resolved to the source tree, not the installed wheel; the check now runs from the
+  (absolute) work directory with isolated Python (`-I`) and exits unless `hx.__file__` lies under
+  the fresh venv, printing the imported path. Oracle: a device-rooted `hx netlist check` extracted
+  a graph holding that device alone (plus the targets of its `ref` edges) while the listing was cut
+  to the ENCLOSING instance, so every sibling was `missing-in-hx` (a deck-level device entry saw the
+  whole listing); present since 7e010e4. Now `compare(..., subtree=P, device=NAME)` narrows BOTH
+  sides to the one device (scope line `device x1.r1`; instance and definition entries unchanged);
+  the selector comes from the entry's occurrence (`occ.path`), never from the display qualname,
+  whose dots are escaped (`x1.r\.foo`; the instance branch shared that flaw); and a listing row
+  spelled exactly as an in-scope hx device expects is in scope BEFORE the tolerant `strip_letters`
+  decode, which cannot carry a bare-letter or dotted device name (ngspice 45.2 lists `r a b 4k`
+  inside `x1` as `r.x1.r` and `r.foo` as `r.x1.r.foo`; the subtree filter used to drop such rows and
+  report `missing-in-ngspice`). Tests: `test_netlist_oracle_fakes.py::test_fake_ngspice_device_entry_narrows_both_sides_to_that_device`
+  (sibling, deck-level, `ref`-target `out_of_scope_hx`, `x1.r\.foo`, `x1.r`, instance and whole-deck
+  counts) and `::test_fake_ngspice_wrong_net_on_odd_names_is_never_zero_comparison_agreement`
+  (one `net` mismatch with one device compared, never zero-comparison agreement);
+  `test_netlist_oracle.py::test_device_scope_keeps_exact_spellings_and_narrows_both_sides` (pure
+  `compare`) and live assertions in `::test_live_agreement` (`ota.sp:xa.m_load_1`, `ota.sp:f1`,
+  fixture `oracle/odd_names/odd_names.sp`). Docs: the README oracle bullet, the netlist tutorial and
+  the dialect matrix's oracle row name the device scope.
   Validation: 414 tests passed in 189 s with `HX_REQUIRE_TOOLS=1 HX_REQUIRE_VENDOR_TOOLS=xyce,xdm`
   (no skips); strict MkDocs build passed; coverage.py with subprocess measurement 91.8 %
   of 9,622 statements (lowest: `fsutil.py` 78 %, the no-`fcntl` fallback; `lsp_fe.py` 83 %;

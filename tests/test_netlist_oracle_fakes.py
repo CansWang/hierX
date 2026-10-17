@@ -77,9 +77,9 @@ c1 n2 0 1p
 _GOOD_ROWS = ["     1 : fake deck", "     3 : r.x1.r1 n1 0 1k", "     3 : r.x2.r1 n1 0 1k", "     7 : rt n1 n2 1k", "     8 : c1 n2 0 1p"]
 
 
-def _listing_fake(tmp_path, rows, exit_code=0, stderr=""):
+def _listing_fake(tmp_path, rows, exit_code=0, stderr="", name="ngspice-fake"):
     body = "import sys\nsys.stdin.read()\n" + f"sys.stderr.write({stderr!r})\n" + "".join(f"print({r!r})\n" for r in rows) + f"sys.exit({exit_code})\n"
-    return _fake(tmp_path, "ngspice-fake", body)
+    return _fake(tmp_path, name, body)
 
 
 def _deck(tmp_path, text=_DECK, name="fake.sp"):
@@ -97,7 +97,7 @@ def test_fake_ngspice_agreement_and_scopes(tmp_path):
     rep = check_ngspice("fake.sp:x1", root=str(root), exe=exe)
     assert rep["status"] == "agree" and rep["scope"] == "instance x1" and rep["summary"]["compared"] == 1 and rep["summary"]["out_of_scope"] == 3
     rep = check_ngspice("fake.sp:x1.r1", root=str(root), exe=exe)
-    assert rep["scope"] == "device x1.r1 (its enclosing instance x1)" and rep["summary"]["compared"] == 1
+    assert rep["scope"] == "device x1.r1" and rep["summary"]["compared"] == 1
     rep = check_ngspice("fake.sp:@leaf", root=str(root), exe=exe)
     assert rep["status"] == "agree" and rep["scope"].startswith("definition leaf per unguarded instance in deck fake.sp") and rep["summary"]["instances"] == 2
     text = format_report(rep)
@@ -133,6 +133,70 @@ def test_fake_ngspice_failure_garbage_and_timeout_are_unavailable(tmp_path, caps
     rep = check_ngspice("fake.sp:.", root=str(root), exe=sleeper, timeout=0.3)
     assert rep["status"] == "unavailable" and rep["reason"] == "oracle unavailable: ngspice timed out after 0.3s"
     assert main(["netlist", "check", "fake.sp:.", "--ngspice", sleeper, "--root", str(root), "--timeout", "0.3"]) == 2
+
+
+_SIB_DECK = """fake deck
+.subckt leaf a b
+r1 a b 1k
+r2 a b 2k
+r.foo a b 3k
+r a b 4k
+.ends
+x1 n1 0 leaf
+rt n1 n2 1k
+vs n1 0 1
+f1 fout 0 vs 2
+.end
+"""
+# ngspice 45.2 spells the dotted and the bare-letter device `r.x1.r.foo` and `r.x1.r` (verified live; `strip_letters` cannot decode either)
+_SIB_ROWS = ["     1 : fake deck", "     3 : r.x1.r1 n1 0 1k", "     4 : r.x1.r2 n1 0 2k", "     5 : r.x1.r.foo n1 0 3k", "     6 : r.x1.r n1 0 4k",
+             "     9 : rt n1 n2 1k", "    10 : vs n1 0 1", "    11 : f1 fout 0 vs 2"]
+
+
+def _scope_counts(rep):
+    return rep["summary"]["compared"], rep["summary"]["out_of_scope"], rep["summary"]["out_of_scope_hx"]
+
+
+def test_fake_ngspice_device_entry_narrows_both_sides_to_that_device(tmp_path):
+    """A device entry compares that one device: siblings, deck-level devices and a controlling target pulled into the
+    graph by the `ref` edge are out of scope on both sides, never missing (7e010e4 cut the listing to the enclosing
+    instance while hx held the device alone, and a deck-level device was checked against the whole listing)."""
+    root = _deck(tmp_path, _SIB_DECK)
+    exe = _listing_fake(tmp_path, _SIB_ROWS)
+    rep = check_ngspice("fake.sp:x1.r1", root=str(root), exe=exe)
+    assert rep["status"] == "agree" and rep["scope"] == "device x1.r1" and rep["mismatches"] == [] and _scope_counts(rep) == (1, 6, 0), rep["mismatches"]
+    rep = check_ngspice("fake.sp:rt", root=str(root), exe=exe)                    # deck level: the whole listing is not its scope
+    assert rep["status"] == "agree" and rep["scope"] == "device rt" and _scope_counts(rep) == (1, 6, 0), rep["mismatches"]
+    rep = check_ngspice("fake.sp:f1", root=str(root), exe=exe)                    # vs enters f1's graph through the ref edge: counted, not compared
+    assert rep["status"] == "agree" and rep["scope"] == "device f1" and _scope_counts(rep) == (1, 6, 1), rep["mismatches"]
+    # names the tolerant decode cannot carry: a dotted name (escaped `\.` in the entry) and a bare letter
+    rep = check_ngspice(r"fake.sp:x1.r\.foo", root=str(root), exe=exe)
+    assert rep["status"] == "agree" and rep["scope"] == r"device x1.r\.foo" and _scope_counts(rep) == (1, 6, 0), rep["mismatches"]
+    rep = check_ngspice("fake.sp:x1.r", root=str(root), exe=exe)
+    assert rep["status"] == "agree" and rep["scope"] == "device x1.r" and _scope_counts(rep) == (1, 6, 0), rep["mismatches"]
+    rep = check_ngspice("fake.sp:x1", root=str(root), exe=exe)                    # the instance subtree keeps those rows too
+    assert rep["status"] == "agree" and rep["mismatches"] == [] and _scope_counts(rep) == (4, 3, 0), rep["mismatches"]
+    rep = check_ngspice("fake.sp:.", root=str(root), exe=exe)
+    assert rep["status"] == "agree" and rep["summary"]["compared"] == 7, rep["mismatches"]
+
+
+def test_fake_ngspice_wrong_net_on_odd_names_is_never_zero_comparison_agreement(tmp_path, capsys):
+    """A wrong net on the selected device is one `net` mismatch with one device compared, whatever its name; the
+    sibling's own check stays clean and the enclosing instance sees the same single mismatch."""
+    root = _deck(tmp_path, _SIB_DECK)
+    for i, entry, row in ((3, r"x1.r\.foo", "r.x1.r.foo"), (4, "x1.r", "r.x1.r"), (2, "x1.r2", "r.x1.r2")):
+        rows = list(_SIB_ROWS)
+        rows[i] = rows[i].replace(" 0 ", " n9 ", 1)                                 # a wrong second net on that row only
+        bad = _listing_fake(tmp_path, rows, name=f"ngspice-bad-{i}")
+        rep = check_ngspice(f"fake.sp:{entry}", root=str(root), exe=bad)
+        assert rep["status"] == "mismatch" and rep["summary"]["compared"] == 1, (entry, rep["summary"], rep["mismatches"])
+        assert [(m["what"], m["path"], m["terminal"], m["hx"], m["ngspice"]) for m in rep["mismatches"]] == [("net", row, 1, "0", "n9")]
+        sib = check_ngspice("fake.sp:x1.r1", root=str(root), exe=bad)
+        assert sib["status"] == "agree" and sib["summary"]["compared"] == 1, sib["mismatches"]
+        assert check_ngspice("fake.sp:x1", root=str(root), exe=bad)["summary"]["mismatches"] == 1
+        assert main(["netlist", "check", f"fake.sp:{entry}", "--ngspice", bad, "--root", str(root)]) == 1
+        out = capsys.readouterr().out
+        assert f"scope       device {entry}" in out and f"mismatch    net                {row} [1]: hx '0' vs ngspice 'n9'" in out, out
 
 
 # ------------------------------------------------------------------ fake Xyce

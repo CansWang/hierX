@@ -68,8 +68,8 @@ inductor grouping), and exposed net names. XDM checks its top-level primitive
 inventory; it does not expose subcircuit inventory or terminal bindings through
 that interface. Both checks always cover the whole deck, whatever entry is
 given, and read `--dialect auto` as `xyce`; the report's `scope` and `dialect`
-lines say so (only the ngspice oracle narrows to an instance subtree or compares
-a definition per instance). Warnings indicating translation loss return unavailable, even
+lines say so (only the ngspice oracle narrows to an instance subtree or a single
+device, or compares a definition per instance). Warnings indicating translation loss return unavailable, even
 when XDM exits successfully. Neither check claims full terminal-level simulator
 agreement. Original sources are mirrored without overwriting them. The explicit
 production runner requires both local tools:

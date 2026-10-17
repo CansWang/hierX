@@ -129,7 +129,7 @@ def _run_check(args, cwd):
 
 def test_live_agreement(tmp_path):
     require_tool("ngspice")
-    for sub in ("ota", "scoped", "oracle/search_path", "bjt", "numeric_nets", "globals", "pdk", "switches", "conditional", "params"):
+    for sub in ("ota", "scoped", "oracle/search_path", "oracle/odd_names", "bjt", "numeric_nets", "globals", "pdk", "switches", "conditional", "params"):
         shutil.copytree(os.path.join(FIX, sub), tmp_path / sub.replace("/", "_"))
     r = _run_check(["ota_oracle.sp:.", "--json"], tmp_path / "ota")
     rep = json.loads(r.stdout)
@@ -141,6 +141,17 @@ def test_live_agreement(tmp_path):
     r = _run_check(["ota.sp:xa", "--json"], tmp_path / "ota")
     rep = json.loads(r.stdout)
     assert rep["status"] == "agree" and rep["summary"]["out_of_scope"] > 0 and rep["summary"]["compared"] > 0, rep["summary"]
+    r = _run_check(["ota.sp:xa.m_load_1", "--json"], tmp_path / "ota")                          # one device: siblings and nested instances out of scope on both sides
+    rep = json.loads(r.stdout)
+    assert rep["status"] == "agree" and rep["scope"] == "device xa.m_load_1" and rep["summary"]["compared"] == 1 and rep["summary"]["unmatched"] == 0, rep["summary"]
+    r = _run_check(["ota.sp:f1", "--json"], tmp_path / "ota")                                   # vsense enters the graph through the ref edge: counted, not compared
+    rep = json.loads(r.stdout)
+    assert rep["status"] == "agree" and rep["summary"]["compared"] == 1 and rep["summary"]["out_of_scope_hx"] == 1, rep["summary"]
+    for entry in ("x1.r", r"x1.r\.foo", "x1", "."):                                              # ngspice 45.2 lists r.x1.r and r.x1.r.foo
+        r = _run_check([f"odd_names.sp:{entry}", "--json"], tmp_path / "oracle_odd_names")
+        rep = json.loads(r.stdout)
+        assert r.returncode == 0 and rep["status"] == "agree" and rep["summary"]["unmatched"] == 0, (entry, rep.get("reason"), rep["summary"])
+    assert rep["summary"]["compared"] == 6
     r = _run_check(["mixed.sp:."], tmp_path / "scoped")
     assert r.returncode == 0 and "status      agree" in r.stdout, r.stdout + r.stderr
     r = _run_check(["scoped.sp:."], tmp_path / "scoped")
@@ -182,6 +193,26 @@ def test_subtree_filters_both_sides():
     assert res["mismatches"] == [] and (s["compared"], s["out_of_scope"], s["out_of_scope_hx"], s["guarded_hx"]) == (1, 2, 3, 0)
     whole = oracle.compare(devs, lst, NGSPICE, set())
     assert whole["mismatches"] == [] and whole["summary"]["compared"] == 3 and whole["summary"]["out_of_scope_hx"] == 0
+
+
+def test_device_scope_keeps_exact_spellings_and_narrows_both_sides():
+    """`device` narrows both sides to one device; a listing row spelled exactly as hx expects is in scope even when the
+    tolerant decode cannot carry its name (a bare `r`, a dotted `r.foo`), for the instance subtree as well."""
+    lst = oracle.parse_listing("     1 : t\n     3 : r.xa.r1 n1 0 1k\n     4 : r.xa.r2 n1 0 2k\n     5 : r.xa.r.foo n1 0 3k\n     6 : r.xa.r n1 0 4k\n"
+                               "     8 : r.xb.r1 n1 0 1k\n     9 : rtop n1 0 1k\n")
+    devs = [_dev("r1", "R", ["n1", "0"], ["xa"], [False]), _dev("r2", "R", ["n1", "0"], ["xa"], [False]), _dev("r.foo", "R", ["n1", "0"], ["xa"], [False]),
+            _dev("r", "R", ["n1", "0"], ["xa"], [False]), _dev("r1", "R", ["n1", "0"], ["xb"], [False]), _dev("rtop", "R", ["n1", "0"])]
+
+    def counts(res):
+        return res["summary"]["compared"], res["summary"]["out_of_scope"], res["summary"]["out_of_scope_hx"], res["mismatches"]
+    assert counts(oracle.compare(devs, lst, NGSPICE, set(), subtree=["xa"], device="r1")) == (1, 5, 5, [])
+    assert counts(oracle.compare(devs, lst, NGSPICE, set(), subtree=["xa"], device="r.foo")) == (1, 5, 5, [])
+    assert counts(oracle.compare(devs, lst, NGSPICE, set(), subtree=["xa"], device="r")) == (1, 5, 5, [])
+    assert counts(oracle.compare(devs, lst, NGSPICE, set(), subtree=[], device="rtop")) == (1, 5, 5, [])
+    assert counts(oracle.compare(devs, lst, NGSPICE, set(), subtree=["xa"])) == (4, 2, 2, [])          # the bare `r` row stays in the subtree
+    tolerant = oracle.parse_listing("     1 : t\n     3 : r.xa.r.r1 n1 0 1k\n     9 : rtop n1 0 1k\n")
+    res = oracle.compare(devs[:1] + devs[-1:], tolerant, NGSPICE, set(), subtree=["xa"], device="r1")
+    assert [m["what"] for m in res["mismatches"]] == ["name-form"] and res["summary"]["compared"] == 1 and res["summary"]["out_of_scope"] == 1
 
 
 def test_required_model_missing_in_hx_never_agrees():

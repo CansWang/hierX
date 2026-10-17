@@ -174,13 +174,25 @@ class HxDevice:
     family: object = None
 
 
-def compare(devices: list[HxDevice], listing: Listing, profile: Profile, hx_models: set[str], subtree: Optional[list[str]] = None) -> dict:
-    """Project hx's unguarded devices onto the listing and diff paths, arity, nets, models and references."""
+def compare(devices: list[HxDevice], listing: Listing, profile: Profile, hx_models: set[str], subtree: Optional[list[str]] = None,
+            device: Optional[str] = None) -> dict:
+    """Project hx's unguarded devices onto the listing and diff paths, arity, nets, models and references.
+
+    `subtree` restricts both sides to an instance path; with `device` (the folded name of a device declared directly
+    in `subtree`) both sides narrow to that single device, so siblings are out of scope, never missing. A listing row
+    spelled exactly as an in-scope hx device expects is in scope before any tolerant decode: `strip_letters` cannot
+    carry a bare-letter or dotted device name (`r.x1.r`, `r.x1.r.foo`)."""
+    def in_scope(segments: list[str], name: str) -> bool:
+        if subtree is None:
+            return True
+        if device is not None:
+            return segments == subtree and name.lower() == device.lower()
+        return segments[:len(subtree)] == subtree
     by_name: dict[str, HxDevice] = {}
     guarded_spellings: set[str] = set()
     out_of_scope_hx = 0
-    if subtree is not None:                                    # both sides are restricted to the subtree
-        inside = [d for d in devices if d.segments[:len(subtree)] == subtree]
+    if subtree is not None:                                    # both sides are restricted to the subtree (or the one device)
+        inside = [d for d in devices if in_scope(d.segments, d.name)]
         out_of_scope_hx = len(devices) - len(inside)
         devices = inside
     for d in devices:
@@ -189,6 +201,7 @@ def compare(devices: list[HxDevice], listing: Listing, profile: Profile, hx_mode
             guarded_spellings.add(spell)
             continue
         by_name[spell] = d
+    expected = set(by_name) | guarded_spellings                # exact spellings of every in-scope hx device
     model_names = {k.split(":")[-1] for k in listing.models} | hx_models
     is_model = lambda tok: tok.lower().split(":")[-1] in model_names
     mismatches: list[dict] = []
@@ -199,11 +212,9 @@ def compare(devices: list[HxDevice], listing: Listing, profile: Profile, hx_mode
     rows_by_name: dict[str, Row] = {}
     for row in listing.devices:
         nm = row.tokens[0].lower()
-        if subtree is not None:
-            segs, _dev = strip_letters(nm)
-            if segs[:len(subtree)] != subtree:
-                out_of_scope += 1
-                continue
+        if subtree is not None and nm not in expected and not in_scope(*strip_letters(nm)):
+            out_of_scope += 1
+            continue
         if nm in guarded_spellings:
             guarded_sim += 1
             continue
