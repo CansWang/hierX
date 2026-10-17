@@ -46,7 +46,7 @@ def _build_parser() -> argparse.ArgumentParser:
     sv.add_argument("--top", help="top module (default: inferred from the entry symbol)")
     sv.add_argument("--verilator", default="verilator", help="verilator executable")
     nl = e.add_argument_group("SPICE-family netlists (native parser; simulators only as optional oracles)")
-    nl.add_argument("--dialect", default="auto", help="auto | spice | ngspice (hspice, xyce and spectre arrive in later phases)")
+    nl.add_argument("--dialect", default="auto", help="auto | spice | ngspice | xyce (HSPICE and Spectre are deferred)")
     nl.add_argument("--deck", help="top deck when the entry file is an include or library (default: the entry file; a `@name` entry whose line 1 is a dot-directive is read as a standalone library, line 1 kept)")
     nl.add_argument("--search-path", action="append", default=[], dest="search_paths", metavar="DIR", help="extra directory for .include/.lib resolution (repeatable)")
     lsp = e.add_argument_group("LSP languages (rust-analyzer, pyright, gopls)")
@@ -111,7 +111,7 @@ def _build_parser() -> argparse.ArgumentParser:
     mc.add_argument("--root", help=_ROOT_HELP)
     mc.add_argument("--print-config", action="store_true", help="print the .mcp.json / `claude mcp add` snippet")
 
-    mg = sub.add_parser("migrate", help="upgrade a project from schema hx/1 or hx/2: re-extract every tracked entry, then rewrite annotation keys once (hx/3)")
+    mg = sub.add_parser("migrate", help="upgrade hx/1, hx/2 or hx/3: re-extract tracked entries and migrate annotations to hx/4")
     mg.add_argument("--root", help=_ROOT_HELP)
     mg.add_argument("--keep-history", type=int, default=None)
     mg.set_defaults(func=cmd_migrate)
@@ -120,8 +120,10 @@ def _build_parser() -> argparse.ArgumentParser:
     nls = nl.add_subparsers(dest="netlist_cmd", required=True)
     ck = nls.add_parser("check", help="cross-check a deck's structure (paths, arity, nets, models, references) with a simulator oracle")
     ck.add_argument("entry", help="<deck>:. or <deck>:<instance path>")
-    ck.add_argument("--oracle", choices=["ngspice"], default="ngspice")
+    ck.add_argument("--oracle", choices=["ngspice", "xyce", "xdm"], default="ngspice")
     ck.add_argument("--ngspice", help="ngspice executable (default: PATH or HX_TOOL_NGSPICE)")
+    ck.add_argument("--xyce", help="Xyce executable (or HX_TOOL_XYCE)")
+    ck.add_argument("--xdm", help="XDM executable (or HX_TOOL_XDM)")
     ck.add_argument("--root", help=_ROOT_HELP)
     ck.add_argument("--dialect", default="auto")
     ck.add_argument("--deck", help="top deck when the entry file is an include or library")
@@ -129,6 +131,18 @@ def _build_parser() -> argparse.ArgumentParser:
     ck.add_argument("--json", action="store_true", help="print the full report as JSON (includes the rendered closure)")
     ck.add_argument("--limit", type=int, default=20, help="mismatches to print (default 20)")
     ck.add_argument("--timeout", type=float, default=120.0)
+
+    for name in ("net", "uses"):
+        q = nls.add_parser(name, help="query connectivity or declaration users in a saved graph")
+        q.add_argument("target", help="net key/name" if name == "net" else "definition/model key/name")
+        q.add_argument("--graph", help=_GRAPH_HELP)
+        q.add_argument("--root", help=_ROOT_HELP)
+        q.add_argument("--json", action="store_true")
+        q.add_argument("--limit", type=int, default=60)
+        if name == "net":
+            q.add_argument("--node", default="", help="occurrence ID for guarded binding context")
+        else:
+            q.add_argument("--kind", required=True, choices=["definition", "model"])
 
     ex = sub.add_parser("export", help="write a standalone viewer HTML with graph + annotations inlined")
     ex.add_argument("graph", nargs="?", help=_GRAPH_HELP)
@@ -351,10 +365,29 @@ def cmd_mcp(a: argparse.Namespace) -> int:
 
 def cmd_netlist(a: argparse.Namespace) -> int:
     import json
+    if a.netlist_cmd in ("net", "uses"):
+        from .netlist.query import get_net, uses, format_result
+        from .graphio import load_graph_dict
+        try:
+            from pathlib import Path
+            path = a.graph or select_graph(None, cwd=Path(a.root))
+            graph = load_graph_dict(path)
+            result = (get_net(graph, a.target, node=a.node, limit=a.limit) if a.netlist_cmd == "net" else
+                      uses(graph, a.target, kind=a.kind, limit=a.limit))
+            print(json.dumps(result, indent=2) if a.json else format_result(result))
+            return 0
+        except (OSError, ValueError) as e:
+            print(f"hx: {e}", file=sys.stderr)
+            return 2
     from .netlist.check import check_ngspice, format_report
     root = os.path.abspath(a.root)
     try:
-        report = check_ngspice(a.entry, root=root, exe=a.ngspice, dialect=a.dialect, deck=a.deck, search_paths=a.search_paths, timeout=a.timeout)
+        if a.oracle == "ngspice":
+            report = check_ngspice(a.entry, root=root, exe=a.ngspice, dialect=a.dialect, deck=a.deck, search_paths=a.search_paths, timeout=a.timeout)
+        else:
+            from .netlist.xyce import check_external
+            report = check_external(a.entry, root=root, oracle=a.oracle, exe=getattr(a, a.oracle),
+                                    dialect=a.dialect, deck=a.deck, search_paths=a.search_paths, timeout=a.timeout)
     except EntryNotFound as e:
         print(f"hx: {e}", file=sys.stderr)
         if e.suggestions:
@@ -433,7 +466,7 @@ def _resolve_project_args(a: argparse.Namespace) -> None:
     if a.cmd in {"serve", "export"}:
         return
     entry_command = a.cmd in {"extract", "netlist", "diff"} or (a.cmd == "track" and not a.list)
-    entries = a.entries if a.cmd == "update" else ([a.entry] if entry_command and a.entry else [])
+    entries = a.entries if a.cmd == "update" else ([a.entry] if entry_command and getattr(a, "entry", None) else [])
     explicit_root = a.root is not None
     a.root, normalized = resolve_project(a.root, entries)
     if a.cmd == "update":
@@ -450,7 +483,7 @@ def _resolve_project_args(a: argparse.Namespace) -> None:
         for key in ("sv_file", "search_paths"):
             if hasattr(a, key):
                 setattr(a, key, [os.path.abspath(value) for value in getattr(a, key)])
-        for key in ("verilator", "ngspice"):
+        for key in ("verilator", "ngspice", "xyce", "xdm"):
             value = getattr(a, key, None)
             if value and os.path.dirname(value):
                 setattr(a, key, os.path.abspath(value))

@@ -1,0 +1,9 @@
+Xyce memristor and one-dimensional PDE structure
+V1 a 0 0.5
+RLOAD b 0 10k
+YMEMRISTOR memory a b memory_model
+YPDE junction b 0 diode_model NX=11
+.model memory_model MEMRISTOR LEVEL=3
+.model diode_model ZOD LEVEL=1
+.op
+.end

@@ -36,6 +36,7 @@ const fmtTime = () => new Date().toLocaleTimeString();
 
 // ------------------------------------------------------------------ state
 const S = {
+  circuitView: "hierarchy", netContext: "",
   graph: null, ann: {nodes: {}, types: {}, globals: {}, view: {hidden: [], pinned_positions: {}}}, rev: 0,
   idx: null, sel: null, history: [],
   depthMax: 3, showFiles: true, showGhosts: true, showRefs: true, layout: "LR",
@@ -200,7 +201,7 @@ function snapshotLabel(sn) {
   const revision = git.commit ? git.commit.slice(0, 12) : git.status === "no-repo" ? "no Git" : "revision unknown";
   return stamp + " · " + revision + (git.dirty ? " · modified" : "");
 }
-function diffStamp() { return S.diff.since_generated || S.diff.since; }
+function diffStamp() { return S.diff.since_generated || S.diff.since || "baseline"; }
 async function applyDiff(base) {
   S.diffBase = base || "";
   if (!S.diffBase) { S.diff = null; renderAll(); setStatus(""); updateHash(); return; }
@@ -279,6 +280,18 @@ function changesSection(root) {
   for (const id of d.types.added) row(id, "d-add", "+ " + shortId(id), "type");
   for (const id of d.types.removed) row(id, "d-rm", "− " + shortId(id), "type");
   for (const [id, ch] of Object.entries(d.types.changed)) row(id, "d-chg", "~ " + shortId(id), "type", Object.keys(ch).join(", "));
+  if (S.graph.circuit) {
+    root.append(h("div", {class: "tree-h circuit-changes"}, "Circuit changes"));
+    for (const [id, ch] of Object.entries(d.nodes.changed)) if (ch.wiring) row(id, "d-chg", "~ wiring " + shortId(id), "node");
+    for (const [section, dd] of Object.entries(d.circuit || {})) {
+      for (const [change, cls, mark] of [["added", "d-add", "+"], ["removed", "d-rm", "−"], ["changed", "d-chg", "~"]]) {
+        for (const item of dd[change] || []) {
+          const key = typeof item === "string" ? item : item.key;
+          row(JSON.stringify([section, key]), cls, mark + " " + section + " " + key, "circuit-diff");
+        }
+      }
+    }
+  }
   if (!d.summary.any) root.append(h("p", {class: "muted small", style: "padding:0 6px"}, "no structural changes"));
 }
 function diffBlock(id) {
@@ -315,7 +328,7 @@ function renderRemoved(d, id) {
 // ------------------------------------------------------------------ selection
 function select(kind, id, {push = true, fromGraph = false} = {}) {
   if (S.sel && push && (S.sel.kind !== kind || S.sel.id !== id)) S.history.push(S.sel);
-  S.sel = kind ? {kind, id} : null;
+  S.sel = kind ? {kind, id, context: kind === "net" ? S.netContext : ""} : null;
   if (S.history.length > 50) S.history.shift();
   renderDetail();
   renderTree();
@@ -324,8 +337,9 @@ function select(kind, id, {push = true, fromGraph = false} = {}) {
     if (kind === "node" || kind === "ghost") { const ele = S.cy.$id(id); if (ele.length) { ele.select(); } }
   }
   updateHash();
+  highlightNet();
 }
-function back() { const prev = S.history.pop(); if (prev) select(prev.kind, prev.id, {push: false}); }
+function back() { const prev = S.history.pop(); if (prev) { S.netContext = prev.context || ""; select(prev.kind, prev.id, {push: false}); } }
 
 // ------------------------------------------------------------------ tree
 function kindBadge(e) {
@@ -354,6 +368,21 @@ function treeRow({id, label, depthLabel, cls, edge, children, open, onToggle, ki
   return row;
 }
 function renderTree() {
+  const picker = $("#circuit-view");
+  picker.hidden = !S.graph.circuit;
+  picker.value = S.circuitView;
+  if (S.graph.circuit && S.circuitView !== "hierarchy") {
+    const tree = $("#tree"); tree.replaceChildren();
+    const kind = S.circuitView === "nets" ? "net" : S.circuitView === "definitions" ? "definition" : "model";
+    for (const [key, rec] of Object.entries(S.graph.circuit[S.circuitView] || {}).sort(([a], [b]) => a.localeCompare(b))) {
+      if (S.search && !(key + " " + rec.spelled).toLowerCase().includes(S.search.toLowerCase())) continue;
+      tree.append(h("div", {class: "row circuit-row" + (S.sel && S.sel.kind === kind && S.sel.id === key ? " sel" : ""),
+        onclick: () => { S.netContext = ""; select(kind, key); }}, h("span", {class: "nm"}, key),
+        rec.status ? h("span", {class: "badge"}, rec.status) : null));
+    }
+    changesSection(tree);
+    return;
+  }
   const root = $("#tree"); root.replaceChildren();
   const g = S.graph; if (!g) return;
   const q = S.search.trim().toLowerCase();
@@ -511,6 +540,8 @@ function buildStyle() {
     {selector: "edge:selected", style: {"width": 3, "line-color": sel, "target-arrow-color": sel}},
     {selector: "edge.hl", style: {"width": 3}},
     {selector: ".dim", style: {"opacity": 0.25}},
+    {selector: "node.net-hl", style: {"border-width": 5, "border-color": sel}},
+    {selector: "edge.net-hl", style: {"width": 4, "line-color": sel, "target-arrow-color": sel}},
   ];
 }
 const labelWidth = (text) => Math.max(28, Math.round(text.length * 6.7) + 6);  // 11px monospace ≈ 6.7px per glyph
@@ -635,6 +666,7 @@ function renderGraph({fit = true} = {}) {
   cy.endBatch();
   runLayout(fit);
   if (S.sel && (S.sel.kind === "node" || S.sel.kind === "ghost" || S.sel.kind === "removed")) { const ele = cy.$id(S.sel.id); if (ele.length) ele.select(); }
+  highlightNet();
 }
 function bindGraphEvents(cy) {
   const tip = $("#edge-tip");
@@ -711,6 +743,9 @@ function renderDetail() {
   else if (kind === "ghost") renderGhost(d, S.idx.ghosts[id]);
   else if (kind === "edge") renderEdge(d, S.graph.edges[Number(id)]);
   else if (kind === "removed") renderRemoved(d, id);
+  else if (kind === "net") renderNet(d, id);
+  else if (kind === "definition" || kind === "model") renderDeclaration(d, kind, id);
+  else if (kind === "circuit-diff") renderCircuitDiff(d, id);
   if (!d.childNodes.length) d.append(h("p", {class: "muted"}, "not in this graph: " + id));
 }
 function renderNode(d, n) {
@@ -797,8 +832,66 @@ function terminalsTable(n) {
     h("table", {class: "t"}, h("thead", null, h("tr", null, h("th", null, isDev ? "terminal" : "port"), h("th", null, "net"), h("th", null, "as written"))),
       h("tbody", null, rows.map((r) => h("tr", null, h("td", {class: "mono"}, isDev ? r.terminal : r.port),
         // the outermost net reached through the enclosing instances' bindings, with the net in this scope when it differs
-        h("td", {class: "mono"}, isDev ? (r.canonical && r.canonical !== r.net ? r.canonical + " (via " + r.net + ")" : r.net) : r.net + (r.outer !== r.net ? " (via " + r.outer + ")" : "")),
+        h("td", {class: "mono link", onclick: () => { S.netContext = n.id; select("net", isDev ? r.net : r.inner); }}, isDev ? (r.canonical && r.canonical !== r.net ? r.canonical + " (via " + r.net + ")" : r.net) : r.net + (r.outer !== r.net ? " (via " + r.outer + ")" : "")),
         h("td", {class: "mono muted"}, r.as_written))))));
+}
+function renderNet(d, id) {
+  const q = window.hxCircuit.getNet(S.graph, id, S.netContext);
+  if (!q) return;
+  const vis = visibleSet(), outside = q.results.filter(r => !vis.has(r.node)).length;
+  d.append(navBar(), h("h2", null, "net " + id), h("p", {class: "mono"}, "canonical: " + q.canonical.join(", ")),
+    h("p", {class: "small muted"}, "aliases: " + q.aliases.join(", ")),
+    h("p", {class: "small net-boundary"}, q.total + " endpoints in the saved graph; " + outside + " outside the current view. Guarded endpoints are alternatives, not simultaneous connections."));
+  if (S.netContext) d.append(h("button", {onclick: () => { S.netContext = ""; select("net", id, {push: false}); }}, "show all binding alternatives"));
+  if (q.notice) d.append(h("p", {class: "small net-boundary"}, q.notice));
+  d.append(h("ul", {class: "list net-endpoints"}, q.results.map(r => h("li", null, nodeLink(r.node),
+    " · " + r.kind + " " + r.terminal + " → " + r.canonical,
+    r.guard_id ? h("span", {class: "badge", title: JSON.stringify(r.guard)}, "guard " + r.guard_id) : null))));
+}
+function declarationLink(kind, identity) {
+  const records = S.graph.circuit && S.graph.circuit[kind === "definition" ? "definitions" : "models"] || {};
+  const key = Object.keys(records).find(k => k === identity || (records[k].declarations || []).some(d => d.identity === identity));
+  return key ? h("span", {class: "mono link", onclick: () => select(kind, key)}, identity) : h("span", {class: "mono muted"}, identity);
+}
+function renderDeclaration(d, kind, id) {
+  const records = S.graph.circuit && S.graph.circuit[kind === "definition" ? "definitions" : "models"] || {}, r = records[id];
+  if (!r) return;
+  d.append(navBar(), h("h2", null, kind + " " + id), h("p", {class: "badge"}, r.status));
+  for (const decl of r.declarations || []) {
+    d.append(h("h3", null, decl.identity || id), h("p", {class: "mono small"}, decl.file + ":" + decl.line),
+      h("pre", {class: "declaration-text"}, decl.params_text || JSON.stringify(decl.params || decl.ports || {}, null, 2)));
+    if (decl.guard && decl.guard.length) d.append(h("pre", null, JSON.stringify(decl.guard, null, 2)));
+    if (SERVE) d.append(h("button", {onclick: () => showSource({loc: decl}, decl.line)}, "source"));
+  }
+  if (r.bins && r.bins.length) d.append(h("p", null, "bins: " + r.bins.join(", ")));
+  const users = r[kind === "definition" ? "instances" : "used_by"] || [];
+  d.append(h("h3", null, "users in saved graph (" + users.length + ")"), h("ul", {class: "list"}, users.map(id => h("li", null, nodeLink(id, shortId(id))))), h("div", {id: "source-holder"}));
+}
+function renderCircuitDiff(d, id) {
+  let section, key;
+  try { [section, key] = JSON.parse(id); } catch (_) { return; }
+  const dd = S.diff && S.diff.circuit && S.diff.circuit[section];
+  if (!dd) return;
+  d.append(navBar(), h("h2", null, section + " " + key));
+  for (const [label, field] of [["before", "before"], ["after", "after"]]) {
+    const record = (dd[field] || {})[key];
+    d.append(h("h3", null, label), h("pre", {class: "declaration-text", "data-side": label}, record ? JSON.stringify(record, null, 2) : "absent"));
+  }
+}
+function highlightNet() {
+  if (!S.cy) return;
+  S.cy.elements().removeClass("net-hl");
+  if (!S.sel || S.sel.kind !== "net") return;
+  const q = window.hxCircuit.getNet(S.graph, S.sel.id, S.netContext);
+  if (!q) return;
+  const queue = q.results.map(r => r.node), seen = new Set();
+  while (queue.length) {
+    const id = queue.pop(); if (seen.has(id)) continue; seen.add(id);
+    S.cy.$id(id).addClass("net-hl");
+    for (const e of S.idx.inc[id] || []) if (e.kind === "instance") {
+      S.cy.$id("e" + e._i).addClass("net-hl"); queue.push(e.from);
+    }
+  }
 }
 function attrsBlock(attrs) {
   const dl = h("dl", {class: "kv", style: "margin-top:8px"});
@@ -808,7 +901,8 @@ function attrsBlock(attrs) {
     if (k === "signals" && Array.isArray(v)) val = h("details", null, h("summary", {class: "link small"}, v.length + " internal signals"),
       h("ul", {class: "list"}, v.map((sg) => h("li", null, h("span", {class: "mono"}, sg.name), h("span", {class: "muted small"}, sg.type)))));
     else if (Array.isArray(v) && v.length && v.every((x) => x && typeof x === "object" && ("key" in x || "target" in x)))
-      val = v.map((x, i) => [i ? ", " : null, x.target ? nodeLink(x.target, x.as_written || shortId(x.target)) : h("span", {class: "mono"}, x.key + (x.guard_id ? "#" + x.guard_id : ""))]).flat().filter((x) => x !== null);
+      val = v.map((x, i) => [i ? ", " : null, x.target ? nodeLink(x.target, x.as_written || shortId(x.target)) :
+        (k === "model_refs" || k === "definition_refs" ? declarationLink(k === "model_refs" ? "model" : "definition", x.key) : h("span", {class: "mono"}, x.key))]).flat().filter((x) => x !== null);
     else if (typeof v === "object" && !Array.isArray(v)) val = Object.entries(v).flatMap(([pk, pv], i) => [i ? ", " : null, pk + "=", fmtValue(pv)]).filter((x) => x !== null);
     else if (Array.isArray(v)) val = v.map((x) => typeof x === "object" ? JSON.stringify(x) : String(x)).join(", ");
     else val = String(v);
@@ -943,6 +1037,8 @@ function updateHash() {
   const p = new URLSearchParams();
   if (S.sel) { p.set("sel", S.sel.id); p.set("kind", S.sel.kind); }
   p.set("depth", S.depthMax); p.set("layout", S.layout);
+  if (S.circuitView !== "hierarchy") p.set("view", S.circuitView);
+  if (S.sel && S.sel.kind === "net" && S.netContext) p.set("via", S.netContext);
   if (S.graphName) p.set("graph", S.graphName);
   if (S.diffBase) p.set("diff", S.diffBase);
   history.replaceState(null, "", "#" + p.toString());
@@ -952,6 +1048,8 @@ function readHash() {
   if (p.get("depth")) S.depthMax = Number(p.get("depth"));
   if (p.get("layout")) S.layout = p.get("layout");
   if (p.get("graph")) S.graphName = p.get("graph");
+  if (["nets", "definitions", "models"].includes(p.get("view"))) S.circuitView = p.get("view");
+  S.netContext = p.get("via") || "";
   if (p.get("diff")) S.diffBase = p.get("diff").replace(/ /g, "+");   // a hand-typed '+' in the hash arrives as a space
   return p.get("sel") ? {kind: p.get("kind") || "node", id: p.get("sel")} : null;
 }
@@ -1003,7 +1101,10 @@ async function reloadGraph() {
   await loadData();
   showMigrationBanner();
   renderTree(); renderGraph({fit: false});
-  if (keep) select(keep.kind, keep.id, {push: false}); else renderDetail();
+  if (keep && ["net", "definition", "model"].includes(keep.kind) &&
+      !((S.graph.circuit || {})[keep.kind === "net" ? "nets" : keep.kind === "definition" ? "definitions" : "models"] || {})[keep.id]) {
+    select(null, null, {push: false}); setStatus("selected circuit item is absent after reload");
+  } else if (keep) select(keep.kind, keep.id, {push: false}); else renderDetail();
   S.sourceCache.clear();
   if (S.diffBase) await applyDiff(S.diffBase);
   else setStatus("graph reloaded " + fmtTime() + " · " + Object.keys(S.graph.nodes).length + " nodes");
@@ -1036,6 +1137,7 @@ function connectEvents() {
   es.addEventListener("hello", () => { if ($("#status").classList.contains("err")) setStatus(""); });
 }
 function bindUI() {
+  $("#circuit-view").addEventListener("change", ev => { S.circuitView = ev.target.value; renderTree(); updateHash(); });
   $("#search").addEventListener("input", (ev) => { S.search = ev.target.value; renderTree(); });
   $("#search").addEventListener("keydown", (ev) => { if (ev.key === "Enter") { const first = $("#tree .row"); if (first) first.click(); } if (ev.key === "Escape") { ev.target.value = ""; S.search = ""; renderTree(); ev.target.blur(); } });
   $("#depth").addEventListener("input", (ev) => { S.depthMax = Number(ev.target.value); $("#depth-val").textContent = S.depthMax; renderTree(); renderGraph(); updateHash(); });

@@ -49,7 +49,7 @@ def test_upgrade_2_to_3_reports_nested_and_module_ids():
         "c:src/y.c::g": _node("c:src/y.c::g", "function", "g", "src/y.c", 3, lang="c", precision="exact"),
     }
     doc, rep = graphio.upgrade(_doc(nodes=nodes))
-    assert doc["schema"] == "hx/3" and rep.from_schema == "hx/2" and rep.pending
+    assert doc["schema"] == "hx/4" and rep.from_schema == "hx/2" and rep.pending
     reasons = {x["id"]: x["reason"] for x in rep.needs_reextract}
     assert "position-hashed" in reasons["py:a.py::helper#abcd1234"]
     assert "nested in py:a.py::outer" in reasons["py:a.py::helper"]
@@ -59,14 +59,14 @@ def test_upgrade_2_to_3_reports_nested_and_module_ids():
     assert "py:b.py::top" not in reasons and "c:/usr/include/stdio.h::printf" not in reasons and "c:src/y.c::g" not in reasons
     assert doc["meta"]["migration"]["from"] == "hx/2"
     with pytest.raises(SchemaError):
-        graphio.upgrade(_doc(schema="hx/4"))
+        graphio.upgrade(_doc(schema="hx/5"))
 
 
 def test_upgrade_2_to_3_flags_hashless_nested_ids():
     """The saved Device.evaluate graph: `Device._interp_with` (line 690) sits inside `Device.evaluate` (340-756) with no
     hash, yet its hx/3 id becomes `Device.evaluate._interp_with`."""
     doc, rep = graphio.load_graph_with_report(DEVICE)
-    assert doc["schema"] == "hx/3" and rep.from_schema == "hx/2"
+    assert doc["schema"] == "hx/4" and rep.from_schema == "hx/2"
     reasons = {x["id"]: x["reason"] for x in rep.needs_reextract}
     nested = "py:src/apragma/circuit_model/device.py::Device._interp_with"
     assert nested in reasons and "nested in py:src/apragma/circuit_model/device.py::Device.evaluate" in reasons[nested]
@@ -221,7 +221,7 @@ def test_nested_function_with_class_scope_maps_from_saved_graphs():
     old, _ = graphio.load_graph_with_report(DEVICE)
     with open(DEVICE3, encoding="utf-8") as fh:
         new = json.load(fh)
-    assert new["schema"] == "hx/3"
+    assert new["schema"] == "hx/3"   # committed historical fixture, read without upgrade
     mapped, ambiguous, unmapped = project.map_node_ids(old, new, "/root")
     dev = "py:src/apragma/circuit_model/device.py::"
     assert mapped[dev + "Device._interp_with"] == dev + "Device.evaluate._interp_with"
@@ -258,12 +258,12 @@ def test_module_verification_is_invalidated_with_an_unchanged_id(tmp_path):
     gp = project.graph_path(root, "hxfix/dma.py:dma_poll")
     fresh = project.load_graph(gp)
     mid = "py:hxfix/script.py::(module) script.py"
-    assert fresh["schema"] == "hx/3" and fresh["nodes"][mid]["kind"] == "module"
+    assert fresh["schema"] == "hx/4" and fresh["nodes"][mid]["kind"] == "module"
     assert sum(1 for n in fresh["nodes"].values() if n["kind"] == "module") == 1
     with open(gp, encoding="utf-8") as fh:
         txt = fh.read()
     with open(gp, "w", encoding="utf-8") as fh:                          # the hx/2 spelling: a function, same id
-        fh.write(txt.replace('"kind": "module"', '"kind": "function"').replace('"schema": "hx/3"', '"schema": "hx/2"'))
+        fh.write(txt.replace('"kind": "module"', '"kind": "function"').replace('"schema": "hx/4"', '"schema": "hx/2"'))
     A.save(os.path.join(root, ".hx", "annotations.json"),
            {"nodes": {mid: {"verified_body_hash": fresh["nodes"][mid]["body_hash"], "note": "keep"}}})
     out = project.migrate(root)
@@ -294,7 +294,7 @@ def _legacyize(path, replacements):
     txt = open(path, encoding="utf-8").read()
     for a, b in replacements:
         txt = txt.replace(json.dumps(a)[1:-1], json.dumps(b)[1:-1])
-    txt = txt.replace('"schema": "hx/3"', '"schema": "hx/2"')
+    txt = txt.replace('"schema": "hx/4"', '"schema": "hx/2"')
     open(path, "w", encoding="utf-8").write(txt)
     return txt
 
@@ -305,14 +305,14 @@ def test_migrate_hx2_project_writes_bak_hx2(cproj):
     project.update(root)
     gp = project.graph_path(root, "src/main.c:app_run")
     fresh = project.load_graph(gp)
-    assert fresh["schema"] == "hx/3"
+    assert fresh["schema"] == "hx/4"
     abs_dma = os.path.realpath(os.path.join(root, "src", "dma.c"))
     old_id, new_id = f"c:{abs_dma}::dma_prog_desc", "c:src/dma.c::dma_prog_desc"
     assert new_id in fresh["nodes"]
     _legacyize(gp, [(new_id, old_id), ('"file": "src/dma.c", "line": ' + str(fresh["nodes"][new_id]["loc"]["line"]),
                                         f'"file": "{abs_dma}", "line": ' + str(fresh["nodes"][new_id]["loc"]["line"]))])
     legacy = project.load_graph(gp)                                   # loader upgrades in memory …
-    assert legacy["schema"] == "hx/3" and old_id in legacy["nodes"]   # … but the abs-path id is still the old one
+    assert legacy["schema"] == "hx/4" and old_id in legacy["nodes"]   # … but the abs-path id is still the old one
     A.save(os.path.join(root, ".hx", "annotations.json"), {"nodes": {old_id: {"note": "desc"}, "c:src/main.c::app_run": {"note": "keep"}}})
     out = project.migrate(root)
     assert out["status"] == "migrated" and not out["failed"] and not out["ambiguous"], out
@@ -321,7 +321,7 @@ def test_migrate_hx2_project_writes_bak_hx2(cproj):
     assert ann["nodes"][new_id]["note"] == "desc" and ann["nodes"]["c:src/main.c::app_run"]["note"] == "keep"
     assert ann["meta"]["migrated"]["from"] == "hx/2" and os.path.exists(os.path.join(root, ".hx", "annotations.json.bak-hx2"))
     assert not os.path.exists(os.path.join(root, ".hx", "annotations.json.bak-hx1"))
-    assert project.load_graph(gp)["schema"] == "hx/3" and new_id in project.load_graph(gp)["nodes"]
+    assert project.load_graph(gp)["schema"] == "hx/4" and new_id in project.load_graph(gp)["nodes"]
     assert len(project.list_history(root, "src/main.c:app_run")) >= 1 and out["invalidated"] == []
 
 

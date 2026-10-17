@@ -1,0 +1,953 @@
+{
+  "version": "7.10.0",
+  "source": "Xyce -param (local opensource build)",
+  "families": {
+    "acc": {
+      "1": {
+        "nodes": "3",
+        "optional": "0",
+        "fill": "0",
+        "model": "no",
+        "description": "Accelerated Object Device"
+      }
+    },
+    "adc": {
+      "1": {
+        "nodes": "2",
+        "optional": "0",
+        "fill": "0",
+        "model": "no",
+        "description": "ADC"
+      }
+    },
+    "add": {
+      "1": {
+        "nodes": "2",
+        "optional": "20",
+        "fill": "0",
+        "model": "yes",
+        "description": "Behavioral Digital"
+      }
+    },
+    "and": {
+      "1": {
+        "nodes": "2",
+        "optional": "20",
+        "fill": "0",
+        "model": "yes",
+        "description": "Behavioral Digital"
+      }
+    },
+    "antiwinduplimiter": {
+      "1": {
+        "nodes": "2",
+        "optional": "0",
+        "fill": "0",
+        "model": "no",
+        "description": "AntiWindupLimiter"
+      }
+    },
+    "awl": {
+      "1": {
+        "nodes": "2",
+        "optional": "0",
+        "fill": "0",
+        "model": "no",
+        "description": "AntiWindupLimiter"
+      }
+    },
+    "b": {
+      "1": {
+        "nodes": "2",
+        "optional": "0",
+        "fill": "0",
+        "model": "no",
+        "description": "Expression Based Voltage or Current Source"
+      }
+    },
+    "battery": {
+      "1": {
+        "nodes": "3",
+        "optional": "0",
+        "fill": "0",
+        "model": "yes",
+        "description": "Battery"
+      }
+    },
+    "buf": {
+      "1": {
+        "nodes": "2",
+        "optional": "20",
+        "fill": "0",
+        "model": "yes",
+        "description": "Behavioral Digital"
+      }
+    },
+    "c": {
+      "1": {
+        "nodes": "2",
+        "optional": "0",
+        "fill": "0",
+        "model": "no",
+        "description": "Capacitor"
+      }
+    },
+    "d": {
+      "1": {
+        "nodes": "2",
+        "optional": "0",
+        "fill": "0",
+        "model": "yes",
+        "description": "Diode"
+      },
+      "2": {
+        "nodes": "2",
+        "optional": "0",
+        "fill": "0",
+        "model": "yes",
+        "description": "Diode"
+      },
+      "200": {
+        "nodes": "2",
+        "optional": "0",
+        "fill": "0",
+        "model": "yes",
+        "description": "JUNCAP200 Diode"
+      },
+      "2002": {
+        "nodes": "2",
+        "optional": "0",
+        "fill": "0",
+        "model": "yes",
+        "description": "DIODE_CMC 2.0.0"
+      }
+    },
+    "dac": {
+      "1": {
+        "nodes": "2",
+        "optional": "0",
+        "fill": "0",
+        "model": "no",
+        "description": "DAC"
+      }
+    },
+    "delay": {
+      "1": {
+        "nodes": "4",
+        "optional": "0",
+        "fill": "0",
+        "model": "no",
+        "description": "Delay element"
+      }
+    },
+    "dff": {
+      "1": {
+        "nodes": "2",
+        "optional": "20",
+        "fill": "0",
+        "model": "yes",
+        "description": "Behavioral Digital"
+      }
+    },
+    "dltch": {
+      "1": {
+        "nodes": "2",
+        "optional": "20",
+        "fill": "0",
+        "model": "yes",
+        "description": "Behavioral Digital"
+      }
+    },
+    "e": {
+      "1": {
+        "nodes": "4",
+        "optional": "0",
+        "fill": "0",
+        "model": "no",
+        "description": "Linear Voltage Controlled Voltage Source"
+      }
+    },
+    "ext": {
+      "1": {
+        "nodes": "2",
+        "optional": "1000",
+        "fill": "0",
+        "model": "no",
+        "description": "External Device"
+      }
+    },
+    "f": {
+      "1": {
+        "nodes": "2",
+        "optional": "0",
+        "fill": "0",
+        "model": "no",
+        "description": "Expression Based Voltage or Current Source"
+      }
+    },
+    "g": {
+      "1": {
+        "nodes": "4",
+        "optional": "0",
+        "fill": "0",
+        "model": "no",
+        "description": "Linear Voltage Controlled Current Source"
+      }
+    },
+    "genext": {
+      "1": {
+        "nodes": "2",
+        "optional": "1000",
+        "fill": "0",
+        "model": "no",
+        "description": "GeneralExternal"
+      }
+    },
+    "h": {
+      "1": {
+        "nodes": "2",
+        "optional": "0",
+        "fill": "0",
+        "model": "no",
+        "description": "Expression Based Voltage or Current Source"
+      }
+    },
+    "i": {
+      "1": {
+        "nodes": "2",
+        "optional": "0",
+        "fill": "0",
+        "model": "no",
+        "description": "Independent Current Source"
+      }
+    },
+    "ibis": {
+      "1": {
+        "nodes": "2",
+        "optional": "20",
+        "fill": "0",
+        "model": "no",
+        "description": "IBIS"
+      }
+    },
+    "inv": {
+      "1": {
+        "nodes": "2",
+        "optional": "20",
+        "fill": "0",
+        "model": "yes",
+        "description": "Behavioral Digital"
+      }
+    },
+    "j": {
+      "1": {
+        "nodes": "3",
+        "optional": "0",
+        "fill": "0",
+        "model": "yes",
+        "description": "JFET"
+      },
+      "2": {
+        "nodes": "3",
+        "optional": "0",
+        "fill": "0",
+        "model": "yes",
+        "description": "JFET"
+      }
+    },
+    "jkff": {
+      "1": {
+        "nodes": "2",
+        "optional": "20",
+        "fill": "0",
+        "model": "yes",
+        "description": "Behavioral Digital"
+      }
+    },
+    "l": {
+      "1": {
+        "nodes": "2",
+        "optional": "0",
+        "fill": "0",
+        "model": "no",
+        "description": "Inductor"
+      }
+    },
+    "lin": {
+      "1": {
+        "nodes": "2",
+        "optional": "20",
+        "fill": "0",
+        "model": "yes",
+        "description": "LIN"
+      }
+    },
+    "m": {
+      "1": {
+        "nodes": "4",
+        "optional": "0",
+        "fill": "0",
+        "model": "yes",
+        "description": "MOSFET level 1"
+      },
+      "2": {
+        "nodes": "4",
+        "optional": "0",
+        "fill": "0",
+        "model": "yes",
+        "description": "MOSFET level 2"
+      },
+      "3": {
+        "nodes": "4",
+        "optional": "0",
+        "fill": "0",
+        "model": "yes",
+        "description": "MOSFET level 3"
+      },
+      "6": {
+        "nodes": "4",
+        "optional": "0",
+        "fill": "0",
+        "model": "yes",
+        "description": "MOSFET level 6"
+      },
+      "9": {
+        "nodes": "4",
+        "optional": "0",
+        "fill": "0",
+        "model": "yes",
+        "description": "BSIM3"
+      },
+      "10": {
+        "nodes": "4",
+        "optional": "3",
+        "fill": "0",
+        "model": "yes",
+        "description": "BSIM3 SOI"
+      },
+      "14": {
+        "nodes": "4",
+        "optional": "0",
+        "fill": "0",
+        "model": "yes",
+        "description": "BSIM4"
+      },
+      "18": {
+        "nodes": "4",
+        "optional": "0",
+        "fill": "0",
+        "model": "yes",
+        "description": "Power MOSFET"
+      },
+      "49": {
+        "nodes": "4",
+        "optional": "0",
+        "fill": "0",
+        "model": "yes",
+        "description": "BSIM3"
+      },
+      "54": {
+        "nodes": "4",
+        "optional": "0",
+        "fill": "0",
+        "model": "yes",
+        "description": "BSIM4"
+      },
+      "57": {
+        "nodes": "4",
+        "optional": "3",
+        "fill": "0",
+        "model": "yes",
+        "description": "BSIM3 SOI"
+      },
+      "70": {
+        "nodes": "4",
+        "optional": "3",
+        "fill": "0",
+        "model": "yes",
+        "description": "BSIM-SOI 4.6.1"
+      },
+      "77": {
+        "nodes": "4",
+        "optional": "1",
+        "fill": "0",
+        "model": "yes",
+        "description": "BSIM6"
+      },
+      "102": {
+        "nodes": "4",
+        "optional": "0",
+        "fill": "0",
+        "model": "yes",
+        "description": "PSP102VA legacy MOSFET 102.5"
+      },
+      "103": {
+        "nodes": "4",
+        "optional": "0",
+        "fill": "0",
+        "model": "yes",
+        "description": "PSP103VA MOSFET"
+      },
+      "107": {
+        "nodes": "4",
+        "optional": "0",
+        "fill": "0",
+        "model": "yes",
+        "description": "BSIM-CMG FINFET v107.0.0"
+      },
+      "108": {
+        "nodes": "4",
+        "optional": "0",
+        "fill": "0",
+        "model": "yes",
+        "description": "BSIM-CMG FINFET v108.0.0"
+      },
+      "110": {
+        "nodes": "4",
+        "optional": "1",
+        "fill": "0",
+        "model": "yes",
+        "description": "BSIM-CMG FINFET v110.0.0"
+      },
+      "111": {
+        "nodes": "4",
+        "optional": "1",
+        "fill": "0",
+        "model": "yes",
+        "description": "BSIM-CMG FINFET v111.2.1"
+      },
+      "260": {
+        "nodes": "4",
+        "optional": "0",
+        "fill": "0",
+        "model": "yes",
+        "description": "EKV MOSFET version 2.6"
+      },
+      "1031": {
+        "nodes": "5",
+        "optional": "0",
+        "fill": "0",
+        "model": "yes",
+        "description": "PSP103VA MOSFET with self-heating"
+      },
+      "2000": {
+        "nodes": "3",
+        "optional": "0",
+        "fill": "0",
+        "model": "yes",
+        "description": "MVS ETSOI 2.0.0"
+      },
+      "2001": {
+        "nodes": "3",
+        "optional": "0",
+        "fill": "0",
+        "model": "yes",
+        "description": "MVS HEMT 2.0.0"
+      },
+      "2002": {
+        "nodes": "4",
+        "optional": "0",
+        "fill": "0",
+        "model": "yes",
+        "description": "MVSG-HV HEMT MODEL"
+      },
+      "10240": {
+        "nodes": "5",
+        "optional": "0",
+        "fill": "0",
+        "model": "yes",
+        "description": "L_UTSOI MOSFET"
+      },
+      "70450": {
+        "nodes": "4",
+        "optional": "3",
+        "fill": "0",
+        "model": "yes",
+        "description": "BSIM-SOI 4.5.0"
+      }
+    },
+    "memristor": {
+      "2": {
+        "nodes": "2",
+        "optional": "0",
+        "fill": "0",
+        "model": "yes",
+        "description": "MemristorTEAM"
+      },
+      "3": {
+        "nodes": "2",
+        "optional": "0",
+        "fill": "0",
+        "model": "yes",
+        "description": "MemristorYakopcic"
+      },
+      "4": {
+        "nodes": "2",
+        "optional": "0",
+        "fill": "0",
+        "model": "yes",
+        "description": "MemristorPEM"
+      }
+    },
+    "mil": {
+      "1": {
+        "nodes": "2",
+        "optional": "0",
+        "fill": "0",
+        "model": "no",
+        "description": "Linear Mutual Inductor"
+      }
+    },
+    "min": {
+      "1": {
+        "nodes": "2",
+        "optional": "0",
+        "fill": "0",
+        "model": "yes",
+        "description": "Nonlinear Mutual Inductor"
+      },
+      "2": {
+        "nodes": "2",
+        "optional": "0",
+        "fill": "0",
+        "model": "yes",
+        "description": "Nonlinear Mutual Inductor"
+      }
+    },
+    "nand": {
+      "1": {
+        "nodes": "2",
+        "optional": "20",
+        "fill": "0",
+        "model": "yes",
+        "description": "Behavioral Digital"
+      }
+    },
+    "neuron": {
+      "1": {
+        "nodes": "2",
+        "optional": "0",
+        "fill": "0",
+        "model": "yes",
+        "description": "Neuron"
+      },
+      "2": {
+        "nodes": "2",
+        "optional": "0",
+        "fill": "0",
+        "model": "yes",
+        "description": "Neuron"
+      },
+      "3": {
+        "nodes": "2",
+        "optional": "0",
+        "fill": "0",
+        "model": "yes",
+        "description": "Neuron"
+      },
+      "4": {
+        "nodes": "2",
+        "optional": "0",
+        "fill": "0",
+        "model": "yes",
+        "description": "Neuron"
+      },
+      "5": {
+        "nodes": "2",
+        "optional": "0",
+        "fill": "0",
+        "model": "yes",
+        "description": "Neuron"
+      },
+      "6": {
+        "nodes": "2",
+        "optional": "0",
+        "fill": "0",
+        "model": "yes",
+        "description": "Neuron"
+      },
+      "7": {
+        "nodes": "1",
+        "optional": "0",
+        "fill": "0",
+        "model": "yes",
+        "description": "Neuron"
+      },
+      "8": {
+        "nodes": "1",
+        "optional": "0",
+        "fill": "0",
+        "model": "yes",
+        "description": "Neuron"
+      },
+      "9": {
+        "nodes": "2",
+        "optional": "0",
+        "fill": "0",
+        "model": "yes",
+        "description": "Neuron"
+      }
+    },
+    "neuronpop": {
+      "1": {
+        "nodes": "2",
+        "optional": "0",
+        "fill": "0",
+        "model": "yes",
+        "description": "NeuronPopulation"
+      }
+    },
+    "nor": {
+      "1": {
+        "nodes": "2",
+        "optional": "20",
+        "fill": "0",
+        "model": "yes",
+        "description": "Behavioral Digital"
+      }
+    },
+    "not": {
+      "1": {
+        "nodes": "2",
+        "optional": "20",
+        "fill": "0",
+        "model": "yes",
+        "description": "Behavioral Digital"
+      }
+    },
+    "nxor": {
+      "1": {
+        "nodes": "2",
+        "optional": "20",
+        "fill": "0",
+        "model": "yes",
+        "description": "Behavioral Digital"
+      }
+    },
+    "o": {
+      "1": {
+        "nodes": "4",
+        "optional": "0",
+        "fill": "0",
+        "model": "yes",
+        "description": "Lossy Transmission Line"
+      }
+    },
+    "opamp": {
+      "1": {
+        "nodes": "3",
+        "optional": "0",
+        "fill": "0",
+        "model": "yes",
+        "description": "Operational Amplifier"
+      }
+    },
+    "or": {
+      "1": {
+        "nodes": "2",
+        "optional": "20",
+        "fill": "0",
+        "model": "yes",
+        "description": "Behavioral Digital"
+      }
+    },
+    "p": {
+      "1": {
+        "nodes": "2",
+        "optional": "0",
+        "fill": "0",
+        "model": "no",
+        "description": "Independent Voltage Source"
+      }
+    },
+    "pde": {
+      "1": {
+        "nodes": "2",
+        "optional": "100",
+        "fill": "0",
+        "model": "yes",
+        "description": "1D PDE (level 1)"
+      },
+      "2": {
+        "nodes": "2",
+        "optional": "100",
+        "fill": "2",
+        "model": "yes",
+        "description": "2D PDE (level 2)"
+      }
+    },
+    "pgbr": {
+      "1": {
+        "nodes": "4",
+        "optional": "0",
+        "fill": "0",
+        "model": "no",
+        "description": "PowerGridBranch"
+      }
+    },
+    "pgbs": {
+      "1": {
+        "nodes": "4",
+        "optional": "0",
+        "fill": "0",
+        "model": "no",
+        "description": "PowerGridBusShunt"
+      }
+    },
+    "pggb": {
+      "1": {
+        "nodes": "4",
+        "optional": "0",
+        "fill": "0",
+        "model": "no",
+        "description": "PowerGridGenBus"
+      }
+    },
+    "pgtr": {
+      "1": {
+        "nodes": "4",
+        "optional": "1",
+        "fill": "0",
+        "model": "no",
+        "description": "PowerGridTransformer"
+      }
+    },
+    "powergrid": {
+      "1": {
+        "nodes": "4",
+        "optional": "100",
+        "fill": "0",
+        "model": "no",
+        "description": "PowerGrid Device"
+      }
+    },
+    "powergridbranch": {
+      "1": {
+        "nodes": "4",
+        "optional": "0",
+        "fill": "0",
+        "model": "no",
+        "description": "PowerGridBranch"
+      }
+    },
+    "powergridbusshunt": {
+      "1": {
+        "nodes": "4",
+        "optional": "0",
+        "fill": "0",
+        "model": "no",
+        "description": "PowerGridBusShunt"
+      }
+    },
+    "powergridgenbus": {
+      "1": {
+        "nodes": "4",
+        "optional": "0",
+        "fill": "0",
+        "model": "no",
+        "description": "PowerGridGenBus"
+      }
+    },
+    "powergridtransformer": {
+      "1": {
+        "nodes": "4",
+        "optional": "1",
+        "fill": "0",
+        "model": "no",
+        "description": "PowerGridTransformer"
+      }
+    },
+    "q": {
+      "1": {
+        "nodes": "3",
+        "optional": "4",
+        "fill": "1",
+        "model": "yes",
+        "description": "Bipolar Junction Transistor"
+      },
+      "11": {
+        "nodes": "3",
+        "optional": "6",
+        "fill": "0",
+        "model": "yes",
+        "description": "VBIC 1.3 3T"
+      },
+      "12": {
+        "nodes": "4",
+        "optional": "6",
+        "fill": "0",
+        "model": "yes",
+        "description": "VBIC 1.3 4T"
+      },
+      "23": {
+        "nodes": "4",
+        "optional": "0",
+        "fill": "0",
+        "model": "yes",
+        "description": "FBH HBT_X v2.1"
+      },
+      "230": {
+        "nodes": "5",
+        "optional": "0",
+        "fill": "0",
+        "model": "yes",
+        "description": "HICUM L0 v1.32"
+      },
+      "234": {
+        "nodes": "5",
+        "optional": "0",
+        "fill": "0",
+        "model": "yes",
+        "description": "HICUM v2.4.0"
+      },
+      "504": {
+        "nodes": "4",
+        "optional": "0",
+        "fill": "0",
+        "model": "yes",
+        "description": "MEXTRAM 504.12.1"
+      },
+      "505": {
+        "nodes": "5",
+        "optional": "0",
+        "fill": "0",
+        "model": "yes",
+        "description": "MEXTRAM 504.12.1 with self heating"
+      }
+    },
+    "r": {
+      "1": {
+        "nodes": "2",
+        "optional": "0",
+        "fill": "0",
+        "model": "no",
+        "description": "Resistor"
+      },
+      "2": {
+        "nodes": "2",
+        "optional": "0",
+        "fill": "0",
+        "model": "no",
+        "description": "Resistor"
+      },
+      "3": {
+        "nodes": "2",
+        "optional": "0",
+        "fill": "0",
+        "model": "no",
+        "description": "Resistor"
+      }
+    },
+    "rom": {
+      "1": {
+        "nodes": "2",
+        "optional": "1000",
+        "fill": "0",
+        "model": "no",
+        "description": "ROM"
+      }
+    },
+    "rxn": {
+      "1": {
+        "nodes": "2",
+        "optional": "0",
+        "fill": "0",
+        "model": "yes",
+        "description": "Rxn Effects Device"
+      }
+    },
+    "s": {
+      "1": {
+        "nodes": "2",
+        "optional": "2",
+        "fill": "0",
+        "model": "yes",
+        "description": "Controlled Switch"
+      }
+    },
+    "synapse": {
+      "1": {
+        "nodes": "2",
+        "optional": "0",
+        "fill": "0",
+        "model": "no",
+        "description": "Synapse"
+      },
+      "2": {
+        "nodes": "2",
+        "optional": "0",
+        "fill": "0",
+        "model": "no",
+        "description": "Synapse"
+      },
+      "3": {
+        "nodes": "2",
+        "optional": "0",
+        "fill": "0",
+        "model": "no",
+        "description": "Synapse, Clopath"
+      },
+      "4": {
+        "nodes": "2",
+        "optional": "0",
+        "fill": "0",
+        "model": "no",
+        "description": "Synapse"
+      }
+    },
+    "t": {
+      "1": {
+        "nodes": "4",
+        "optional": "0",
+        "fill": "0",
+        "model": "no",
+        "description": "Ideal Transmission Line"
+      }
+    },
+    "tff": {
+      "1": {
+        "nodes": "2",
+        "optional": "20",
+        "fill": "0",
+        "model": "yes",
+        "description": "Behavioral Digital"
+      }
+    },
+    "transline": {
+      "1": {
+        "nodes": "2",
+        "optional": "0",
+        "fill": "0",
+        "model": "yes",
+        "description": "Lumped Transmission Line"
+      }
+    },
+    "v": {
+      "1": {
+        "nodes": "2",
+        "optional": "0",
+        "fill": "0",
+        "model": "no",
+        "description": "Independent Voltage Source"
+      }
+    },
+    "xor": {
+      "1": {
+        "nodes": "2",
+        "optional": "20",
+        "fill": "0",
+        "model": "yes",
+        "description": "Behavioral Digital"
+      }
+    },
+    "z": {
+      "1": {
+        "nodes": "3",
+        "optional": "0",
+        "fill": "0",
+        "model": "yes",
+        "description": "MESFET"
+      }
+    }
+  }
+}

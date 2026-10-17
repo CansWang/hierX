@@ -3,8 +3,8 @@
 Every reader (CLI, server, differ, MCP, exporter, `Graph.load`) goes through `load_graph_dict`, which
   * parses JSON with `values.parse_int_token`, so integers wider than JavaScript's 2**53 become canonical
     strings and a 5,000-digit legacy number never hits CPython's int<->str digit limit;
-  * accepts older schema majors (hx/1, hx/2) and upgrades them IN MEMORY through the `MIGRATIONS` chain
-    (`migrate_1_to_2`, `migrate_2_to_3`), attaching one composed `MigrationReport` under `meta.migration`; nothing
+  * accepts older schema majors (hx/1 through hx/3) and upgrades them IN MEMORY through the `MIGRATIONS` chain,
+    attaching one composed `MigrationReport` under `meta.migration`; nothing
     on disk is touched;
   * refuses any other major.
 """
@@ -194,7 +194,18 @@ def migrate_2_to_3(doc: dict) -> tuple[dict, MigrationReport]:
     return doc, rep
 
 
-MIGRATIONS = {"1": migrate_1_to_2, "2": migrate_2_to_3}   # major -> the step that produces the next major
+def migrate_3_to_4(doc: dict) -> tuple[dict, MigrationReport]:
+    """Preserve old bytes/IDs in memory; Rust identity corrections need source evidence."""
+    rep = MigrationReport(from_schema="hx/3")
+    if doc.get("lang") in ("rs", "rust"):
+        rep.needs_reextract = [{"id": nid, "reason": "Rust impl identity and token rules changed in hx/4; re-extract"}
+                               for nid in doc.get("nodes", {})]
+        rep.notes.append("Rust annotations require source-based migration; old IDs are not guessed")
+    doc["schema"] = "hx/4"
+    return doc, rep
+
+
+MIGRATIONS = {"1": migrate_1_to_2, "2": migrate_2_to_3, "3": migrate_3_to_4}
 
 
 def _major(s: Any) -> tuple[str, str]:

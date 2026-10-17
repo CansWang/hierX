@@ -20,13 +20,13 @@ resolved types behind them (structs with field offsets, typedef chains,
 enums), the globals it touches, and every call edge, including calls hidden
 behind macros and calls through function pointers.
 
-The output is a schema-versioned JSON graph (`hx/schema/hx-3.schema.json`). It
+The output is a schema-versioned JSON graph (`hx/schema/hx-4.schema.json`). It
 is designed to be regenerated after every AI-agent editing session and then
 **diffed and viewed** instead of reading the agent's narration. IDs are stable
 across regeneration for the same build configuration, so notes you attach later
 survive; see [Boundaries](#boundaries) for what does and does not move them.
 
-Status: **Phase 4 + hardening (4.5–4.7) + netlists N1** done — C/C++ (libclang), SystemVerilog/Verilog (verilator),
+Status: **0.5.0 — Rust, Xyce, and circuit review hardening** — C/C++ (libclang), SystemVerilog/Verilog (verilator),
 Rust (rust-analyzer), Python (pyright) and SPICE-family netlist (native parser,
 ngspice as an optional oracle) frontends; browser viewer with editable
 annotations, live reload and diff mode; tracked entry points with history,
@@ -83,17 +83,20 @@ Chromium with `python -m playwright install chromium`. That installation is
 separate from Pyright's Node.js runtime. The JavaScript unit tests need a
 standalone `node` executable on PATH.
 
-### Planned netlist integrations
+### Netlist integrations
 
-The current `hx netlist check` CLI supports ngspice only. The following
-integrations are planned; their CLI flags are not available yet:
+The CLI supports `--oracle ngspice`, `--oracle xyce` and `--oracle xdm`.
+Extraction needs none of them. Xyce checks syntax/topology, normalized family
+counts and exposed net names; XDM checks the top-level primitive inventory.
+XDM translation warnings or omitted U devices are unavailable checks, never
+agreement. HSPICE and Spectre syntax remain deferred.
 
-| planned integration | installation guidance |
+| integration | installation guidance |
 |---|---|
-| Xyce oracle (Phase N2) | installer or source build from [Xyce downloads](https://xyce.sandia.gov/downloads/) |
-| XDM structural check (Phase N2) | `xdm_bdl` bundle from [XDM releases](https://github.com/Xyce/XDM/releases) |
-| HSPICE integration (Phase N2) | licensed Synopsys installation |
-| Spectre integration (Phase N3) | licensed Cadence installation |
+| Xyce oracle (`--xyce PATH`) | installer or source build from [Xyce downloads](https://xyce.sandia.gov/downloads/) |
+| XDM structural check (`--xdm PATH`) | `xdm_bdl` bundle from [XDM releases](https://github.com/Xyce/XDM/releases) |
+| HSPICE (deferred) | licensed Synopsys installation |
+| Spectre (deferred) | licensed Cadence installation |
 
 ### Project requirements
 
@@ -105,7 +108,7 @@ Per-language project requirements:
 | SystemVerilog / Verilog | `verilator` on PATH; sources via `-f list.f`, `--sv-file GLOB`, a lone `*.f` at the root, or every `*.sv`/`*.v` under it | exact: hierarchy, ports with explicit direction, parameters, packed-struct bit layouts |
 | Rust | `rust-analyzer` (rustup component) and a `Cargo.toml` at the root | lsp: signatures from hover, struct fields without sizes, no globals |
 | Python | Pyright and its Node.js runtime are included in the base install | lsp: as above; dataclass fields from annotations |
-| SPICE-family netlists (`.sp .spi .spice .cir .ckt .net .sub .lib .inc`) | nothing: a native parser. `--dialect auto\|spice\|ngspice` (sniffed from `.control`/`.if`/`.csparam`), `--deck FILE` when the entry file is an include or library, `--search-path DIR` (repeatable). Simulators are optional oracles for `hx netlist check` only | syntax: hierarchy, device terminals, nets, scoped models and definitions, symbolic parameters (never evaluated) |
+| SPICE-family netlists (`.sp .spi .spice .cir .ckt .net .sub .lib .inc`) | nothing: a native parser. `--dialect auto\|spice\|ngspice\|xyce` (sniffed from `.control`/`.if`/`.csparam`), `--deck FILE` when the entry file is an include or library, `--search-path DIR` (repeatable). Simulators are optional oracles for `hx netlist check` only | syntax: hierarchy, device terminals, nets, scoped models and definitions, symbolic parameters (never evaluated) |
 
 The language is picked from the entry file's extension; force it with `--lang`.
 
@@ -265,8 +268,8 @@ written. The additive `circuit` block holds what call graphs have no place for
   In strict mode (`HX_REQUIRE_TOOLS=1`) ngspice is required; vendor tools are
   required per `HX_REQUIRE_VENDOR_TOOLS=xyce,xdm` (or `all`).
 - **Dialects.** `spice` and `ngspice` today (`dev/ssot/netlist-dialect-matrix.md`
-  lists every construct); HSPICE and Xyce profiles arrive in Phase N2, Spectre
-  (`simulator lang=`, refused for now) in N3.
+  lists every construct); Xyce is selected with `--dialect xyce`. HSPICE and
+  Spectre syntax remain deferred.
 
 Output summary:
 
@@ -422,7 +425,7 @@ Values: an integer below 2^53 is a JSON number; anything wider is a lossless
 string in canonical hex (`17270'h1000…` with its width, `0x…` without), x/z
 literals keep their bit pattern. The differ compares values numerically, so a
 decimal and a hex rendering of one value never register as a change. The
-schema is `hx/3`; `hx/1` and `hx/2` files are read and upgraded in memory, and
+schema is `hx/4`; `hx/1`, `hx/2` and `hx/3` files are read and upgraded in memory, and
 `hx migrate` re-extracts a project's tracked entries once and carries
 annotations over (see Boundaries).
 
@@ -498,15 +501,16 @@ What the tool promises, and where the promise stops:
   `hx mcp` and the CLI can share one
   `annotations.json`; two servers on different machines sharing a network
   drive are not supported.
-- **Schema.** Readers must ignore unknown fields; `hx/3.x` only adds fields.
-  `hx/1` and `hx/2` files are upgraded in memory by every reader (relabelling
+- **Schema.** Readers must ignore unknown fields; `hx/4.x` only adds fields.
+  `hx/1`, `hx/2` and `hx/3` files are upgraded in memory by every reader (relabelling
   and a report only): ids that the new rules derive differently (nested Python
   functions, module callers, C statics and types keyed by file, symlinked
-  paths, collapsed overload targets, SystemVerilog layout-identified types) are
+  paths, collapsed overload targets, Rust trait implementations, SystemVerilog layout-identified types) are
   mapped only by `hx migrate`, which re-extracts every tracked entry into a
   staging area, commits only when all succeed, then rewrites `annotations.json`
-  once (backup `annotations.json.bak-hx1` or `.bak-hx2`, never overwritten).
-  Nodes map by file, kind, name and line; ghost targets by call site with the
+  once (backup `annotations.json.bak-hx1`, `.bak-hx2` or `.bak-hx3`, never overwritten).
+  Nodes map by file, kind, name and line, with signature/body evidence for Rust
+  line drift; ghost targets by call site with the
   overload-family evidence of the new graph; types by base id and users.
   Ambiguous or unmatched keys are listed, never guessed; a `verified` mark on
   a node that became a module node is dropped because its hash now covers the
@@ -515,16 +519,17 @@ What the tool promises, and where the promise stops:
 - **Layout-identified types.** Editing a module-scoped struct changes its id;
   the diff pairs the old and new id through their users and reports one changed
   type, and notes attached to the old id are listed as orphaned by `hx migrate`.
-- **Netlists.** Ids are case-folded for the case-insensitive SPICE dialects
-  (Spectre's case rule, Phase N3, is documented when it lands); parameters and
+- **Netlists.** Ids are case-folded for the supported SPICE-family dialects;
+  HSPICE and Spectre are deferred. Parameters and
   expressions are kept as written and never evaluated, so model bins are
-  resolved to the family and not to a W/L bin, and the oracle needs a deck
-  ngspice can run numerically. Occurrences inside `.if` branches are
+  resolved to the family rather than a W/L bin. Each optional oracle reports
+  its checked dimensions and unavailable constructs. Occurrences inside `.if` branches are
   distinguished by `attrs.guard` and the `#<guard_id>` suffix only. Files
   outside the project root keep absolute, machine-specific paths in their ids.
   `.control` blocks are stored, never executed. Unknown device letters and
-  directives are preserved with a diagnostic, not dropped; `Y`/`A` devices,
-  `.alter`, `.func` and `.measure` are Phase N2.
+  directives are preserved with a diagnostic. Xyce supports named `Y` devices,
+  digital `U` selectors, `.func`, `.measure` and `.data` structurally; XSPICE `A`
+  devices and `.alter` remain outside current coverage.
 - **Viewer layout.** In hierarchy graphs a file's functions and tasks are
   grouped apart from its module instances (`file · functions`): a group that
   mixes both, joined by a call edge, makes dagre's ranker throw (CVA6 at depth
@@ -565,3 +570,28 @@ every frontend whose toolchain is installed). Headless check of the viewer:
 ## License
 
 This project is licensed under the [MIT License](LICENSE).
+
+## Rust and circuit review in 0.5.0
+
+Rust trait-method IDs include self type and trait arguments, for example
+`rs:src/lib.rs::<Item as Convert<String>>::convert`. Qualified entry names keep
+`::`; ambiguous short names list candidates. Rust source handling covers nested
+comments, closures, raw literals, lifetimes and turbofish calls. Existing Rust
+graphs require `hx migrate` for hx/4 identities; history remains immutable.
+
+```bash
+hx extract design.cir:. --dialect xyce --all
+hx netlist check design.cir:. --oracle xyce
+hx netlist check design.cir:. --oracle xdm
+hx netlist net out --graph .hx/graph.json --json
+hx netlist uses /amp --kind definition --graph .hx/graph.json
+```
+
+Net queries are read-only and bounded to the saved graph. MCP exposes `get_net`
+and `netlist_uses`. The viewer adds Nets/Definitions/Models navigation, net
+highlighting in the hierarchy, and Circuit changes with before/after declaration
+records. Static exports support the same connectivity navigation.
+
+The explicit `dev/scripts/hardening_coverage.py` runner uses a pinned Codex
+workspace and installed Xyce/XDM tools, writes replayable acceptance artifacts,
+and exits nonzero on failed stages. See the Rust guide and netlist tutorial.

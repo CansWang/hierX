@@ -4,6 +4,8 @@ these tables, so `NGSPICE` is `replace(SPICE, …)` and a test asserts the two d
 from __future__ import annotations
 
 import re
+import json
+from pathlib import Path
 from dataclasses import dataclass, field, replace
 from typing import Optional
 
@@ -28,7 +30,7 @@ class Directive:
 
 ROLES = ("scope_open", "scope_close", "include", "lib", "lib_end", "param", "global", "model", "cond_if", "cond_elseif",
          "cond_else", "cond_end", "control", "control_end", "end", "analysis", "option", "output", "func", "protect",
-         "unprotect", "title", "unknown")
+         "unprotect", "title", "data", "data_end", "unknown")
 
 
 @dataclass(frozen=True)
@@ -101,8 +103,35 @@ NGSPICE = replace(
         ".control": "control", ".endc": "control_end", ".csparam": "param"}.items()}},
 )
 
-PROFILES: dict[str, Profile] = {"spice": SPICE, "ngspice": NGSPICE}
-LATER_DIALECTS = ("hspice", "xyce", "spectre")      # named in --dialect help, refused until their phase lands
+XYCE_INVENTORY = json.loads(Path(__file__).with_name("xyce_devices.json").read_text())
+
+
+def _xyce_families():
+    families = {k: v for k, v in SPICE_FAMILIES.items() if k != "N"}
+    for name, levels in XYCE_INVENTORY["families"].items():
+        prefix = name.upper() if len(name) == 1 else "Y" + name.upper()
+        entries = list(levels.values())
+        lo = min(int(x["nodes"]) for x in entries)
+        hi = max(int(x["nodes"]) + int(x["optional"]) for x in entries)
+        base = families.get(prefix)
+        model = "required" if any(x["model"] == "yes" for x in entries) else "none"
+        if prefix in ("R", "C", "L", "YADC", "YDAC"):
+            model = "optional"
+        families[prefix] = _fam(prefix, entries[0]["description"] or name,
+                                base.terminals if base else tuple(f"t{i + 1}" for i in range(lo)),
+                                lo, hi, model, base.value if base else False, base.refs if base else ())
+    families["U"] = _fam("U", "digital", ("vdd", "vss"), 2, 22, "required")
+    return families
+
+
+XYCE = replace(SPICE, name="xyce", grammar="xyce", inline_comment=(";",), families=_xyce_families(),
+               directives={**SPICE_DIRECTIVES, **{k: Directive(k, role) for k, role in {
+                   ".global_param": "param", ".func": "func", ".measure": "output", ".meas": "output",
+                   ".step": "analysis", ".data": "data", ".enddata": "data_end", ".preprocess": "option",
+                   ".sens": "analysis", ".four": "output", ".fft": "output", ".hb": "analysis"}.items()}})
+
+PROFILES: dict[str, Profile] = {"spice": SPICE, "ngspice": NGSPICE, "xyce": XYCE}
+LATER_DIALECTS = ("hspice", "spectre")
 
 _CONTROL_RE = re.compile(r"^\s*\.(control|endc|if|elseif|endif|csparam)\b", re.I | re.M)
 _SPECTRE_RE = re.compile(r"^\s*simulator\s+lang\s*=", re.I | re.M)
@@ -126,5 +155,5 @@ def get_profile(name: str, text: str = "") -> Profile:
     if name in PROFILES:
         return PROFILES[name]
     if name in LATER_DIALECTS:
-        raise FrontendError(f"dialect {name!r} arrives in a later phase; Phase 1 supports --dialect spice|ngspice")
+        raise FrontendError(f"dialect {name!r} is deferred to a later phase; supported: --dialect spice|ngspice|xyce")
     raise FrontendError(f"unknown dialect {name!r}; choose from auto, {', '.join(PROFILES)}")

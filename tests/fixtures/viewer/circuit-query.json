@@ -1,0 +1,25 @@
+{
+  "nodes": {
+    "deck": {"attrs": {}},
+    "x": {"attrs": {}},
+    "r1": {"attrs": {}},
+    "r2": {"attrs": {"guard_id": "g0", "guard_constraints": [{"chain": "pick", "branch": 0}]}},
+    "r3": {"attrs": {"guard_id": "g1", "guard_constraints": [{"chain": "pick", "branch": 1}]}}
+  },
+  "circuit": {
+    "nets": {
+      "out": {"spelled": "out", "bindings": []},
+      "x.p": {"spelled": "p", "bindings": [{"via": "x", "outer": "out", "canonical": "out"}]}
+    },
+    "terminals": {
+      "r1": [{"terminal": "p", "net": "out", "canonical": "out"}],
+      "r2": [{"terminal": "p", "net": "x.p", "canonical": "out"}],
+      "r3": [{"terminal": "p", "net": "x.p", "canonical": "out"}]
+    },
+    "ports": {"x": [{"port": "p", "inner": "x.p", "outer": "out", "net": "out"}]},
+    "definitions": {"/amp": {"spelled": "amp", "status": "found", "instances": ["x"], "declarations": []}},
+    "models": {"/dm": {"spelled": "dm", "status": "ambiguous", "used_by": ["r2", "ghost"], "declarations": []}}
+  },
+  "unresolved": [{"id": "ghost", "name": "missing", "reason": "not expanded"}],
+  "expected": {"all": ["r1", "r2", "r3", "x"], "guarded": ["r1", "r2", "x"], "aliases": ["out", "x.p"]}
+}

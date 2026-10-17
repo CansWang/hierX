@@ -30,6 +30,48 @@ Select an instance and inspect its ports and connections. Device terminal
 bindings are available in the detail pane. Case-insensitive lookup uses
 case-folded IDs while names retain their source spelling.
 
+Use the Nets, Definitions and Models selector to navigate circuit records.
+Selecting a terminal's net highlights its connected devices and hierarchy paths.
+Hidden/depth-filtered devices stay hidden; the detail panel reports endpoints
+outside the current view. These features also work in standalone exports.
+
+Saved graphs support read-only queries:
+
+```bash
+hx netlist net out --graph .hx/graph.json
+hx netlist uses /five_t_opamp --kind definition --graph .hx/graph.json --json
+```
+
+Queries list only what was extracted. Guarded bindings remain alternatives; use
+`net --node ID` to choose an occurrence's context. MCP provides `get_net` and
+`netlist_uses`. Circuit diff mode adds separate wiring, model, definition and
+parameter changes, including before/after records for removed declarations.
+Legacy graphs without occurrence guard constraints report that they need
+re-extraction before contextual queries can filter conditional alternatives.
+
+## Xyce
+
+Use `hx extract deck.cir:. --dialect xyce --all` for native Xyce structure.
+Named devices retain their type in IDs, such as `yadc!probe`. Device grammar
+metadata is pinned to Xyce 7.10; model expressions stay symbolic.
+
+```bash
+hx netlist check deck.cir:. --oracle xyce --json
+hx netlist check deck.cir:. --oracle xdm --json
+```
+
+Xyce checks original-deck syntax/topology, family counts (accounting for coupled
+inductor grouping), and exposed net names. XDM checks its top-level primitive
+inventory; it does not expose subcircuit inventory or terminal bindings through
+that interface. Warnings indicating translation loss return unavailable, even
+when XDM exits successfully. Neither check claims full terminal-level simulator
+agreement. Original sources are mirrored without overwriting them. The explicit
+production runner requires both local tools:
+
+```bash
+python dev/scripts/hardening_coverage.py --suite xyce --out /tmp/hx-xyce-coverage
+```
+
 ## Narrow the graph
 
 <!-- hx:test netlist-entries -->

@@ -1,0 +1,14 @@
+Xyce hierarchical analog circuit
+.lib "devices.lib" typical
+VDD vdd 0 1.8
+VIN in 0 0.2
+XDUT in out vdd amp gain=2
+RLOAD out 0 R=10k
+.global_param scale=1
+.func twice(x) {2*x}
+.data sweep_data value
++ 1
++ 2
+.enddata
+.op
+.end

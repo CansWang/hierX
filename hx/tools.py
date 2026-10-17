@@ -27,9 +27,9 @@ class Tool:
 TOOLS: dict[str, Tool] = {t.key: t for t in (
     Tool("ngspice", "ngspice", "ngspice", "the ngspice oracle (`hx netlist check --oracle ngspice`)",
          "sudo apt-get install -y ngspice", "https://ngspice.sourceforge.io/download.html", "--ngspice", (), "HX_TOOL_NGSPICE"),
-    Tool("xyce", "Xyce", "Xyce", "the Xyce oracle (Phase N2)", "download the installer or build from source",
+    Tool("xyce", "Xyce", "Xyce", "the Xyce syntax/topology oracle", "download the installer or build from source",
          "https://xyce.sandia.gov/downloads/", "--xyce", ("/usr/cad/xyce/parallel/bin/Xyce", "/usr/local/Xyce/bin/Xyce"), "HX_TOOL_XYCE"),
-    Tool("xdm", "XDM", "xdm_bdl", "the XDM structural check (Phase N2)",
+    Tool("xdm", "XDM", "xdm_bdl", "the XDM Xyce structural check",
          "download the xdm_bdl bundle from the XDM releases and put it on PATH", "https://github.com/Xyce/XDM/releases", "--xdm",
          ("~/.local/bin/xdm_bdl",), "HX_TOOL_XDM"),
     Tool("spectre", "Spectre", "spectre", "the Spectre syntax check (Phase N3)", "Cadence licensed install; put `spectre` on PATH",

@@ -1,9 +1,15 @@
 # Graph format
 
-The current graph schema is `hx/3`. Download the
-[JSON Schema](hx-3.schema.json) for field-level validation. Consumers should ignore
+The current graph schema is `hx/4`. Download the
+[JSON Schema](hx-4.schema.json) for field-level validation. Consumers should ignore
 unknown fields: additions within a major version are compatible. Unsupported
 majors are refused by the shared readers.
+
+Rust trait methods include the self type and trait arguments, for example
+`rs:src/lib.rs::<Item as Convert<String>>::convert`. Older Rust graphs are read
+without guessing new IDs and flagged for `hx migrate`. Migration preserves
+history and backs up notes; ambiguous mappings are reported. Verification marks
+are cleared when Rust token corrections change a body hash.
 
 ## Top-level fields
 
@@ -135,7 +141,7 @@ and include probes also appear in metadata for caching and watching.
 
 ## Older graphs and migration
 
-Shared readers upgrade `hx/1` and `hx/2` in memory and can attach a migration
+Shared readers upgrade `hx/1`, `hx/2` and `hx/3` in memory and can attach a migration
 report. That does not reconstruct IDs requiring new extraction rules.
 `hx migrate` re-extracts tracked entries into staging, then maps annotation keys
 and creates a one-time backup. Ambiguous/unmatched mappings are reported rather

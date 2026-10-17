@@ -200,7 +200,7 @@ class Elaborator:
         f = fold(name, cs)
         if f in self.profile.ground_names:
             return "0"
-        if f in self.index.globals:
+        if f in self.index.globals or (self.profile.name == "xyce" and f.startswith("$g")):
             return f
         return path_str(scope_occ.path + (f,))
 
@@ -230,7 +230,7 @@ class Elaborator:
         f = fold(name, self.profile.case_sensitive)
         if f in self.profile.ground_names:
             return "ground"
-        if f in self.index.globals:
+        if f in self.index.globals or (self.profile.name == "xyce" and f.startswith("$g")):
             return "global"
         if scope_occ.decl is not None and f in {fold(p, self.profile.case_sensitive) for p in scope_occ.decl.ports}:
             return "port"
@@ -326,10 +326,26 @@ class Elaborator:
         fam = self.profile.families.get(st.letter)
         is_model = lambda n: self.index.is_model_visible(scope, n, occ.guard)
         parts = self.grammar.split_element(st.tokens(self.profile), fam, is_model)
+        if self.profile.name == "xyce" and fam and parts.master:
+            import re
+            from dataclasses import replace
+            from .profiles import XYCE_INVENTORY
+            lookup = self.index.lookup("model", scope, parts.master, occ.guard)
+            if len(lookup.alternatives) == 1:
+                decl = lookup.alternatives[0]
+                match = re.search(r"\blevel\s*=\s*(\d+)", decl.params_text or "", re.I)
+                level = match.group(1) if match else "1"
+                family_key = fam.letter[1:].lower() if fam.letter.startswith("Y") else fam.letter.lower()
+                spec = XYCE_INVENTORY["families"].get(family_key, {}).get(level)
+                if spec:
+                    fam = replace(fam, min_terminals=int(spec["nodes"]), max_terminals=int(spec["nodes"]) + int(spec["optional"]))
+                    parts = self.grammar.split_element(st.tokens(self.profile), fam, is_model)
         rec = DeviceRecord(occ=occ, family=fam, parts=parts)
         if fam is None:
             rec.diagnostics.append(self._diag("unknown-device-family", f"{st.name}: no device family for letter {st.letter!r}; tokens kept", occ, "warning"))
         else:
+            if self.profile.name == "xyce" and not fam.min_terminals <= len(parts.positional) <= fam.max_terminals and not any(m.startswith("only ") for m in parts.diagnostics):
+                rec.diagnostics.append(self._diag("terminal-count-mismatch", f"{st.name}: {len(parts.positional)} terminals outside {fam.min_terminals}..{fam.max_terminals}", occ))
             names = list(fam.terminals or ())
             for i, net in enumerate(parts.positional):
                 tname = names[i] if i < len(names) else f"t{i + 1}"
@@ -358,7 +374,8 @@ class Elaborator:
             elif fam.model == "required" and not parts.master:
                 rec.model_status = "missing"
                 rec.diagnostics.append(self._diag("missing-model", f"{st.name}: no model given", occ))
-            for role, as_written in zip(fam.refs, parts.refs):
+            roles = (("inductor",) * len(parts.refs)) if self.profile.name == "xyce" and fam.letter == "K" else fam.refs
+            for role, as_written in zip(roles, parts.refs):
                 letters = ("V",) if role == "vsource" else ("L",) if role == "inductor" else ()
                 targets = self.find_children(parent, fold(as_written, self.profile.case_sensitive), occ.guard, letters)
                 entry = {"role": role, "as_written": as_written, "targets": targets, "reason": None}

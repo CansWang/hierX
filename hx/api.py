@@ -13,7 +13,9 @@ def split_entry(entry: str) -> tuple[str, str]:
     """'src/main.c:app_run' -> ('src/main.c', 'app_run')."""
     if ":" not in entry:
         raise ValueError(f"entry must be <file>:<symbol>, got {entry!r}")
-    file, symbol = entry.rsplit(":", 1)
+    start = 2 if len(entry) > 2 and entry[1] == ":" and entry[2] in "/\\" else 0
+    cut = entry.find(":", start)
+    file, symbol = entry[:cut], entry[cut + 1:]
     if not file or not symbol:
         raise ValueError(f"entry must be <file>:<symbol>, got {entry!r}")
     return file, symbol
@@ -107,7 +109,7 @@ def extract(entry: str, *, root: str = ".", compile_commands: Optional[str] = No
         verilator: Verilator executable name or path.
         lsp_cmd: Language-server executable and arguments as a sequence, not shell text.
         lsp_timeout: Seconds allowed for language-server indexing/readiness.
-        dialect: Netlist dialect: auto, spice, or ngspice.
+        dialect: Netlist dialect: auto, spice, ngspice, or xyce.
         deck: Top deck supplying context for a netlist include/library entry.
         search_paths: Additional netlist include/library search directories.
 

@@ -196,7 +196,7 @@ class _Builder:
                         if callee_id:
                             self.unresolved(decl.name, callee_id, "caller truncated by --max-nodes", cs.loc, decl.id, decl.family)
                         continue
-                    rec = self.fe.function(caller_key)
+                    rec = getattr(self.fe, "caller_function", self.fe.function)(caller_key)
                     if rec is None:
                         continue
                     node = rec.node

@@ -50,8 +50,8 @@ Go is experimental and has no integration tests.
 
 ## Netlists
 
-Only `spice` and `ngspice` parsing are currently supported. HSPICE, Xyce, and
-Spectre profiles are planned; finding their executables does not enable parsing.
+Native `spice`, `ngspice` and `xyce` parsing are supported. Select Xyce explicitly
+with `--dialect xyce`. HSPICE and Spectre remain deferred.
 
 Inspect `circuit.diagnostics`, the summary counts, and `-v` output. Common causes:
 
@@ -62,7 +62,7 @@ Inspect `circuit.diagnostics`, the summary counts, and `-v` output. Common cause
 | `terminal-count-mismatch` | Compare the occurrence's nets with the resolved definition's port count |
 | `duplicate-definition`, ambiguous lookup | Resolve duplicate declarations in the same scope; hx does not use last-wins lookup |
 | Unsupported/unknown statement | Read the preserved source and diagnostic; it may be outside current dialect coverage |
-| Oracle unavailable | Confirm ngspice is installed and the deck has numerical parameters and required model implementations |
+| Oracle unavailable | Confirm the selected oracle is installed; inspect the reason for missing models, symbolic values, or XDM translation/coverage gaps |
 
 Extraction continuing does not mean diagnostics are harmless. Parameters are
 symbolic, guarded branches are retained, and `.control` text is never executed.

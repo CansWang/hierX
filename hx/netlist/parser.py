@@ -190,6 +190,11 @@ def structure(raw: RawFile, role: str, profile: Profile) -> FileSummary:
             title = ""
     for rs in stmts[start:]:
         body = frames[-1][2]
+        if frames[-1][0] == "data":
+            body.append(Directive(raw=rs, name=".data-row", role="analysis"))
+            if rs.text.split(None, 1)[0].lower() == ".enddata":
+                frames.pop()
+            continue
         if rs.kind_hint == "control":
             body.append(ControlBlock(raw=rs))
             continue
@@ -210,7 +215,10 @@ def structure(raw: RawFile, role: str, profile: Profile) -> FileSummary:
             d = profile.directives.get(word)
             drole = d.role if d else "unknown"
             positional, pairs = assignments(toks[1:])
-            if drole == "scope_open":
+            if drole == "data":
+                body.append(Directive(raw=rs, name=word, role="analysis"))
+                frames.append(("data", None, body, {}))
+            elif drole == "scope_open":
                 if not positional:
                     body.append(Unparsed(raw=rs, reason=".subckt without a name"))
                     _diag(diags, "unparsed-statement", ".subckt without a name", rs)
@@ -303,6 +311,11 @@ def structure(raw: RawFile, role: str, profile: Profile) -> FileSummary:
             continue
         letter = text[0].upper()
         name = text.split(None, 1)[0]
+        if profile.name == "xyce" and letter == "Y":
+            pieces = text.split()
+            letter = pieces[0].upper()
+            if len(pieces) >= 2:
+                name = letter.lower() + "!" + pieces[1]
         fam_known = letter in profile.families
         body.append(Element(raw=rs, letter=letter, name=name, family_known=fam_known))
     while len(frames) > 1:
@@ -313,5 +326,8 @@ def structure(raw: RawFile, role: str, profile: Profile) -> FileSummary:
             _diag(diags, "unparsed-statement", ".if never closed", hdr.raw)
         elif kind == "lib":
             _diag(diags, "unparsed-statement", f".lib {hdr.name} never closed", hdr.raw)
-        frames[-1][2].append(hdr)
+        elif kind == "data":
+            _diag(diags, "unparsed-statement", ".data never closed", rs)
+        if hdr is not None:
+            frames[-1][2].append(hdr)
     return FileSummary(file=raw.path, role=role, statements=out, diagnostics=diags, title=title)

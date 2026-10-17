@@ -14,11 +14,12 @@ for *what is intended*.
 
 ## Current status (2026-10-16)
 
-The package is **0.4.0**, emitting graph schema **hx/3** and annotation schema
+The package is **0.5.0**, emitting graph schema **hx/4** and annotation schema
 **hx-ann/1**. Supported frontends are C/C++, SystemVerilog/Verilog, Rust, Python,
-and SPICE/ngspice netlists. `instance` is a supported edge kind. Xyce/XDM oracle
-integration, HSPICE profiles and Spectre grammar remain future work; their tool
-registry entries do not imply working CLI flags. The [README](../../README.md)
+and SPICE/ngspice/Xyce netlists. `instance` is a supported edge kind. Native Xyce,
+Xyce/XDM checks, saved circuit queries and circuit viewer navigation are implemented.
+HSPICE and Spectre syntax are deferred because their simulators are unavailable.
+The [README](../../README.md)
 and [tutorials/API references](../../docs/index.md) describe the current interface.
 
 - **State placement.** Default CLI extraction walks upward from the real source
@@ -53,7 +54,8 @@ and [tutorials/API references](../../docs/index.md) describe the current interfa
   build, interface coverage tests and executable tutorials.
 - **Remaining boundaries.** Runtime capture, inotify watching, C++ template
   instantiation expansion, LSP disk caching, and per-always-block SV signal
-  reads/writes remain outside the implemented scope. Netlist N2–N5 remain planned.
+  reads/writes remain outside the implemented scope. Full production hardening
+  is validated explicitly with the pinned Codex/Xyce/XDM acceptance runner.
 
 Phase descriptions below preserve design history, including superseded schemas,
 IDs and test counts. Dated benchmark results describe their original runs; they
@@ -95,7 +97,7 @@ and the linked reference documentation for current behavior.
 6. **Real-project hardening (4.6)** — the eleven findings from the CVA6 review (wide constants, SV cache identity, specialized type identity, generated instances, viewer layout failure, anonymous SV ids, source ranges, warnings, entry validation, generate-array spelling, version) plus schema `hx/2` with migration. **Done 2026-10-10.**
 7. **Review fixes (4.7)** — the nine defects of the FFmpeg C review (C-C1…C4) and the apragma Python review (PY-H1…H5) plus the two found while verifying them (struct-tag USR collision, Pyright overload fan-out): shared lexer, file-scoped C identity with cross-TU type reconciliation and SCC fingerprints, nested LSP qualnames, module nodes, caller admission before fetch, schema `hx/3` with the 1→2→3 upgrade chain and location-based migration, review bundles replayable against a fixed checkout. **Done 2026-10-12.**
 8. **Runtime (reserved, not now)** — IR already carries an empty `runtime` slot; instrumentation strategies noted only.
-9. **Circuit netlists** — N1 SPICE + ngspice end to end (native parser, `circuit` block, scoped lookup with guards, include/library closure with probes, ngspice listing oracle, viewer/diff/track/watch/MCP plumbing) **Done 2026-10-13**; N2 HSPICE + Xyce profiles (Xyce/XDM oracles, corpus); N3 Spectre (second grammar); N4 viewer nets/definitions panes, circuit diff section, `hx netlist net|uses`, MCP queries; N5 hardening, thresholds, version 0.5.0.
+9. **Circuit netlists** — N1 SPICE + ngspice end to end **done 2026-10-13**. Native Xyce, Xyce/XDM checks, viewer nets/definitions/models, circuit diff, `hx netlist net|uses`, MCP queries and version 0.5.0 are implemented. HSPICE and Spectre are deferred until their tools are available. See the current dialect matrix for the supported constructs and oracle coverage.
 
 ---
 
@@ -123,7 +125,7 @@ hx/
 ### Historical IR — `graph.json`, schema `hx/1`
 
 This is the Phase 1 shape, retained for context. Current readers/writers use
-`hx/3`; see the [graph reference](../../docs/reference/graph.md).
+`hx/4`; see the [graph reference](../../docs/reference/graph.md).
 
 - Top level: `schema`, `generated`, `root`, `lang`, `entry`, `meta`, `nodes{}`, `types{}`, `globals{}`, `edges[]`, `unresolved[]`.
 - **Node**: `id`, `kind`, `name`, `qualname`, `lang`, `loc{file,line,end_line,col}`, `signature`, `storage`, `depth` (negative = caller side), `body_hash`, `precision`, `returns{type,type_ref}`, `params[]{name,type,type_ref,dir,dir_source}`, `globals{reads[],writes[]}`, `calls[]`, `runtime: null`.
@@ -244,6 +246,43 @@ Default CLI extraction, updates, MCP, viewer re-extraction, and migration commit
 - **Review fixes 1.1 (2026-10-14; critique of N1 reviewed three rounds, every item reproduced before planning)**: (1) `Elaborator.canonical(key, occ)` follows port bindings along the occurrence's own ancestor chain (`_by_key` registry); a net with several bindings and no ancestor among them stops (nothing guessed); `terminals[].canonical` added; `hx diff` compares IMMEDIATE bindings (device terminal keys, instance `ports[].outer`), so an ancestor's rewiring is reported once. (2) `circuit` declaration records merge across calls (`_merge_record`, dedupe by `(identity, file, line)`: two unguarded cards of one name share an identity, one file included from `.if` and `.else` shares a source) and `finalize` also walks unresolved ghosts: an ambiguous instance lists its candidates (`ambiguous`), a missing one a `missing` record, bodies unexpanded; `terminals`/`ports` stay node-keyed, `instances`/`used_by` may name ghosts. (3) Controlling references keep every guard-compatible target (`refs[].targets`, `attrs.controls[].targets`, one `ref` edge each; a ghost for a missing one); compatible targets → `ambiguous-reference`; the oracle takes the name form from the first target or the spelled name. (4) Grammar order terminals → refs → model → value (`W1 out 0 VSENSE sm` keeps `sm`); `compare` never skips a required-model family (a `None` model on either side is a `model` mismatch); `subtree` filters hx devices too (`out_of_scope_hx`). (5) Scope hashes carry each statement's guard key (`item_texts` → `(guard, text)`), so a condition-only edit moves the deck's and the definitions' hashes while spacing does not. (6) Deck role: `DesignIndex(deck_role)`, `SpiceFrontend(deck_role="deck|library|auto")`; `api.extract` passes `auto` for `@` entries without `--deck` (line 1 a dot-directive → library, read like an include with diagnostics), stores `extract_args.deck` AS GIVEN (`None` when omitted, so the viewer's `POST /api/extract` and `project.update` replay the library reading), `meta.index.deck_role`, `circuit.root.deck_role`; a deck title starting with `.` gets `title-is-directive`. (7) `names.canonical_expr` normalises an expression token's interior (whitespace, case) keeping delimiters and inner `"…"` strings. (8) `check_ngspice` compares a definition-rooted entry with deck context once per unguarded instance (`SpiceFrontend.instances_of`, deck extracted once, ngspice run once, `compare(..., subtree=P)` per instance, per-instance report lines); no unguarded instance → unavailable before the simulator starts; a library reading without `--deck` → "no deck context … pass --deck". New fixtures `conditional/{nested_guard, per_branch, ref_alternatives, shared_include(.sp/.inc)}`, `fail/{ref_duplicate_and_missing, duplicate_model}`, `switches/switches.sp`, `oracle/uninstantiated.sp`; conformance invariants: every `definition_refs`/`model_refs` key serialised, every ambiguous/missing instance ghost listed, canonical ports equal the chain walk, unique reference targets with a diagnostic on overlap; `_spice_nested` factory. Known limit: `diff._decl_hashes` keys by identity, so a same-identity ambiguous pair diffs as one key (already an error).
 - **Known limits (N2–N5)**: HSPICE/Xyce/Spectre profiles; numeric bin selection; `Y`/`A` devices, `.alter`, `.func`, `.measure`; net highlighting, nets/definitions panes and `hx netlist net|uses`; Xyce/XDM oracles; ids outside the root are absolute; the oracle needs numeric parameters.
 
+## Rust and Xyce hardening — 0.5.0
+
+- **Rust identities and source boundaries.** rust-analyzer remains the semantic
+  authority. UTF-8/UTF-16 positions, qualified entries, trait arguments, closures,
+  nested comments and long calls are handled explicitly. Source-backed Rust IDs
+  never acquire positional collision suffixes; generated targets without a source
+  declaration remain unresolved. Caller-only records avoid unrelated outgoing
+  queries. Request counts/times and readiness failures are recorded.
+- **Compatibility.** Schema `hx/4` changes Rust identity/token rules. Old readers
+  upgrade through the 1→2→3→4 chain in memory. Rust graphs request re-extraction;
+  persistent migration maps annotations with source evidence, retains backups
+  and history, reports ambiguities and invalidates changed verification hashes.
+- **Native Xyce.** A local 7.10 registration inventory describes 64 family names
+  and 117 level descriptors. Native grammar covers named Y devices, U selectors,
+  multi-inductor references, model-level terminal bounds, global parameters,
+  functions and data blocks. Unsupported constructs retain diagnostics. The
+  inventory describes structural coverage, not simulator validation of every level.
+- **Independent checks.** Xyce checks mirrored original decks for syntax/topology,
+  normalized family counts and exposed net names. XDM checks its exposed top-level
+  primitive inventory. Translation warnings or missing U devices are unavailable,
+  never agreement; nested inventory, terminal bindings and model values remain
+  outside that XDM interface. HSPICE and Spectre remain deferred.
+- **Review workflow.** Saved-graph `hx netlist net|uses` and MCP `get_net` /
+  `netlist_uses` report aliases, canonical connectivity, guarded alternatives and
+  declaration users, with bounded results. Nets, Definitions and Models viewer
+  panes support navigation and highlight connected devices along hierarchy paths.
+  Circuit changes have a dedicated section with retained before/after records,
+  including removed declarations; exports carry the same behavior.
+- **Acceptance.** `dev/scripts/hardening_coverage.py` pins Codex revision
+  `221e4e7c05386d06aa7b91da2a9b04f7f2bd921f` and Rust 1.95.0. Eight entries
+  run with depth 0, depth 2 and callers in forward/reverse fresh analyzer sessions.
+  A development-only syn parser checks argument boundaries; macro-body gaps must
+  have independent span evidence, while unexpected gaps and mismatches fail.
+  The Xyce/XDM fixture manifest pins unavailable-check reasons. Normal CI uses
+  reduced fixtures; the production runner is explicit and retains JSON/Markdown
+  reports, tool versions, source fingerprint, timings and request counts.
+
 ## Phase 5 — Runtime (reserved)
 - Not in scope. IR keeps `runtime: null`. Candidate strategies: C `-finstrument-functions` / gdb Python / uprobes; SV port probes via `verilator --trace`; Python `sys.setprofile`; Rust `tracing`.
 
@@ -294,3 +333,33 @@ Default CLI extraction, updates, MCP, viewer re-extraction, and migration commit
   strict MkDocs build passed; 27 README CLI examples parse and README/SSOT local
   file links resolve. Existing project graph/annotation files remained unchanged,
   and no `.hx` directories were created under the test cases.
+- **2026-10-16** — Version 0.5.0: Rust/Xyce/circuit-review implementation.
+  HSPICE and Spectre are deferred until their tools are available. Rust uses
+  deterministic trait-aware hx/4 IDs, source-based migration with annotation
+  backups, correct Unicode/token boundaries, canonical attribute-function
+  selections/ranges, reasoned generated-target ghosts and caller-only fetching.
+  Native Xyce uses a pinned 7.10 inventory and grammar; independent Xyce/XDM
+  checks retain mirrored inputs and distinguish agreement, mismatches and
+  unavailable coverage. Added saved-graph net/uses CLI and MCP queries, guarded
+  net highlighting, definition/model navigation, and dedicated circuit changes
+  with before/after declaration records in served and exported viewers. Small
+  fixtures run in normal CI; the explicit acceptance runner uses the pinned
+  Codex checkout, independent syn source audit and local Xyce/XDM manifest.
+  Regression validation: 389 tests passed with `HX_REQUIRE_TOOLS=1` and
+  `HX_REQUIRE_VENDOR_TOOLS=xyce,xdm`; all 5 Node tests and strict MkDocs passed.
+  A freshly installed wheel passed packaged-data, Rust-helper, Xyce extraction,
+  saved-net query and standalone-export smoke checks outside the source tree.
+  Production acceptance: all 19 stages passed against pinned Codex
+  `221e4e7c05386d06aa7b91da2a9b04f7f2bd921f` with Rust/rust-analyzer 1.95.0,
+  Xyce 7.10.0-opensource and the XDM 2.7.0 bundle. All 48 extractions passed;
+  all 24 forward/reverse comparisons matched, including unresolved identities
+  and call sites. The independent syn audit checked 4,090 call-site ranges with
+  zero argument mismatches or unexpected mapping gaps; 17 opaque macro sites
+  retain explicit span evidence. Both sessions issued 2,767 requests; readiness
+  was 42.59/42.00 s and extraction cases totalled 161.49/167.75 s. These are
+  bounded views (maximum 200 nodes), not whole-workspace extraction. Xyce
+  agreed on all five decks; XDM agreed on two and reported the three manifest-pinned
+  coverage gaps as unavailable. Full reports, tool identities and the runtime
+  source fingerprint are under `~/hx-review-artifacts/hierx-0.5/rust-acceptance/`.
+  The Codex checkout remained clean and test fixtures contain no `.hx` directories.
+  Not committed (user commits).

@@ -753,7 +753,7 @@ def install_hook(root: str, event: str = "Stop", command: str = "hx update --qui
     return path, True
 
 
-# ---------------------------------------------------------------- migration (hx/1, hx/2 -> hx/3)
+# ---------------------------------------------------------------- migration (older schemas -> hx/4)
 
 _LAYOUT_SUFFIX = re.compile(r"@[0-9a-f]{8}$")
 
@@ -847,9 +847,19 @@ def map_node_ids(old: dict, new: dict, root: str) -> tuple[dict, dict, list[dict
             if section == "nodes" and kind == "function" and str(name or "").startswith("(module) "):
                 kind = "module"
             cands = list(index.get((norm(loc.get("file") or ""), kind, name, loc.get("line")), []))
+            if not cands and o.get("lang") == "rs" and o.get("body_hash"):
+                cands = [nid for nid, n in new_sec.items() if norm((n.get("loc") or {}).get("file") or "") == norm(loc.get("file") or "")
+                         and n.get("kind") == kind and n.get("name") == name and n.get("signature") == o.get("signature")
+                         and n.get("body_hash") == o.get("body_hash")]
             if section == "nodes":
                 oq = _split_id(oid)[2] or (o.get("qualname") or name or "")
-                cands = [c for c in cands if _scope_compatible_node(oq, _split_id(c)[2])]
+                if o.get("lang") == "rs":
+                    cands = [c for c in cands if _scope_compatible_node(oq, _split_id(c)[2]) or
+                             (new_sec[c].get("signature") == o.get("signature") and
+                              ((new_sec[c].get("loc") or {}).get("end_line") == loc.get("end_line") or
+                               new_sec[c].get("body_hash") == o.get("body_hash")))]
+                else:
+                    cands = [c for c in cands if _scope_compatible_node(oq, _split_id(c)[2])]
             if len(cands) == 1:
                 mapped[oid] = cands[0]
             elif cands:
@@ -960,13 +970,13 @@ def _invalidated_ids(old: dict, new: dict, node_map: dict) -> list[str]:
         if not o or not n:
             continue
         module_caller = o.get("kind") == "function" and str(o.get("name") or "").startswith("(module) ")
-        if module_caller or o.get("kind") != n.get("kind"):
+        if module_caller or o.get("kind") != n.get("kind") or (o.get("lang") == "rs" and o.get("body_hash") != n.get("body_hash")):
             out.add(v)
     return sorted(out)
 
 
 def migrate(root: str, *, keep_history: Optional[int] = None, progress: Optional[Callable[[str], None]] = None) -> dict:
-    """The one persistent older-schema -> current-schema operation (hx/1 or hx/2 -> hx/3). Every tracked entry is
+    """The one persistent older-schema -> current-schema operation (hx/1, hx/2 or hx/3 -> hx/4). Every tracked entry is
     re-extracted into a staging directory; only
     when ALL succeed are the graphs committed (previous ones snapshotted), and annotations rewritten once under the
     file lock with a one-time backup. Extraction or annotation-preflight failures

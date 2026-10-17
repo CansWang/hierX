@@ -30,7 +30,7 @@
 </header>
 <div id="banner" class="banner" hidden></div>
 <main id="main">
-  <aside id="left" class="pane"><div id="tree"></div></aside>
+  <aside id="left" class="pane"><select id="circuit-view" hidden aria-label="structure view"><option value="hierarchy">Hierarchy</option><option value="nets">Nets</option><option value="definitions">Definitions</option><option value="models">Models</option></select><div id="tree"></div></aside>
   <div class="splitter" id="splitter-l" data-pane="left"></div>
   <section id="center">
     <div id="cy" role="img" aria-label="call graph"></div>
@@ -52,6 +52,7 @@
 <script src="/static/vendor/dagre.min.js"></script>
 <script src="/static/vendor/cytoscape-dagre.js"></script>
 <script src="/static/patch.js"></script>
+<script src="/static/circuit.js"></script>
 <script src="/static/app.js"></script>
 </body>
 </html>

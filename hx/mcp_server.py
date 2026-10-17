@@ -164,6 +164,24 @@ def build_server(root: str) -> MCPServer:
         return "\n".join(f"{g['name']:<40} {g['entry']}  [{g['lang']}, {g['nodes']} functions, {g['generated']}{revision(g)}]" for g in gs)
 
     @srv.tool()
+    def get_net(net: str, graph: str = "", node: str = "", limit: int = 60) -> str:
+        """Net connectivity, aliases, guarded alternatives and terminals in the selected saved graph only."""
+        from .netlist.query import get_net as query, format_result
+        try:
+            return format_result(query(store.load(graph)[1], net, node=node, limit=limit))
+        except (ValueError, LookupError) as exc:
+            return f"net query failed: {exc}"
+
+    @srv.tool()
+    def netlist_uses(target: str, kind: str, graph: str = "", limit: int = 60) -> str:
+        """Users of a definition or model, including resolution status and unresolved ghosts. Read-only."""
+        from .netlist.query import uses, format_result
+        try:
+            return format_result(uses(store.load(graph)[1], target, kind=kind, limit=limit))
+        except (ValueError, LookupError) as exc:
+            return f"uses query failed: {exc}"
+
+    @srv.tool()
     def get_function(id: str, graph: str = "") -> str:
         """Full record of one function/module by stable id (or bare name): signature, params in/out, types, globals, call sites with args, callers, annotations."""
         info, g = store.load(graph)

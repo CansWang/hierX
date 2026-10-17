@@ -164,7 +164,9 @@ def format_report(report: dict, limit: int = 20) -> str:
         lines.append(f"instance    {inst['path']}: compared {si['compared']}, mismatches {si['mismatches']}")
     for m in report.get("mismatches", [])[:limit]:
         where = f" @{m['instance']}" if m.get("instance") else ""
-        lines.append(f"mismatch    {m['what']:<18} {m['path']}{where}" + (f" [{m['terminal']}]" if m.get("terminal") is not None else "") + f": hx {m['hx']!r} vs ngspice {m['ngspice']!r}")
+        lines.append(f"mismatch    {m['what']:<18} {m['path']}{where}" + (f" [{m['terminal']}]" if m.get("terminal") is not None else "") + f": hx {m['hx']!r} vs {report['oracle']} {m.get('ngspice', m.get('oracle'))!r}")
+    if report.get("checked"):
+        lines.append("checked     " + ", ".join(report["checked"]))
     if len(report.get("mismatches", [])) > limit:
         lines.append(f"            … {len(report['mismatches']) - limit} more")
     return "\n".join(lines)

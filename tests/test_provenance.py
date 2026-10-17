@@ -62,7 +62,7 @@ def test_native_cold_and_warm_runs_have_stable_fingerprints(tmp_path):
     assert all(files[p]["status"] == "ok" for p in ("deck.sp", "lib.inc"))
     assert files["lib.inc"]["sha256"] == hashlib.sha256((source.parent / "lib.inc").read_bytes()).hexdigest()
     assert not (source.parent / ".hx/graphs").exists()  # Python remains in-memory
-    schema = json.loads((Path(__file__).parents[1] / "hx/schema/hx-3.schema.json").read_text())
+    schema = json.loads((Path(__file__).parents[1] / "hx/schema/hx-4.schema.json").read_text())
     jsonschema.validate(first.to_dict(), schema)
 
 

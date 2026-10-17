@@ -312,6 +312,65 @@ def test_python_module_node_renders(browser, py_module_server):
 SPICE_OTA = os.path.join(HERE, "fixtures", "viewer", "spice-ota.json")
 
 
+def test_circuit_navigation_highlight_export_and_reload(browser, tmp_path):
+    from hx.api import extract
+    from hx.export import build_html
+    from hx.fsutil import atomic_write
+    root = tmp_path / 'xyce'
+    shutil.copytree(os.path.join(HERE, 'fixtures/xyce'), root, ignore=shutil.ignore_patterns('.hx'))
+    graph = extract('analog.cir:.', root=str(root), dialect='xyce', depth=None).to_dict()
+    gp = root / '.hx/graph.json'; gp.write_text(json.dumps(graph))
+    server = Served(gp, root=str(root))
+    try:
+        ctx, page, errors, _ = _open(browser, server.url + '/#depth=3&kind=net&sel=out&view=nets')
+        assert page.locator('#detail h2').inner_text() == 'net out'
+        assert page.evaluate("() => HX_DEBUG.state().cy.nodes('.net-hl').length") >= 3
+        page.locator('#circuit-view').select_option('models')
+        page.locator('#tree .circuit-row', has_text='/dm').click()
+        assert 'model /dm' in page.locator('#detail h2').inner_text()
+        assert 'xdut' in page.locator('#detail').inner_text().lower()
+        page.locator('#circuit-view').select_option('definitions')
+        page.locator('#tree .circuit-row', has_text='/amp').click()
+        assert 'definition /amp' in page.locator('#detail h2').inner_text()
+        page.locator('#circuit-view').select_option('nets')
+        page.locator('#tree .circuit-row .nm', has_text='out').filter(has_text=__import__('re').compile('^out$')).click()
+        atomic_write(str(gp), json.dumps(graph))
+        page.wait_for_timeout(300)
+        assert page.locator('#detail h2').inner_text() == 'net out'
+        assert not errors, errors
+        ctx.close()
+        exported = root / 'review.html'; exported.write_text(build_html(graph))
+        ctx, page, errors, _ = _open(browser, exported.as_uri() + '#depth=3&kind=net&sel=out&view=nets')
+        assert page.locator('#detail h2').inner_text() == 'net out'
+        assert page.evaluate("() => HX_DEBUG.state().cy.nodes('.net-hl').length") >= 3
+        assert not errors, errors
+        ctx.close()
+    finally:
+        server.stop()
+
+
+def test_circuit_diff_removed_model_has_snapshot_details(browser, tmp_path):
+    from hx.api import extract
+    from hx.diff import diff_graphs
+    root = tmp_path / 'xyce'
+    shutil.copytree(os.path.join(HERE, 'fixtures/xyce'), root, ignore=shutil.ignore_patterns('.hx'))
+    old = extract('analog.cir:.', root=str(root), dialect='xyce', depth=None).to_dict()
+    new = json.loads(json.dumps(old)); new['circuit']['models'] = {}
+    diff = diff_graphs(old, new)
+    gp = root / '.hx/graph.json'; gp.write_text(json.dumps(new))
+    server = Served(gp, root=str(root))
+    try:
+        ctx, page, errors, _ = _open(browser, server.url)
+        page.evaluate("d => { HX_DEBUG.state().diff = d; document.querySelector('#search').dispatchEvent(new Event('input')); }", diff)
+        page.locator('#tree .row', has_text=__import__('re').compile('− models /dm', __import__('re').I)).click()
+        assert 'IS=1e-14' in page.locator('#detail pre[data-side=before]').inner_text()
+        assert page.locator('#detail pre[data-side=after]').inner_text() == 'absent'
+        assert not errors, errors
+        ctx.close()
+    finally:
+        server.stop()
+
+
 @pytest.fixture
 def spice_server(tmp_path):
     proj = tmp_path / "sp"; (proj / ".hx").mkdir(parents=True)

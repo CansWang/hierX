@@ -126,7 +126,38 @@ class SpiceGrammar(Grammar):
         return parts
 
 
-GRAMMARS: dict[str, Grammar] = {"spice": SpiceGrammar()}
+class XyceGrammar(SpiceGrammar):
+    """Xyce multi-token Y identities and digital type selectors precede ordinary SPICE nets."""
+    def split_element(self, toks, family, is_model):
+        if family and family.letter.startswith("Y") and len(toks) >= 2:
+            head = toks[0]
+            toks = [Tok(head.kind, head.text.lower() + "!" + toks[1].text, head.line, head.col), *toks[2:]]
+        elif family and family.letter == "U" and len(toks) >= 2:
+            cut = 2
+            if cut < len(toks) and toks[cut].text == "(":
+                while cut < len(toks) and toks[cut].text != ")":
+                    cut += 1
+                cut += 1
+            toks = [toks[0], *toks[cut:]]
+        if family and family.letter == "S" and any(t.text.lower() == "control" for t in toks):
+            from dataclasses import replace
+            family = replace(family, min_terminals=2, max_terminals=2)
+        if family and family.letter == "K":
+            positional, pairs = assignments(toks)
+            rest = [t.text for t in positional[1:]]
+            model_pos = next((i for i, s in enumerate(rest) if is_model(s)), None)
+            cut = model_pos if model_pos is not None else max(0, len(rest) - 1)
+            return ElementParts(name=toks[0].text, positional=[], refs=rest[:cut],
+                                master=rest[cut] if model_pos is not None else None,
+                                value=" ".join(rest[cut:]) if model_pos is None else None, params=pairs)
+        parts = super().split_element(toks, family, is_model)
+        if family and family.terminals is not None and family.model == "none" and family.max_terminals > family.min_terminals:
+            positional, _ = assignments(toks)
+            parts.positional = [t.text for t in positional[1:]]
+        return parts
+
+
+GRAMMARS: dict[str, Grammar] = {"spice": SpiceGrammar(), "xyce": XyceGrammar()}
 
 
 def grammar_for(profile: Profile) -> Grammar:

@@ -34,6 +34,8 @@ def _diff_attrs(a: dict, b: dict) -> dict:
     added/removed names, everything else by JSON equality."""
     out: dict[str, Any] = {}
     for k in sorted(set(a) | set(b)):
+        if k == "guard_constraints":
+            continue   # additive evidence; guard_id already carries the structural identity
         va, vb = a.get(k), b.get(k)
         if va == vb:
             continue
@@ -328,10 +330,27 @@ def _decl_hashes(rec: dict) -> dict[str, dict]:
 def _diff_decls(a: dict, b: dict) -> dict:
     """Netlist declarations (models, definitions, params) compared by their guarded identity: an edited `.model`
     card registers even when every instance keeps its model name; an edit confined to one branch moves one key."""
-    da = {ident: d for rec in a.values() for ident, d in _decl_hashes(rec).items()}
-    db = {ident: d for rec in b.values() for ident, d in _decl_hashes(rec).items()}
-    changed = [{"key": k, "old_hash": da[k].get("hash"), "new_hash": db[k].get("hash")} for k in sorted(set(da) & set(db)) if da[k].get("hash") != db[k].get("hash")]
+    def collect(records):
+        out = {}
+        for key, rec in records.items():
+            for d in rec.get("declarations", []):
+                ident = d.get("identity", "")
+                group = out.setdefault(ident, {"key": key, "spelled": rec.get("spelled"), "status": rec.get("status"),
+                                               "bins": rec.get("bins", []), "declarations": []})
+                group["declarations"].append(d)
+        return out
+    da, db = collect(a), collect(b)
+    def shape(rec):
+        return rec["status"], sorted(rec["bins"]), sorted(d.get("hash", "") for d in rec["declarations"])
+    changed = [{"key": k, "old_hash": da[k]["declarations"][0].get("hash"),
+                "new_hash": db[k]["declarations"][0].get("hash")}
+               for k in sorted(set(da) & set(db)) if shape(da[k]) != shape(db[k])]
     out = {"added": sorted(set(db) - set(da)), "removed": sorted(set(da) - set(db)), "changed": changed}
+    if not any(out.values()):
+        return {}
+    affected = set(out["added"] + out["removed"] + [x["key"] for x in changed])
+    out["before"] = {k: da[k] for k in sorted(affected) if k in da}
+    out["after"] = {k: db[k] for k in sorted(affected) if k in db}
     return {k: v for k, v in out.items() if v}
 
 
@@ -357,7 +376,7 @@ def _diff_circuit(oc: Optional[dict], nc: Optional[dict], nodes_changed: dict, c
         d = _diff_decls(oc.get(key, {}), nc.get(key, {}))
         if d:
             sections[name] = d
-            out[{"models": "models_changed", "definitions": "cdefs_changed", "params": "cparams_changed"}[key]] = sum(len(v) for v in d.values())
+            out[{"models": "models_changed", "definitions": "cdefs_changed", "params": "cparams_changed"}[key]] = sum(len(d.get(k, [])) for k in ("added", "removed", "changed"))
     out["sections"] = sections
     return out
 

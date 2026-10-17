@@ -323,7 +323,8 @@ class SpiceFrontend(Frontend):
                      "model": rec.parts.master if fam and fam.model != "none" else None, "model_refs": list(rec.model_refs),
                      "model_status": rec.model_status, "parameters": dict(rec.parts.params), "value": rec.parts.value,
                      "scope": path_str(occ.parent.path) if occ.parent else "", "guard": guard_text(occ.guard) or None,
-                     "guard_id": occ.gid or None, "controls": [], "tokens": None if fam else _squash(occ.element.text)}
+                     "guard_id": occ.gid or None, "guard_constraints": guard_json(occ.guard),
+                     "controls": [], "tokens": None if fam else _squash(occ.element.text)}
             for r in rec.refs:
                 # every guard-compatible target is an alternative (one `ref` edge each); a missing one is a ghost
                 tkeys = [self._key(tag, t) for t in r["targets"]] or [self._missing_key(tag, occ, r)]
@@ -554,6 +555,7 @@ class SpiceFrontend(Frontend):
             if key is None:
                 continue
             tag, occ = self._occ[key]
+            graph.nodes[nid].attrs["guard_constraints"] = guard_json(occ.guard)
             elab = self._elabs[tag]
             elabs_used.add(tag)
             if occ.kind == "dev":

@@ -1,0 +1,7 @@
+{
+  "analog.cir": {"xyce": "agree", "xdm": "agree"},
+  "mixed.cir": {"xyce": "agree", "xdm": "unavailable", "reason": "Param removed|Model type not found"},
+  "digital.cir": {"xyce": "agree", "xdm": "unavailable", "reason": "omits U digital devices"},
+  "coupling.cir": {"xyce": "agree", "xdm": "agree"},
+  "modern.cir": {"xyce": "agree", "xdm": "unavailable", "reason": "Model type not found|not defined|unsupported"}
+}

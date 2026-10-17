@@ -1,0 +1,1065 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/canswang/hx/schema/hx-4.schema.json",
+  "title": "hx graph (schema hx/4)",
+  "description": "hx/4 adds deterministic Rust trait implementation identities and corrected Rust token hashes. Function-scoped structure graph produced by `hx extract`. hx/3 (0.4.0) id rules: LSP qualified names include enclosing functions (`outer.inner`); Python module callers are `module` nodes spanning the file; C/C++ symbols that are not external (static functions and variables) and ALL C/C++ types are keyed by their defining file, and a type that differs between translation units carries `@<8hex>` (one fingerprint per layout/target set); file identity is symlink-resolved; a call to a Python stub overload family is one edge to one target whose `unresolved` record carries `family`. Function-scoped structure graph produced by `hx extract`. Compatibility policy: within major 4 fields may be ADDED (readers must ignore unknown fields); removing or re-typing a field, or changing an id rule, bumps the major. hx/1 and hx/2 files are upgraded in memory by hx/graphio.py (relabel + report only; ids that hx/3 derives differently need `hx migrate`, which re-extracts). Units: C/C++ `offset`/`size`/`align` are BYTES and `bit_offset`/`bit_width` describe bitfields; SystemVerilog `size`, `offset` (= bit offset, MSB first) and `bit_width` are BITS. Values: an integer whose magnitude is below 2**53 is a JSON number; wider values are lossless strings in canonical hex (`<width>'<s>h<hex>` when the width is known, `0x<hex>`/`-0x<hex>` otherwise); x/z literals are bit patterns `<width>'b<0/1/x/z\u2026>` (see hx/values.py). Precision per node: `exact` = compiler/elaborator derived (libclang, verilator); `lsp` = from a language server. Precision `syntax` = native netlist parser (SPICE-family frontend, lang `sp`): nodes of kind `device` are primitive elements, `instance` nodes subcircuit occurrences, the deck or a definition-rooted view is a `module`; electrical connectivity lives in the additive top-level `circuit` block (emitted by netlist frontends only).",
+  "type": "object",
+  "required": [
+    "schema",
+    "generated",
+    "root",
+    "lang",
+    "entry",
+    "nodes",
+    "types",
+    "globals",
+    "edges",
+    "unresolved"
+  ],
+  "properties": {
+    "schema": {
+      "const": "hx/4"
+    },
+    "generated": {
+      "type": "string",
+      "description": "ISO-8601 UTC timestamp"
+    },
+    "root": {
+      "type": "string",
+      "description": "absolute project root; every relpath in ids/locs is relative to it"
+    },
+    "lang": {
+      "type": "string",
+      "examples": [
+        "c",
+        "cpp",
+        "sv",
+        "rs",
+        "py",
+        "go",
+        "sp"
+      ],
+      "description": "frontend language tag; new frontends add tags without a major bump"
+    },
+    "entry": {
+      "$ref": "#/$defs/id"
+    },
+    "meta": {
+      "type": "object",
+      "description": "extract_args, options, index stats, notes, truncated, migration, and optional observed extraction provenance",
+      "properties": {
+        "provenance": {
+          "$ref": "#/$defs/provenance"
+        }
+      }
+    },
+    "nodes": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/$defs/node"
+      }
+    },
+    "types": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/$defs/typedef"
+      }
+    },
+    "globals": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/$defs/global"
+      }
+    },
+    "edges": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/edge"
+      }
+    },
+    "unresolved": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/unresolved"
+      }
+    },
+    "circuit": {
+      "$ref": "#/$defs/circuit"
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "provenance": {
+      "type": "object",
+      "required": [
+        "version",
+        "run_id",
+        "started",
+        "completed",
+        "hx_version",
+        "git",
+        "inputs",
+        "options_sha256",
+        "graph_sha256"
+      ],
+      "properties": {
+        "version": {
+          "const": 1
+        },
+        "run_id": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{32}$"
+        },
+        "started": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "completed": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "hx_version": {
+          "type": "string"
+        },
+        "git": {
+          "type": "object",
+          "required": [
+            "status",
+            "repo_root",
+            "commit",
+            "dirty",
+            "changed_during_extract"
+          ],
+          "properties": {
+            "status": {
+              "enum": [
+                "ok",
+                "no-repo",
+                "unborn",
+                "unavailable"
+              ]
+            },
+            "repo_root": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "commit": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "dirty": {
+              "type": [
+                "boolean",
+                "null"
+              ]
+            },
+            "changed_during_extract": {
+              "type": "boolean"
+            }
+          }
+        },
+        "inputs": {
+          "type": "object",
+          "required": [
+            "coverage",
+            "files",
+            "sha256",
+            "changed_during_extract"
+          ],
+          "properties": {
+            "coverage": {
+              "const": "observed"
+            },
+            "sha256": {
+              "$ref": "#/$defs/sha256"
+            },
+            "changed_during_extract": {
+              "type": "boolean"
+            },
+            "files": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": [
+                  "path",
+                  "sha256",
+                  "status"
+                ],
+                "properties": {
+                  "path": {
+                    "type": "string"
+                  },
+                  "sha256": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/sha256"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "status": {
+                    "enum": [
+                      "ok",
+                      "missing",
+                      "unreadable",
+                      "changed"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "options_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "graph_sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z]+:[^\\n]+::.+$",
+      "description": "<lang>:<relpath>::<qualname>. C++ functions carry their parameter type list (cpp:src/bus.cpp::hw::Bus::write(uint32_t, uint32_t)); a #<8hex> suffix only on a residual collision. Records: '<kind> <name>' (struct dma_chan); anonymous C records: '<kind> <parent>.<member>'. SystemVerilog: package-scoped types keep '<kind> <pkg>::<name>'; a type declared inside a module is identified by its layout, '<kind> <module>.<name>@<8hex layout fingerprint>'; anonymous SV types are named by their first declaring context ('<kind> <module>.<port>' / '<kind> <parent>.<field>', fallback 'anon#<hash>'); generate-array paths use source spelling ('gen_lane[0].u_x', never Verilator's __BRA__0__KET__)."
+    },
+    "loc": {
+      "type": "object",
+      "required": [
+        "file",
+        "line"
+      ],
+      "properties": {
+        "file": {
+          "type": "string"
+        },
+        "line": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "end_line": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "description": "last line of the definition (SV: the endmodule/endfunction/endtask line)"
+        },
+        "col": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        }
+      }
+    },
+    "typeuse": {
+      "type": "object",
+      "required": [
+        "type"
+      ],
+      "properties": {
+        "type": {
+          "type": "string"
+        },
+        "type_ref": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "param": {
+      "type": "object",
+      "required": [
+        "name",
+        "type",
+        "dir",
+        "dir_source"
+      ],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        },
+        "type_ref": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "dir": {
+          "enum": [
+            "in",
+            "out",
+            "inout"
+          ]
+        },
+        "dir_source": {
+          "enum": [
+            "explicit",
+            "heuristic",
+            "user"
+          ]
+        }
+      }
+    },
+    "field": {
+      "type": "object",
+      "required": [
+        "name",
+        "type"
+      ],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        },
+        "type_ref": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "offset": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "size": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "bit_offset": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "bit_width": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        }
+      }
+    },
+    "node": {
+      "type": "object",
+      "required": [
+        "id",
+        "kind",
+        "name",
+        "qualname",
+        "lang",
+        "loc",
+        "signature",
+        "depth",
+        "precision",
+        "params",
+        "globals",
+        "calls"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "kind": {
+          "enum": [
+            "function",
+            "method",
+            "module",
+            "instance",
+            "task",
+            "device"
+          ]
+        },
+        "name": {
+          "type": "string"
+        },
+        "qualname": {
+          "type": "string"
+        },
+        "lang": {
+          "type": "string"
+        },
+        "loc": {
+          "$ref": "#/$defs/loc"
+        },
+        "signature": {
+          "type": "string"
+        },
+        "storage": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "depth": {
+          "type": "integer",
+          "description": "min BFS distance from the entry; negative on the caller side"
+        },
+        "body_hash": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^sha1:[0-9a-f]{40}$",
+          "description": "token hash of the body: formatting and comments do not change it; literals, operator adjacency and Python indentation do"
+        },
+        "precision": {
+          "enum": [
+            "exact",
+            "lsp",
+            "syntax"
+          ]
+        },
+        "returns": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/typeuse"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "params": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/param"
+          }
+        },
+        "globals": {
+          "type": "object",
+          "properties": {
+            "reads": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "writes": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "calls": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "attrs": {
+          "type": "object",
+          "description": "frontend extras; SV: module, specialization, parameters {name: number|canonical string}, signals [{name,type}]; Rust: module path"
+        },
+        "runtime": {
+          "description": "reserved (Phase 5)"
+        }
+      }
+    },
+    "typedef": {
+      "type": "object",
+      "required": [
+        "id",
+        "kind",
+        "name",
+        "lang"
+      ],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "kind": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "lang": {
+          "type": "string"
+        },
+        "loc": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/loc"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "size": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "align": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "fields": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/field"
+          }
+        },
+        "enumerators": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "name",
+              "value"
+            ],
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "value": {
+                "type": [
+                  "integer",
+                  "string",
+                  "null"
+                ],
+                "description": "JSON number below 2**53, else canonical hex string; x/z enumerators keep their bit pattern"
+              }
+            }
+          }
+        },
+        "underlying": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "underlying_ref": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "anonymous": {
+          "type": "boolean"
+        },
+        "system": {
+          "type": "boolean"
+        },
+        "used_by": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "global": {
+      "type": "object",
+      "required": [
+        "id",
+        "name",
+        "type",
+        "lang"
+      ],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        },
+        "lang": {
+          "type": "string"
+        },
+        "type_ref": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "loc": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/loc"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "storage": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "scope": {
+          "type": "string"
+        }
+      }
+    },
+    "edge": {
+      "type": "object",
+      "required": [
+        "from",
+        "kind"
+      ],
+      "properties": {
+        "from": {
+          "type": "string"
+        },
+        "to": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "null for calls through function pointers"
+        },
+        "kind": {
+          "enum": [
+            "call",
+            "ref",
+            "fnptr",
+            "macro",
+            "instance"
+          ]
+        },
+        "loc": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/loc"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "args": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "name": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "macro": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "ptr_type": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "unresolved": {
+      "type": "object",
+      "required": [
+        "name",
+        "from",
+        "reason"
+      ],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "from": {
+          "type": "string",
+          "description": "always a node id present in `nodes`"
+        },
+        "reason": {
+          "type": "string"
+        },
+        "loc": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/loc"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "family": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "description": "Present when the target is a verified Python stub overload family collapsed into one target: the number of @overload declarations, the evidence and the lexical scope.",
+          "required": [
+            "size",
+            "evidence"
+          ],
+          "properties": {
+            "size": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "evidence": {
+              "type": "string"
+            },
+            "scope": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      }
+    },
+    "declaration": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "spelled",
+        "scope",
+        "status",
+        "declarations"
+      ],
+      "properties": {
+        "spelled": {
+          "type": "string"
+        },
+        "scope": {
+          "type": "string",
+          "description": "declaring scope path, '' for the deck"
+        },
+        "status": {
+          "enum": [
+            "found",
+            "alternatives",
+            "ambiguous",
+            "binned",
+            "shadowed",
+            "missing"
+          ]
+        },
+        "declarations": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": true,
+            "required": [
+              "guard_id",
+              "guard",
+              "file",
+              "line"
+            ],
+            "properties": {
+              "guard_id": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "guard": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "chain": {
+                      "type": "string"
+                    },
+                    "branch": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              },
+              "file": {
+                "type": "string"
+              },
+              "line": {
+                "type": "integer"
+              },
+              "end_line": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "identity": {
+                "type": "string",
+                "description": "scope/name#<guard_id>"
+              },
+              "hash": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          }
+        },
+        "bins": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "circuit": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "netlist connectivity and declarations (Phase N1): every key is additive; nets are not nodes; occurrence ids carry the owning deck, definition ids the declaring file",
+      "required": [
+        "dialect",
+        "deck",
+        "root",
+        "files",
+        "definitions",
+        "models",
+        "params",
+        "nets",
+        "terminals",
+        "ports",
+        "directives",
+        "diagnostics"
+      ],
+      "properties": {
+        "dialect": {
+          "type": "string"
+        },
+        "deck": {
+          "type": "string"
+        },
+        "root": {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "enum": [
+                "deck",
+                "definition"
+              ]
+            },
+            "id": {
+              "$ref": "#/$defs/id"
+            }
+          }
+        },
+        "files": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "path": {
+                "type": "string"
+              },
+              "role": {
+                "enum": [
+                  "deck",
+                  "include",
+                  "lib",
+                  "library"
+                ]
+              },
+              "section": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "outside_root": {
+                "type": "boolean"
+              }
+            }
+          }
+        },
+        "definitions": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/declaration"
+          }
+        },
+        "models": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/declaration"
+          }
+        },
+        "params": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/declaration"
+          }
+        },
+        "nets": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "spelled": {
+                "type": "string"
+              },
+              "scope": {
+                "type": "string"
+              },
+              "kind": {
+                "enum": [
+                  "internal",
+                  "port",
+                  "global",
+                  "ground"
+                ]
+              },
+              "bindings": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "via": {
+                      "type": "string"
+                    },
+                    "outer": {
+                      "type": "string"
+                    },
+                    "canonical": {
+                      "type": "string"
+                    }
+                  }
+                }
+              },
+              "terminals": {
+                "type": "array",
+                "items": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "minItems": 2,
+                  "maxItems": 2
+                }
+              }
+            }
+          }
+        },
+        "terminals": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "terminal",
+                "net",
+                "as_written"
+              ]
+            }
+          }
+        },
+        "ports": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "port",
+                "inner",
+                "outer",
+                "net",
+                "as_written"
+              ]
+            }
+          }
+        },
+        "directives": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "name",
+              "role",
+              "text",
+              "file",
+              "line"
+            ]
+          }
+        },
+        "control_blocks": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "file",
+              "line",
+              "end_line",
+              "text"
+            ]
+          }
+        },
+        "probes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "what",
+              "requested",
+              "candidates"
+            ]
+          }
+        },
+        "diagnostics": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "severity",
+              "code",
+              "message"
+            ],
+            "properties": {
+              "severity": {
+                "enum": [
+                  "error",
+                  "warning",
+                  "info"
+                ]
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

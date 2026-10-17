@@ -12,7 +12,7 @@ import typing
 from dataclasses import dataclass, field, fields as _dc_fields, is_dataclass
 from typing import Any, Optional, Union
 
-SCHEMA = "hx/3"          # "<name>/<major>": a different major is incompatible; fields may be ADDED within a major
+SCHEMA = "hx/4"          # hx/4: deterministic Rust trait-implementation identities and Rust token corrections.
 # hx/3 (2026-10, 0.4.0): ids changed for nested LSP functions (enclosing functions are part of the qualified name),
 # Python module callers (`module` nodes), C/C++ non-external symbols and all C/C++ types (keyed by defining file,
 # `@<8hex>` fingerprint when translation units disagree) and symlinked paths (resolved); Python stub overload

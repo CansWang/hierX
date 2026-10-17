@@ -172,3 +172,7 @@ input.tags { width: 100%; background: var(--surface); border: 1px solid var(--ax
 .row .eye svg { width: 14px; height: 14px; }
 .row.hidden .nm, .row.hidden .badge { color: var(--muted); opacity: .6; }
 .nav .hide-btn { margin-left: auto; font-size: 12px; }
+/* Circuit navigation is available in both served and standalone viewers. */
+#circuit-view { margin: 8px; width: calc(100% - 16px); }
+.declaration-text { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 12px; }
+.net-endpoints li { margin-bottom: 8px; }

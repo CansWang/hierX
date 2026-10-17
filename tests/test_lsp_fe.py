@@ -261,7 +261,7 @@ def test_family_metadata_round_trip(py_fe, tmp_path):
     loaded = project.load_graph(str(gp))
     fam = [u for u in loaded["unresolved"] if u["id"].endswith("builtins.pyi::getattr")]
     assert len(fam) == 1 and fam[0]["family"]["size"] == 6
-    schema = json.load(open(os.path.join(os.path.dirname(os.path.dirname(__file__)), "hx", "schema", "hx-3.schema.json")))
+    schema = json.load(open(os.path.join(os.path.dirname(os.path.dirname(__file__)), "hx", "schema", "hx-4.schema.json")))
     jsonschema.Draft202012Validator(schema).validate(loaded)
     rec = fam[0]
     stub = rec["id"].rpartition("::")[0]

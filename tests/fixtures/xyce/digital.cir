@@ -1,0 +1,11 @@
+Xyce digital syntax variants
+VDD vdd 0 3
+V1 a 0 0
+V2 b 0 3
+Ugate AND(2) vdd 0 a b out1 digmod
+YAND legacy_gate 0 vdd 0 a b out2 digmod
+R1 out1 0 10k
+R2 out2 0 10k
+.model digmod DIG
+.op
+.end

@@ -33,7 +33,7 @@ def test_index_and_static(served):
 def test_graph_and_annotations_roundtrip(served):
     c, cproj, st = served
     g = c.get("/api/graph").json()
-    assert g["schema"] == "hx/3" and "c:src/dma.c::dma_start" in g["nodes"]
+    assert g["schema"] == "hx/4" and "c:src/dma.c::dma_start" in g["nodes"]
     a = c.get("/api/annotations").json()
     assert a["rev"] == 0 and a["annotations"]["nodes"] == {}
     r = c.patch("/api/annotations", json={"nodes": {"c:src/dma.c::dma_start": {"note": "n", "params": {"ch": {"dir": "out"}}}}})

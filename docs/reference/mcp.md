@@ -40,6 +40,21 @@ signature, directions, referenced types, globals, calls, callers, and annotation
 Ambiguous names return candidates; missing names suggest search or extraction.
 No writes.
 
+## `get_net`
+
+Arguments: required `net`, optional `graph=""`, `node=""`, `limit=60` (1–1000).
+Returns canonical net alternatives, aliases, guarded terminals and port bindings
+present in the selected saved graph. `node` selects a specific occurrence's
+binding context. Exact keys win; ambiguous names return candidates. Results are
+capped with a remaining count. No extraction or writes occur.
+
+## `netlist_uses`
+
+Arguments: required `target`, `kind` (`definition` or `model`), optional
+`graph=""`, `limit=60` (1–1000). Returns declaration status, locations and users,
+including unresolved ghosts in the selected graph. It cannot report uses beyond
+that graph's extraction boundaries. No writes.
+
 ## `callees`
 
 Arguments: required `id`, optional `depth=1`, `graph=""`. Uses the exact node ID

@@ -26,7 +26,7 @@ def _ids(g):
 def test_whole_deck_graph_and_circuit_block(tmp_path):
     proj = _proj(tmp_path, "ota")
     g = extract("ota.sp:.", root=str(proj), depth=None, dialect="ngspice")
-    assert g.entry == "sp:ota.sp::(deck) ota.sp" and g.lang == "sp" and g.schema == "hx/3"
+    assert g.entry == "sp:ota.sp::(deck) ota.sp" and g.lang == "sp" and g.schema == "hx/4"
     kinds = {n.kind for n in g.nodes.values()}
     assert kinds == {"module", "instance", "device"} and all(n.precision == "syntax" for n in g.nodes.values())
     assert "sp:ota.sp::xa.x_cm.xref.m1" in g.nodes and "sp:ota.sp::xa.xm_in1.m1" in g.nodes

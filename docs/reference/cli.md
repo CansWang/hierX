@@ -5,7 +5,8 @@ Use `hx COMMAND --help` for the exact help from your installed version.
 
 ## Entry syntax
 
-An entry is `FILE:SYMBOL`, split at the final colon. Without `--root`, its file
+An entry is `FILE:SYMBOL`, split at the first separator after any Windows drive
+prefix. Rust/C++ `::` inside SYMBOL is preserved. Without `--root`, its file
 path is relative to the run directory; the first `.github` upward from the real
 source file selects the project root. With an explicit `--root`, the file path is
 relative to that root. Without a marker, automatic discovery uses the run
@@ -48,6 +49,7 @@ source lookup. See [graph selection](configuration.md#find-a-graph-for-serve-or-
 | `hook` | Configuration snippet or settings-file merge | `--hook` update mode deliberately suppresses failures |
 | `mcp` | stdio protocol, or JSON configuration with `--print-config` | Long-running server; 2 for handled dependency/annotation initialization failures |
 | `netlist check` | Oracle report; `--json` includes rendered closure | 0 agree, 1 mismatch, 2 oracle unavailable or handled extraction failure |
+| `netlist net` / `netlist uses` | Read-only saved-graph queries; `--json` returns full records | 0 success, 2 missing/ambiguous item, invalid arguments or graph |
 
 These are command-specific statuses, not a guarantee that every possible I/O
 exception is converted into a particular code. See

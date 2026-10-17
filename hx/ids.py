@@ -146,8 +146,18 @@ def lex(text: str, lang: str | None = "c") -> list[Tok]:
                 i += 1
             continue
         if not py and ch == "/" and i + 1 < n and text[i + 1] == "*":
-            j = text.find("*/", i + 2)
-            i = n if j < 0 else j + 2
+            if rs:
+                i, nesting = i + 2, 1
+                while i < n and nesting:
+                    if text.startswith("/*", i):
+                        nesting, i = nesting + 1, i + 2
+                    elif text.startswith("*/", i):
+                        nesting, i = nesting - 1, i + 2
+                    else:
+                        i += 1
+            else:
+                j = text.find("*/", i + 2)
+                i = n if j < 0 else j + 2
             continue
         start = i
         # ---- string literals
@@ -320,7 +330,13 @@ def split_top(text: str, lang: str | None = "c", *, sep: str = ",", angle: bool 
     """Split `text` at top-level `sep` tokens, honouring brackets and never splitting inside a literal or a
     comment. `angle=True` (Rust signatures) also treats `<`/`>` as brackets so `d<x, y>` stays whole.
     Parts are squashed like `squash_ws`; empty parts are dropped."""
-    parts = (_join(p) for p in _split_tokens(_code_tokens(text, lang), sep, angle))
+    toks = _code_tokens(text, lang)
+    if _lang_mode(lang) == "rs":
+        from .rustsyntax import split_tokens
+        chunks = split_tokens(toks, sep, types=angle)
+    else:
+        chunks = _split_tokens(toks, sep, angle)
+    parts = (_join(p) for p in chunks)
     return [p for p in parts if p]
 
 
@@ -347,6 +363,10 @@ def paren_args(text: str, lang: str | None = "c", *, angle: bool = False, keep_e
     if span is None:
         return []
     inner = text[span[0] + 1:span[1]]
+    if _lang_mode(lang) == "rs":
+        from .rustsyntax import split_tokens
+        parts = [_join(p) for p in split_tokens(_code_tokens(inner, lang), ",")]
+        return [p for p in parts if p] if not keep_empty else (parts if any(parts) else [])
     if not keep_empty:
         return split_top(inner, lang, angle=angle)
     parts = [_join(p) for p in _split_tokens(_code_tokens(inner, lang), ",", angle)]

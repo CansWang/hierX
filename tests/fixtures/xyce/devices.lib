@@ -1,0 +1,9 @@
+.lib typical
+.model dm D (IS=1e-14)
+.subckt amp in out vdd gain=1
+R1 vdd out R=1k
+C1 out 0 C=1p
+D1 out 0 dm
+B1 out 0 I={gain*V(in)*1e-6}
+.ends amp
+.endl typical

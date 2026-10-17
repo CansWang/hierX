@@ -1,0 +1,8 @@
+Xyce ADC and DAC interfaces
+YDAC input_driver in 0
+R1 in out 1k
+C1 out 0 1n
+YADC output_probe out 0 adcmod R=1T
+.model adcmod ADC (WIDTH=2)
+.op
+.end

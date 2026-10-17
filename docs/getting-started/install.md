@@ -27,7 +27,7 @@ It does not install every external language toolchain.
 | SystemVerilog/Verilog | `verilator`; source list and project flags | `exact`: instances, ports, parameters, and packed layouts |
 | Rust | Rust toolchain, `rust-analyzer`, `rust-src`, and a root `Cargo.toml` | `lsp`: server-provided calls and signatures |
 | Python | No extra server install; Pyright is included | `lsp`: server-provided calls and annotated fields |
-| SPICE/ngspice netlists | No simulator for extraction | `syntax`: hierarchy, terminals, connectivity, and symbolic expressions |
+| SPICE/ngspice/Xyce netlists | No simulator for extraction | `syntax`: hierarchy, terminals, connectivity, and symbolic expressions |
 
 On Ubuntu/Debian, install C/C++ and HDL prerequisites with:
 
@@ -47,7 +47,9 @@ rustup component add --toolchain stable rust-analyzer rust-src
 For the optional netlist oracle, install `ngspice` through your system package
 manager. Extraction works without it. Vendor executables listed by hx's tool
 registry do not imply support for their dialects: the current parser accepts
-`spice` and `ngspice`.
+`spice`, `ngspice` and explicit `xyce`. Optional Xyce and XDM checks use
+`--oracle xyce` / `--oracle xdm`, with `--xyce` / `--xdm` executable overrides
+or `HX_TOOL_XYCE` / `HX_TOOL_XDM`. HSPICE and Spectre syntax are deferred.
 
 Go via `gopls` is experimental and has no integration-test coverage. Install the
 Go SDK and `gopls` separately and request `--lang go`; it is not a documented

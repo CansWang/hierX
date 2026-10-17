@@ -35,6 +35,6 @@ def on_page_markdown(markdown, **kwargs):
 
 
 def on_files(files, config):
-    files.append(File.generated(config, "reference/hx-3.schema.json",
-                                content=(ROOT / "hx/schema/hx-3.schema.json").read_text(encoding="utf-8")))
+    files.append(File.generated(config, "reference/hx-4.schema.json",
+                                content=(ROOT / "hx/schema/hx-4.schema.json").read_text(encoding="utf-8")))
     return files

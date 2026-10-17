@@ -171,6 +171,7 @@ class LspClient:
 
     def initialize(self) -> None:
         caps = {
+            "general": {"positionEncodings": ["utf-8", "utf-16"]},
             "textDocument": {
                 "hover": {"contentFormat": ["markdown", "plaintext"]},
                 "callHierarchy": {"dynamicRegistration": False},
@@ -188,6 +189,7 @@ class LspClient:
             "initializationOptions": {},
         }, timeout=60)
         self.caps = (res or {}).get("capabilities", {})
+        self.position_encoding = self.caps.get("positionEncoding", "utf-16")
         self.notify("initialized", {})
 
     def wait_ready(self, timeout: float) -> None:
@@ -207,6 +209,7 @@ class LspClient:
                 if time.time() - quiet_since > (0.6 if self.progress_seen else 1.5):
                     return
             time.sleep(0.05)
+        raise LspError(f"{self.cmd[0]} indexing did not settle within {timeout:g}s")
 
     def shutdown(self) -> None:
         try:
@@ -254,6 +257,22 @@ def parse_signature(sig: str, lang: str) -> tuple[list[dict], Optional[str]]:
     sig = _ids.squash_ws(sig, lang)
     m = re.search(r"\b(?:fn|def|func)\b\s*[^(]*?\(", sig)
     start = m.end() if m else sig.find("(") + 1
+    if lang == "rs":
+        toks = _ids.lex(sig, "rs")
+        begun, angle_depth = False, 0
+        for tok in toks:
+            if tok.text == "fn":
+                begun = True
+                continue
+            if not begun:
+                continue
+            if tok.text == "<":
+                angle_depth += 1
+            elif tok.text in (">", ">>"):
+                angle_depth = max(0, angle_depth - len(tok.text))
+            elif tok.text == "(" and not angle_depth:
+                start = tok.end
+                break
     if start <= 0:
         return [], None
     span = _ids.paren_span(sig[start - 1:], lang)
@@ -324,7 +343,10 @@ class LspFrontend(Frontend):
         self.types: dict[str, dict] = {}          # type key -> summary
         self.ids: dict[str, str] = {}
         self._used_ids: set[str] = set()         # ids handed out so far (O(1) collision check in _register)
+        self._source_less: set[str] = set()
+        self._nonfunctions: set[str] = set()
         self._fn_cache: dict[str, FunctionRecord] = {}   # key -> record (review finding H4); handed out as copies
+        self._caller_cache: dict[str, FunctionRecord] = {}
         self._families: dict[str, dict] = {}     # key of a collapsed stub overload family -> {size, evidence, scope}
         self.type_ids: dict[str, str] = {}
         self.stats: dict = {}
@@ -358,7 +380,15 @@ class LspFrontend(Frontend):
 
     def _req(self, method: str, params: Any, timeout: Optional[float] = None) -> Any:
         self.requests += 1
-        return self.client.request(method, params, timeout or min(self.timeout, 60))
+        t0 = time.monotonic()
+        try:
+            return self.client.request(method, params, timeout or min(self.timeout, 60))
+        finally:
+            self.stats["requests"] = self.requests
+            counts = self.stats.setdefault("requests_by_method", {})
+            counts[method] = counts.get(method, 0) + 1
+            times = self.stats.setdefault("request_seconds", {})
+            times[method] = round(times.get(method, 0) + time.monotonic() - t0, 6)
 
     def _open(self, path: str) -> str:
         uri = path_to_uri(path)
@@ -386,11 +416,22 @@ class LspFrontend(Frontend):
                 self.src_cache[uri] = []
         return self.src_cache[uri]
 
+    def _column(self, text: str, column: int, *, to_wire=False) -> int:
+        encoding = getattr(self.client, "position_encoding", "utf-16")
+        if encoding == "utf-32":
+            return column
+        codec, unit = ("utf-8", 1) if encoding == "utf-8" else ("utf-16-le", 2)
+        if to_wire:
+            return len(text[:column].encode(codec)) // unit
+        return len(text.encode(codec)[:column * unit].decode(codec, errors="ignore"))
+
     def _text(self, uri: str, rng: dict) -> str:
         lines = self._lines(uri)
         s, e = rng["start"], rng["end"]
         if s["line"] >= len(lines):
             return ""
+        s = {**s, "character": self._column(lines[s["line"]], s["character"])}
+        e = {**e, "character": self._column(lines[e["line"]], e["character"]) if e["line"] < len(lines) else 0}
         if s["line"] == e["line"]:
             return lines[s["line"]][s["character"]:e["character"]]
         chunk = [lines[s["line"]][s["character"]:]] + lines[s["line"] + 1:e["line"]] + [lines[e["line"]][:e["character"]] if e["line"] < len(lines) else ""]
@@ -403,6 +444,10 @@ class LspFrontend(Frontend):
         rng = item["range"]
         sel = item.get("selectionRange") or rng
         uri = item["uri"]
+        if self.lang == "rs":
+            sym = self._symbol_at(uri, sel["start"], FUNC_KINDS)
+            if sym and sym["name"] == item["name"]:
+                return sym["range"]
         if item.get("kind") == 2:                 # a module caller (review finding H5): its extent is the whole file
             lines = self._lines(uri)
             return {"start": {"line": 0, "character": 0}, "end": {"line": max(len(lines) - 1, 0), "character": len(lines[-1]) if lines else 0}}
@@ -426,6 +471,18 @@ class LspFrontend(Frontend):
                 end = li
             return {"start": {"line": start, "character": 0}, "end": {"line": end, "character": len(lines[end])}}
         depth, seen = 0, False
+        if self.lang == "rs":
+            text = "\n".join(lines[start:])
+            for tok in _ids.lex(text, "rs"):
+                if tok.text == "{":
+                    depth, seen = depth + 1, True
+                elif tok.text == "}":
+                    depth -= 1
+                if seen and depth == 0:
+                    end = start + text[:tok.end].count("\n")
+                    return {"start": {"line": start, "character": 0},
+                            "end": {"line": end, "character": self._column(lines[end], len(lines[end]), to_wire=True)}}
+            return rng
         for li in range(start, len(lines)):
             for ch in lines[li]:
                 if ch == "{":
@@ -444,7 +501,10 @@ class LspFrontend(Frontend):
         return os.path.commonpath([self.root, p]) == self.root and "/site-packages/" not in p and "/target/" not in p
 
     def _mkloc(self, uri: str, rng: dict) -> Loc:
-        return Loc(file=self._rel(uri), line=rng["start"]["line"] + 1, end_line=rng["end"]["line"] + 1, col=rng["start"]["character"] + 1)
+        pos = rng["start"]
+        lines = self._lines(uri)
+        col = self._column(lines[pos["line"]], pos["character"]) if pos["line"] < len(lines) else pos["character"]
+        return Loc(file=self._rel(uri), line=pos["line"] + 1, end_line=rng["end"]["line"] + 1, col=col + 1)
 
     # ---------------------------------------------------------------- symbols
     def _symbols(self, uri: str) -> list[dict]:
@@ -495,12 +555,12 @@ class LspFrontend(Frontend):
         for _ in range(tries):
             try:
                 r = fn()
-                if r not in (None, []):
-                    return r
-                last = r
+                return r
             except LspError as e:
                 last = e
                 if "no response" in str(e):
+                    raise
+                if not any(code in str(e) for code in ("-32801", "-32802", "-32800", "loading", "not loaded")):
                     raise
             time.sleep(sleep)
         if isinstance(last, LspError):
@@ -511,7 +571,7 @@ class LspFrontend(Frontend):
     @staticmethod
     def _key(item: dict) -> str:
         p = item["selectionRange"]["start"]
-        return f"{item['uri']}#{p['line']}:{p['character']}"
+        return f"{item['uri']}#{p['line']}:{p['character']}|{item['name']}"
 
     def _scope_path(self, item: dict) -> list[tuple[str, int]]:
         """Containers of an item (classes, modules, enclosing functions), in this order of evidence: the documentSymbol
@@ -533,6 +593,10 @@ class LspFrontend(Frontend):
         parts = []
         for name, kind in self._scope_path(item):
             if kind in CONTAINER_KINDS:
+                if self.lang == "rs" and name.startswith("impl"):
+                    from ..rustsyntax import impl_name
+                    parts.append(impl_name(name))
+                    continue
                 n = re.sub(r"^impl\s+(?:<[^>]*>\s*)?(?:.*\bfor\s+)?", "", name).strip()
                 n = re.sub(r"<.*>$", "", n)
                 parts.append(n)
@@ -540,11 +604,36 @@ class LspFrontend(Frontend):
         return self.sep.join(parts)
 
     def _register(self, item: dict) -> str:
+        source_sym = None
+        if self.lang == "rs" and urlparse(item["uri"]).scheme == "file" and item.get("kind") in FUNC_KINDS:
+            source_sym = self._symbol_at(item["uri"], item["selectionRange"]["start"], FUNC_KINDS)
+            if source_sym and source_sym["name"] == item["name"]:
+                # Incoming hierarchy items for attribute macros can select the
+                # attribute instead of the function name. Canonical source
+                # ranges keep hover requests and body hashes independent of order.
+                item = {**item, "range": source_sym["range"], "selectionRange": source_sym["selectionRange"]}
         key = self._key(item)
         if key not in self.items:
             self.items[key] = item
+            if urlparse(item["uri"]).scheme != "file":
+                self.ids[key] = None   # no source identity can be established; keep a reasoned ghost
+                self._source_less.add(key)
+                return key
+            if self.lang == "rs" and item.get("kind") in FUNC_KINDS:
+                sym = source_sym
+                if sym is None or sym["name"] != item["name"]:
+                    typ = self._symbol_at(item["uri"], item["selectionRange"]["start"], TYPE_KINDS | {22})
+                    if typ and typ["name"] == item["name"]:
+                        self._nonfunctions.add(key)
+                    else:
+                        self.ids[key] = None
+                        self._source_less.add(key)
+                        return key
             cand = _ids.node_id(self.lang, self._rel(item["uri"]), self._qualname(item))
             if cand in self._used_ids:
+                if self.lang == "rs":
+                    self.items.pop(key, None)
+                    raise FrontendError(f"ambiguous Rust source identity {cand}; refusing a position-based ID")
                 cand = f"{cand}#{_ids.short_hash(key)}"      # residual collision only; position-dependent by design
             self.ids[key] = cand
             self._used_ids.add(cand)
@@ -558,11 +647,17 @@ class LspFrontend(Frontend):
         uri = self._open(path)
         syms = [s for s in self._symbols(uri) if s["kind"] in FUNC_KINDS]
         want = symbol.replace("::", self.sep).replace(".", self.sep)
-        hits = [s for s in syms if s["name"] == symbol or self.sep.join([n for n, k in s["path"] if k in CONTAINER_KINDS] + [s["name"]]).endswith(want)]
+        def matches(s):
+            qual = self._qualname({"uri": uri, "name": s["name"], "selectionRange": s["selectionRange"]})
+            return s["name"] == symbol or qual == want or qual.endswith(self.sep + want)
+        hits = [s for s in syms if matches(s)]
         if not hits:
             import difflib
             names = sorted({s["name"] for s in syms})
             raise EntryNotFound(f"function '{symbol}' not found in {file} (server: {self.cmd[0]})", difflib.get_close_matches(symbol, names, n=5, cutoff=0.5))
+        if len(hits) > 1:
+            candidates = [self._qualname({"uri": uri, "name": s["name"], "selectionRange": s["selectionRange"]}) for s in hits]
+            raise EntryNotFound(f"ambiguous function {symbol!r} in {file}; qualify the entry", candidates)
         s = hits[0]
         items = self._retry(lambda: self._req("textDocument/prepareCallHierarchy", {"textDocument": {"uri": uri}, "position": s["selectionRange"]["start"]}))
         if not items:
@@ -581,10 +676,14 @@ class LspFrontend(Frontend):
         except LspError:
             hov = None
         blocks = _code_blocks(hov)
-        sig = next((b for b in blocks if re.search(r"\b(fn|def|func)\b", b)), None)
+        pattern = (r"\bfn\s+" + re.escape(item["name"]) + r"\b") if self.lang == "rs" else r"\b(fn|def|func)\b"
+        sig = next((b for b in blocks if re.search(pattern, b)), None)
         path_block = next((b for b in blocks if b is not sig and re.match(r"^[\w:.]+$", b.strip())), None)
         if sig is None:
             sig = item.get("detail") or self._text(uri, {"start": item["range"]["start"], "end": item["selectionRange"]["end"]}).strip() + "(...)"
+            if self.lang == "rs":
+                from ..rustsyntax import source_signature
+                sig = source_signature(self._text(uri, self._full_range(item)), item["name"]) or sig
         return _ids.squash_ws(sig, self.lang), path_block
 
     def _param_positions(self, item: dict, params: list[dict]) -> dict[str, dict]:
@@ -611,7 +710,7 @@ class LspFrontend(Frontend):
                     break
                 m = pat.search(lines[li])
                 if m:
-                    out[name] = {"line": li, "character": m.start()}
+                    out[name] = {"line": li, "character": self._column(lines[li], m.start(), to_wire=True)}
                     break
         return out
 
@@ -814,10 +913,21 @@ class LspFrontend(Frontend):
         callsites = [] if self.lang == "py" else self._outgoing(item, uri)
         return FunctionRecord(node=node, callsites=callsites, type_keys=[], global_keys=[])
 
-    def function(self, key: str) -> Optional[FunctionRecord]:
+    def caller_function(self, key: str) -> Optional[FunctionRecord]:
+        """Caller-side traversal does not consume unrelated outgoing call sites."""
+        return self.function(key, with_calls=False)
+
+    def function(self, key: str, *, with_calls=True) -> Optional[FunctionRecord]:
         cached = self._fn_cache.get(key)
         if cached is not None:
             return self._copy_record(cached)
+        cached = self._caller_cache.get(key)
+        if cached is not None:
+            rec = self._copy_record(cached)
+            if with_calls:
+                rec.callsites = self._outgoing(self.items[key], self.items[key]["uri"])
+                self._fn_cache[key] = rec
+            return self._copy_record(rec)
         item = self.items.get(key)
         if item is None:
             return None
@@ -850,8 +960,11 @@ class LspFrontend(Frontend):
                     body_hash=_ids.body_hash(body, self.lang), precision="lsp",
                     returns=TypeUse(type=ret) if ret else None, params=pparams, globals=GlobalRefs(),
                     attrs={"module": path_block} if path_block else {})
-        rec = FunctionRecord(node=node, callsites=self._outgoing(item, uri), type_keys=_uniq(type_keys), global_keys=[])
-        self._fn_cache[key] = rec
+        rec = FunctionRecord(node=node, callsites=self._outgoing(item, uri) if with_calls else [], type_keys=_uniq(type_keys), global_keys=[])
+        if with_calls:
+            self._fn_cache[key] = rec
+        else:
+            self._caller_cache[key] = rec
         return self._copy_record(rec)
 
     def _call_args(self, uri: str, rng: dict) -> list[str]:
@@ -859,8 +972,43 @@ class LspFrontend(Frontend):
         generics, Rust `!`) to the `(`, then let `ids.paren_args` match the list and split it — literal-aware,
         so commas, brackets and `>` inside strings never split (review finding H1)."""
         lines = self._lines(uri)
-        li, ci = rng["end"]["line"], rng["end"]["character"]
-        last = min(len(lines), rng["end"]["line"] + 30)
+        li = rng["end"]["line"]
+        if li >= len(lines):
+            return []
+        ci = self._column(lines[li], rng["end"]["character"])
+        if self.lang == "rs":
+            import bisect
+            cache = getattr(self, "_rs_call_tokens", None)
+            if cache is None:
+                cache = self._rs_call_tokens = {}
+            if uri not in cache:
+                text = "\n".join(lines)
+                toks = _ids.lex(text, "rs")
+                offsets, total = [], 0
+                for line in lines:
+                    offsets.append(total)
+                    total += len(line) + 1
+                cache[uri] = text, toks, [t.start for t in toks], offsets
+            text, toks, starts, offsets = cache[uri]
+            first = bisect.bisect_left(starts, offsets[li] + ci)
+            angles = 0
+            for i in range(first, len(toks)):
+                t = toks[i]
+                if t.text == "<":
+                    angles += 1
+                elif t.text in (">", ">>"):
+                    angles = max(0, angles - len(t.text))
+                elif t.text == "(" and not angles:
+                    depth = 0
+                    for end in toks[i:]:
+                        depth += 1 if end.text in ("(", "[", "{") else (-1 if end.text in (")", "]", "}") else 0)
+                        if depth == 0:
+                            return _ids.paren_args(text[t.start:end.end], "rs")
+                    return []
+                elif not angles and t.text in (";", "{", "}", "=", ",", ".", "?"):
+                    return []
+            return []
+        last = len(lines)
         while li < last:
             line = lines[li]
             while ci < len(line):
@@ -878,6 +1026,13 @@ class LspFrontend(Frontend):
         item = self.items.get(key)
         if item is None:
             return None
+        if key in self._source_less:
+            return DeclRecord(id=None, name=item["name"], loc=None, has_definition=False, system=True, relpath=None,
+                              reason="language server target has no matching source declaration (macro/generated target)")
+        if key in self._nonfunctions:
+            return DeclRecord(id=self.ids[key], name=item["name"], loc=self._mkloc(item["uri"], item["range"]),
+                              has_definition=False, system=not self._in_root(item["uri"]), relpath=self._rel(item["uri"]),
+                              reason="not a function (constructor/variant)")
         uri = item["uri"]
         inside = self._in_root(uri)
         fam = self._families.get(key)
@@ -923,8 +1078,11 @@ class LspFrontend(Frontend):
         if item is None:
             return []
         try:
-            calls = self._req("callHierarchy/incomingCalls", {"item": item}) or []
-        except LspError:
+            calls = self._req("callHierarchy/incomingCalls", {"item": item}, timeout=self.timeout if self.lang == "rs" else None) or []
+        except LspError as exc:
+            self.errors.append({"file": self._rel(item["uri"]), "error": str(exc)})
+            if self.lang == "rs":
+                raise
             return []
         out = []
         for c in calls:
