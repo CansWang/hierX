@@ -350,21 +350,36 @@ def test_circuit_navigation_highlight_export_and_reload(browser, tmp_path):
 
 
 def test_circuit_diff_removed_model_has_snapshot_details(browser, tmp_path):
+    """Diff mode entered the way a user does: a baseline exists in history, the new graph is served, the `#diff-base`
+    picker selects the baseline (fetching /api/diff), and the Circuit changes section shows the removed model with its
+    before/after records."""
+    import re
+    from hx import project
     from hx.api import extract
-    from hx.diff import diff_graphs
     root = tmp_path / 'xyce'
     shutil.copytree(os.path.join(HERE, 'fixtures/xyce'), root, ignore=shutil.ignore_patterns('.hx'))
-    old = extract('analog.cir:.', root=str(root), dialect='xyce', depth=None).to_dict()
-    new = json.loads(json.dumps(old)); new['circuit']['models'] = {}
-    diff = diff_graphs(old, new)
-    gp = root / '.hx/graph.json'; gp.write_text(json.dumps(new))
+    old = extract('analog.cir:.', root=str(root), dialect='xyce', depth=None)
+    gp = root / '.hx/graph.json'
+    gp.parent.mkdir(exist_ok=True)                                                     # extract() already made .hx/cache
+    old.save(str(gp))
+    snap = project.snapshot(str(root), old.meta['entry_arg'], str(gp))              # the baseline the picker will offer
+    ts = os.path.basename(snap)[:-5]
+    new = old.to_dict(); new['circuit']['models'] = {}
+    gp.write_text(json.dumps(new))
     server = Served(gp, root=str(root))
     try:
         ctx, page, errors, _ = _open(browser, server.url)
-        page.evaluate("d => { HX_DEBUG.state().diff = d; document.querySelector('#search').dispatchEvent(new Event('input')); }", diff)
-        page.locator('#tree .row', has_text=__import__('re').compile('− models /dm', __import__('re').I)).click()
+        options = page.locator('#diff-base option').evaluate_all('os => os.map(o => o.value)')
+        assert options == ['', ts], options
+        page.select_option('#diff-base', ts)                                         # fires change → applyDiff → /api/diff
+        page.wait_for_function("() => (window.HX_DEBUG.state().diff || {}).since === %s" % json.dumps(ts), timeout=5000)
+        assert 'diff vs' in page.locator('#status').inner_text()
+        page.locator('#tree .row', has_text=re.compile('− models /dm', re.I)).click()
         assert 'IS=1e-14' in page.locator('#detail pre[data-side=before]').inner_text()
         assert page.locator('#detail pre[data-side=after]').inner_text() == 'absent'
+        page.select_option('#diff-base', '')                                          # leaving diff mode clears the section
+        page.wait_for_function("() => window.HX_DEBUG.state().diff === null", timeout=5000)
+        assert page.locator('#tree .circuit-changes').count() == 0
         assert not errors, errors
         ctx.close()
     finally:

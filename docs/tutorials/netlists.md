@@ -35,10 +35,13 @@ Selecting a terminal's net highlights its connected devices and hierarchy paths.
 Hidden/depth-filtered devices stay hidden; the detail panel reports endpoints
 outside the current view. These features also work in standalone exports.
 
-Saved graphs support read-only queries:
+Saved graphs support read-only queries (`outa` is the first amplifier's output
+net in the fixture; a net name is matched exactly or case-folded, never by
+substring):
 
+<!-- hx:test netlist-queries -->
 ```bash
-hx netlist net out --graph .hx/graph.json
+hx netlist net outa --graph .hx/graph.json
 hx netlist uses /five_t_opamp --kind definition --graph .hx/graph.json --json
 ```
 
@@ -63,7 +66,10 @@ hx netlist check deck.cir:. --oracle xdm --json
 Xyce checks original-deck syntax/topology, family counts (accounting for coupled
 inductor grouping), and exposed net names. XDM checks its top-level primitive
 inventory; it does not expose subcircuit inventory or terminal bindings through
-that interface. Warnings indicating translation loss return unavailable, even
+that interface. Both checks always cover the whole deck, whatever entry is
+given, and read `--dialect auto` as `xyce`; the report's `scope` and `dialect`
+lines say so (only the ngspice oracle narrows to an instance subtree or compares
+a definition per instance). Warnings indicating translation loss return unavailable, even
 when XDM exits successfully. Neither check claims full terminal-level simulator
 agreement. Original sources are mirrored without overwriting them. The explicit
 production runner requires both local tools:

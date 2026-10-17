@@ -36,9 +36,11 @@ hx extract src/main.cpp:run --depth 3
 ```
 
 The graph distinguishes the `hw::Bus::write` overloads by parameter types in their
-IDs. The current entry parser splits at the final colon, so namespace-qualified
-C++ entries containing `::` cannot be passed directly; use the bare name `run`.
-Stable IDs distinguish graph records but are not accepted as C/C++ CLI entries.
+IDs. The entry parser splits at the first colon after any Windows drive prefix,
+so a namespace-qualified entry such as `src/main.cpp:hw::run` is accepted and
+resolves to `cpp:src/main.cpp::hw::run(Bus &)`; the bare name `run` also works
+when it is unique in the file. Stable IDs (with the parameter list) are not
+accepted as C/C++ CLI entries.
 When several overloads share a name and file, lookup selects the first indexed
 match. Start at an unambiguous caller to inspect its overload targets,
 then use their IDs for graph and MCP queries.

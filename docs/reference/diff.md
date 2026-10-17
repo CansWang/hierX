@@ -41,9 +41,10 @@ The current diff schema is `hx-diff/1`:
 
 | Key | Contents |
 |---|---|
+| `schema` | `hx-diff/1` |
 | `old`, `new` | Generation/entry metadata and node counts |
 | `summary` | Counts by category, a combined `total`, and boolean `any` |
-| `nodes`, `types`, `globals` | `added`, `removed`, and ID-keyed `changed` records |
+| `nodes`, `types`, `globals` | `added`, `removed`, and ID-keyed `changed` records; `nodes.removed_info` keeps each removed node's name, kind and location |
 | `edges` | Added/removed edge records and `args_changed` |
 | `unresolved` | Added/removed unresolved records |
 | `circuit` | Netlist declaration and connectivity change sections |
@@ -51,7 +52,7 @@ The current diff schema is `hx-diff/1`:
 Use `summary.any` to decide whether there are changes. Individual counters can
 overlap, so do not infer a count of unique changed objects by summing them.
 Change records carry category-specific old/new values. HTTP responses can add
-`since` and a `markdown` rendering; those are wrappers around the core diff.
+`since`, `since_generated` and a `markdown` rendering; those are wrappers around the core diff.
 
 Python callers use `diff_graphs(old_dict, new_dict)` and
 `render_markdown(diff, new_dict)`. Rendering limits displayed items per section;

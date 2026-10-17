@@ -14,7 +14,7 @@ from hx.api import extract
 from hx.model import Graph
 from hx.serve.app import create_app
 from fastapi.testclient import TestClient
-from conftest import require_tool, require_vendor_tool
+from conftest import require_tool
 
 ROOT = Path(__file__).resolve().parents[1]
 DOCS = ROOT / "docs"
@@ -53,6 +53,8 @@ def test_netlist_tutorial_and_annotations(tmp_path):
     assert graph.entry == "sp:ota.sp::(deck) ota.sp"
     assert graph.nodes["sp:ota.sp::xa"].kind == "instance"
     assert graph.nodes["sp:ota.sp::xa.m_load_1"].precision == "syntax"
+    queries = run_block(page, "netlist-queries", workspace)
+    assert queries.startswith("net outa (") and '"key": "/five_t_opamp"' in queries and "sp:ota.sp::xa" in queries
     run_block(page, "netlist-entries", workspace)
     assert Graph.load(str(workspace / ".hx/library.json")).entry.endswith("::@nch_wrap")
     run_block(page, "netlist-track", workspace)
@@ -140,9 +142,8 @@ def test_language_toolchain_guides(tmp_path, language, page, commands, entry, mo
     assert len(graph.nodes) > 1 and graph.edges
 
 
-@pytest.mark.vendor_tool("ngspice")
 def test_netlist_oracle_tutorial(tmp_path, monkeypatch):
-    executable = require_vendor_tool("ngspice")
+    executable = require_tool("ngspice")
     monkeypatch.setenv("HX_TOOL_NGSPICE", executable)
     workspace = prepare("netlist", tmp_path / "oracle")
     output = run_block("tutorials/netlists.md", "netlist-oracle", workspace)

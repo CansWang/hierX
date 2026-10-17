@@ -68,13 +68,22 @@ def _build_parser() -> argparse.ArgumentParser:
     tr.add_argument("--root", help=_ROOT_HELP)
     tr.add_argument("--list", action="store_true", help="list tracked entries")
     tr.add_argument("--remove", action="store_true", help="remove the entry instead of adding it")
+    track_help = {"--depth": "callee depth to expand (default 3)", "--type-depth": "how deep to expand nested struct fields (default 2)",
+                  "--include-callers": "also walk callers of the entry", "--include-system": "expand functions/types from system headers",
+                  "--exclude": "skip definitions whose path matches GLOB (repeatable)", "--max-nodes": "safety cap on expanded functions",
+                  "--extra-arg": "extra compiler arg for every TU (repeatable)", "--compile-commands": "compile_commands.json or the directory containing it",
+                  "--lang": "auto (by extension) | c | cpp | sv | rust | python | go | spice", "--sv-file": "SystemVerilog source glob (repeatable)",
+                  "-f": "verilator -f file list", "--top": "top module (default: inferred from the entry symbol)",
+                  "--lsp-cmd": "language server command line", "--lsp-timeout": "seconds to wait for the server to index (default 90)",
+                  "--dialect": "netlist dialect: auto | spice | ngspice | xyce", "--deck": "top deck when the entry file is an include or library",
+                  "--search-path": "extra directory for .include/.lib resolution (repeatable)"}
     for flag, kw in (("--depth", dict(type=int)), ("--type-depth", dict(type=int)), ("--include-callers", dict(action="store_true")),
-                     ("--include-system", dict(action="store_true")), ("--exclude", dict(action="append", default=[])),
-                     ("--max-nodes", dict(type=int)), ("--extra-arg", dict(action="append", default=[])), ("--compile-commands", {}),
-                     ("--lang", {}), ("--sv-file", dict(action="append", default=[])), ("-f", dict(dest="filelist")), ("--top", {}),
+                     ("--include-system", dict(action="store_true")), ("--exclude", dict(action="append", default=[], metavar="GLOB")),
+                     ("--max-nodes", dict(type=int)), ("--extra-arg", dict(action="append", default=[], metavar="ARG")), ("--compile-commands", {}),
+                     ("--lang", {}), ("--sv-file", dict(action="append", default=[], metavar="GLOB")), ("-f", dict(dest="filelist")), ("--top", {}),
                      ("--lsp-cmd", {}), ("--lsp-timeout", dict(type=float)),
-                     ("--dialect", {}), ("--deck", {}), ("--search-path", dict(action="append", default=[], dest="search_paths"))):
-        tr.add_argument(flag, **kw)
+                     ("--dialect", {}), ("--deck", {}), ("--search-path", dict(action="append", default=[], dest="search_paths", metavar="DIR"))):
+        tr.add_argument(flag, help=track_help[flag], **kw)
 
     up = sub.add_parser("update", help="re-extract tracked entries, snapshot the previous graphs and print what changed")
     up.add_argument("entries", nargs="*", help="only these entries (default: all tracked)")
@@ -113,24 +122,28 @@ def _build_parser() -> argparse.ArgumentParser:
 
     mg = sub.add_parser("migrate", help="upgrade hx/1, hx/2 or hx/3: re-extract tracked entries and migrate annotations to hx/4")
     mg.add_argument("--root", help=_ROOT_HELP)
-    mg.add_argument("--keep-history", type=int, default=None)
+    mg.add_argument("--keep-history", type=int, default=None, metavar="N",
+                    help="previous graphs to keep per entry when the migrated graphs are committed (default: watch.history from .hx/config.toml, 20)")
     mg.set_defaults(func=cmd_migrate)
 
     nl = sub.add_parser("netlist", help="SPICE-family netlist utilities (optional simulator oracles)")
     nls = nl.add_subparsers(dest="netlist_cmd", required=True)
     ck = nls.add_parser("check", help="cross-check a deck's structure (paths, arity, nets, models, references) with a simulator oracle")
-    ck.add_argument("entry", help="<deck>:. or <deck>:<instance path>")
-    ck.add_argument("--oracle", choices=["ngspice", "xyce", "xdm"], default="ngspice")
+    ck.add_argument("entry", help="<deck>:. (whole deck); <deck>:<instance path> (ngspice compares that subtree); <file>:@definition with deck "
+                                  "context (ngspice compares once per unguarded instance). xyce and xdm always check the whole deck")
+    ck.add_argument("--oracle", choices=["ngspice", "xyce", "xdm"], default="ngspice",
+                    help="ngspice: paths, arity, nets, models, references from `listing expand`; xyce: syntax/topology, device-family counts, "
+                         "exposed net names; xdm: top-level primitive inventory. The report's `scope` line says what was compared")
     ck.add_argument("--ngspice", help="ngspice executable (default: PATH or HX_TOOL_NGSPICE)")
     ck.add_argument("--xyce", help="Xyce executable (or HX_TOOL_XYCE)")
     ck.add_argument("--xdm", help="XDM executable (or HX_TOOL_XDM)")
     ck.add_argument("--root", help=_ROOT_HELP)
-    ck.add_argument("--dialect", default="auto")
+    ck.add_argument("--dialect", default="auto", help="auto | spice | ngspice | xyce (with --oracle xyce|xdm, auto means xyce; an explicit dialect is kept)")
     ck.add_argument("--deck", help="top deck when the entry file is an include or library")
     ck.add_argument("--search-path", action="append", default=[], dest="search_paths", metavar="DIR")
     ck.add_argument("--json", action="store_true", help="print the full report as JSON (includes the rendered closure)")
     ck.add_argument("--limit", type=int, default=20, help="mismatches to print (default 20)")
-    ck.add_argument("--timeout", type=float, default=120.0)
+    ck.add_argument("--timeout", type=float, default=120.0, help="seconds before the simulator run is abandoned as `oracle unavailable` (default 120)")
 
     for name in ("net", "uses"):
         q = nls.add_parser(name, help="query connectivity or declaration users in a saved graph")
@@ -337,7 +350,11 @@ def cmd_hook(a: argparse.Namespace) -> int:
     if a.action == "print":
         print(json.dumps(project.hook_snippet(a.event, a.command), indent=2))
         return 0
-    path, added = project.install_hook(a.root, a.event, a.command, a.settings_dir)
+    try:
+        path, added = project.install_hook(a.root, a.event, a.command, a.settings_dir)
+    except (ValueError, OSError) as e:
+        print(f"hx: cannot install the hook: {e}", file=sys.stderr)
+        return 2
     print(("installed   " if added else "already set ") + f"{a.event} hook → {a.command}  ({path})")
     return 0
 

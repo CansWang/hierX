@@ -104,10 +104,6 @@ def guard_union(a: Guard, b: Guard) -> Guard:
     return frozenset(a | b)
 
 
-def guard_exclusive(a: Guard, b: Guard) -> bool:
-    return not guard_compatible(a, b)
-
-
 def guard_sorted(g: Guard) -> list[tuple[str, int]]:
     return sorted(g)
 

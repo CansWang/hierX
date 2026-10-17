@@ -324,3 +324,21 @@ def test_cpp_overload_ids_do_not_depend_on_siblings(tmp_path):
     g2 = _extract("src/main.cpp:run", root=str(proj), depth=3, jobs=1)
     assert before <= set(g2.nodes) | {u.id for u in g2.unresolved}
     assert all(i in g2.nodes for i in writes)
+
+
+def test_cross_compiler_args_probe_the_toolchain_for_its_system_includes(tmp_path, monkeypatch):
+    from hx.frontends.clang_fe import cross_compiler_args
+    bindir = tmp_path / "bin"
+    bindir.mkdir()
+    fake = bindir / "arm-none-eabi-gcc"
+    fake.write_text("#!/bin/sh\n"
+                    "echo '#include <...> search starts here:' >&2\n"
+                    "echo ' /opt/arm/include' >&2\necho ' /opt/arm/lib/gcc/include' >&2\n"
+                    "echo 'End of search list.' >&2\n")
+    fake.chmod(0o755)
+    monkeypatch.setenv("PATH", str(bindir) + os.pathsep + os.environ["PATH"])
+    args = cross_compiler_args("arm-none-eabi-gcc", "c")
+    assert args == ["--target=arm-none-eabi", "-isystem", "/opt/arm/include", "-isystem", "/opt/arm/lib/gcc/include"]
+    assert cross_compiler_args("arm-none-eabi-gcc", "c") is args                    # memoised per (compiler, lang)
+    assert cross_compiler_args("gcc", "c") == [] and cross_compiler_args("/usr/bin/cc", "cpp") == []
+    assert cross_compiler_args("riscv64-unknown-elf-clang", "c") == ["--target=riscv64-unknown-elf"]   # clang: no include probe

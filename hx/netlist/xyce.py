@@ -73,7 +73,7 @@ def check_external(entry, *, root, oracle="xyce", exe=None, dialect="auto", deck
     dialect = "xyce" if dialect == "auto" else dialect
     g = extract(entry, root=root, depth=None, dialect=dialect, deck=deck, search_paths=search_paths, use_cache=False).to_dict()
     c = g["circuit"]
-    report = {"entry": entry, "oracle": oracle, "exe": exe, "status": "unavailable", "summary": {},
+    report = {"entry": entry, "oracle": oracle, "exe": exe, "status": "unavailable", "summary": {}, "dialect": dialect,
               "mismatches": [], "checked": [], "scope": "whole deck", "reason": None}
     if c["root"].get("deck_role") != "deck":
         report["reason"] = "no deck context; pass --deck for a standalone definition"

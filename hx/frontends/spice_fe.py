@@ -125,9 +125,6 @@ class SpiceFrontend(Frontend):
     def _root_tag_for_decl(self, d: Decl) -> str:
         return "@" + decl_identity(d.scope, d.name, d.gid).lstrip("/")
 
-    def _elab_for(self, tag: str) -> Elaborator:
-        return self._elabs[tag]
-
     def _ensure_def_root(self, d: Decl) -> str:
         tag = self._root_tag_for_decl(d)
         if tag not in self._elabs:

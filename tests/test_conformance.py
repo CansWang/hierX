@@ -175,7 +175,10 @@ def _check_invariants(g, fe, opts):
         _check_circuit(g, fe)
     if opts.max_nodes is not None:
         assert len(g.nodes) <= opts.max_nodes
-        assert g.meta["truncated"] == (len(g.nodes) >= opts.max_nodes and any("max-nodes" in u.reason for u in g.unresolved)) or not g.meta["truncated"]
+        capped = any("max-nodes" in u.reason for u in g.unresolved)
+        assert g.meta["truncated"] == capped, (g.meta["truncated"], capped)      # the flag and the unresolved evidence agree
+        if capped:
+            assert len(g.nodes) >= opts.max_nodes
     for n in g.nodes.values():
         if opts.depth is not None:
             assert abs(n.depth) <= opts.depth

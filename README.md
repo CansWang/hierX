@@ -27,8 +27,8 @@ across regeneration for the same build configuration, so notes you attach later
 survive; see [Boundaries](#boundaries) for what does and does not move them.
 
 Status: **0.5.0 — Rust, Xyce, and circuit review hardening** — C/C++ (libclang), SystemVerilog/Verilog (verilator),
-Rust (rust-analyzer), Python (pyright) and SPICE-family netlist (native parser,
-ngspice as an optional oracle) frontends; browser viewer with editable
+Rust (rust-analyzer), Python (pyright) and SPICE-family netlist (native parser for the `spice`, `ngspice` and
+`xyce` dialects; ngspice, Xyce and XDM as optional oracles) frontends; browser viewer with editable
 annotations, live reload and diff mode; tracked entry points with history,
 `hx diff`, a watch loop, an update hook and an MCP server. The plan lives in
 `dev/ssot/single-source-of-truth.md`; the netlist dialect coverage in
@@ -93,8 +93,8 @@ agreement. HSPICE and Spectre syntax remain deferred.
 
 | integration | installation guidance |
 |---|---|
-| Xyce oracle (`--xyce PATH`) | installer or source build from [Xyce downloads](https://xyce.sandia.gov/downloads/) |
-| XDM structural check (`--xdm PATH`) | `xdm_bdl` bundle from [XDM releases](https://github.com/Xyce/XDM/releases) |
+| Xyce oracle (`--xyce PATH` or `HX_TOOL_XYCE`; without either, PATH, then `/usr/cad/xyce/parallel/bin/Xyce` and `/usr/local/Xyce/bin/Xyce` are tried) | installer or source build from [Xyce downloads](https://xyce.sandia.gov/downloads/) |
+| XDM structural check (`--xdm PATH` or `HX_TOOL_XDM`; without either, PATH, then `~/.local/bin/xdm_bdl`) | `xdm_bdl` bundle from [XDM releases](https://github.com/Xyce/XDM/releases) |
 | HSPICE (deferred) | licensed Synopsys installation |
 | Spectre (deferred) | licensed Cadence installation |
 
@@ -203,8 +203,8 @@ written. The additive `circuit` block holds what call graphs have no place for
   file and suggests near names.
 - **Scoped lookup.** Definitions, models and parameters are looked up from the
   innermost subcircuit outward to the deck and its library sections, so a
-  local `.model` or `.subckt` shadows a global one (an info diagnostic says
-  so). Two declarations of one name in one scope are `ambiguous`, never
+  local `.model` or `.subckt` shadows a global one (the shadowed outer
+  declaration stays in the record with status `shadowed`). Two declarations of one name in one scope are `ambiguous`, never
   last-wins. A model that exists only as bins (`nfet_03v3.0 … .15`) resolves
   to the family with `status: binned`.
 - **Conditionals (ngspice).** An occurrence inside `.if/.elseif/.else` carries
@@ -243,7 +243,9 @@ written. The additive `circuit` block holds what call graphs have no place for
   (tokens kept, `attrs.family: "?"`), `missing-model`, `ambiguous-model`,
   `unsupported-directive` (preserved), `unparsed-statement` (text kept),
   `encrypted-content`, `ends-name-mismatch`, `guarded-duplicate`,
-  `missing-reference`, `ambiguous-reference`, `title-is-directive`; counts are
+  `missing-reference`, `ambiguous-reference`, `title-is-directive`,
+  `model-not-visible`, `missing-lib-section`, `lib-section-skipped` (info),
+  `recursive-hierarchy`, `hierarchy-too-deep`; counts are
   in `meta.notes`, the first thirty under `-v`. Only an unreadable deck or an
   entry that is not found aborts.
 - **`.control` blocks** are kept verbatim in `circuit.control_blocks` and never
@@ -257,19 +259,24 @@ written. The additive `circuit` block holds what call graphs have no place for
   and the simulator rows they could spell are counted, not compared; a family
   that needs a model (`M`, `Q`, `D`, `W`, …) is always compared on it, so a
   model missing on either side is a `model` mismatch, never a skipped check;
-  an instance-path entry restricts both sides to that subtree; a
-  definition-rooted entry with deck context (`lib.inc:@cm --deck deck.sp`, or
+  an instance-path entry restricts both sides to that subtree (ngspice only:
+  `--oracle xyce|xdm` always check the whole deck and read `--dialect auto` as
+  `xyce`, and every report prints `scope` and `dialect` lines saying what was
+  compared); a definition-rooted entry with deck context (`lib.inc:@cm --deck deck.sp`, or
   a deck's own `deck.sp:@name`) is compared once per unguarded instance of the
   definition and reports each; a deck ngspice cannot run (symbolic
   parameters), or a definition with no unguarded instance, is "oracle
-  unavailable" with the reason quoted. Exit 0 agree, 1 mismatch, 2 tool
-  missing or unavailable. A missing tool is named with its install command:
+  unavailable" with the reason quoted, as is a simulator that exits non-zero,
+  prints no listing or exceeds `--timeout`. Mismatch kinds: `missing-in-hx`,
+  `missing-in-ngspice`, `arity`, `net`, `model`, `ref` and `name-form` (a
+  tolerant name match is reported, never silent). Exit 0 agree, 1 mismatch,
+  2 tool missing or unavailable. A missing tool is named with its install command:
   `ngspice executable 'ngspice' not found (needed for the ngspice oracle (`hx netlist check --oracle ngspice`)); install it (sudo apt-get install -y ngspice, https://ngspice.sourceforge.io/download.html) or pass --ngspice PATH`.
   In strict mode (`HX_REQUIRE_TOOLS=1`) ngspice is required; vendor tools are
   required per `HX_REQUIRE_VENDOR_TOOLS=xyce,xdm` (or `all`).
-- **Dialects.** `spice` and `ngspice` today (`dev/ssot/netlist-dialect-matrix.md`
-  lists every construct); Xyce is selected with `--dialect xyce`. HSPICE and
-  Spectre syntax remain deferred.
+- **Dialects.** `spice`, `ngspice` and `xyce` (`dev/ssot/netlist-dialect-matrix.md`
+  lists every construct). `--dialect auto` sniffs `spice` or `ngspice` only, so
+  select Xyce with `--dialect xyce`. HSPICE and Spectre syntax remain deferred.
 
 Output summary:
 
@@ -345,8 +352,10 @@ Keyboard: `/` search · `f` fit · `Esc` clear selection · `Backspace` back.
 URL hash carries selection, depth and layout, so links are shareable;
 `?theme=dark|light` forces a theme and `?live=0` disables the live connection.
 
-API: `GET /api/graph`, `GET|PUT|PATCH /api/annotations`, `POST /api/extract`,
-`GET /api/source?file&line&span`, `GET /api/status`, `GET /events` (SSE).
+API: `GET /api/graph`, `GET /api/graphs`, `GET /api/history`, `POST /api/snapshot`,
+`GET /api/diff?since&format`, `GET|PUT|PATCH /api/annotations`, `POST /api/extract`,
+`GET /api/source?file&line&span`, `GET /api/status`, `GET /events` (SSE); every
+route and status code is in [the HTTP reference](docs/reference/http.md).
 
 **Hiding modules.** Every function or module row in the hierarchy has an eye
 button (also the "hide module" button in the detail pane, or `h` on the
@@ -386,7 +395,8 @@ that snapshots the current graph, and a **diff** selector that colors the graph
 change details. Links carry `#graph=…&diff=…`.
 
 `hx mcp` exposes `list_graphs`, `search`, `get_function`, `callees`, `callers`,
-`get_type`, `diff_since`, `extract` and `annotate` as compact text tools, so an
+`get_type`, `diff_since`, `extract`, `annotate`, and for netlist graphs `get_net`
+and `netlist_uses`, as compact text tools, so an
 agent can ask "who calls this, with what arguments" or "what changed since the
 baseline" without re-reading files. `extract` takes the tracked entry's options
 (depth, callers, language, dialect, deck, search paths) for anything the agent
@@ -543,7 +553,7 @@ What the tool promises, and where the promise stops:
 ```bash
 python -m pytest -q                      # skips tests whose toolchain is missing
 HX_REQUIRE_TOOLS=1 python -m pytest -q   # missing required toolchains fail; vendor checks are separately opt-in
-node --test tests/js                     # viewer merge-patch unit tests (also run from pytest)
+node --test tests/js                     # viewer merge-patch and circuit-query unit tests (also run from pytest)
 pip install -e ".[e2e]" && python -m playwright install chromium   # browser workflow tests (tests/test_e2e_viewer.py)
 ```
 
@@ -554,22 +564,26 @@ MCP imports, Pyright and dependency consistency. It then installs `.[dev,e2e]`
 and Chromium and runs the suite with `HX_REQUIRE_TOOLS=1`. Optional vendor checks
 remain skippable unless named in `HX_REQUIRE_VENDOR_TOOLS`.
 
-Layout: `hx/model.py` (IR), `hx/ids.py` (stable ids), `hx/traverse.py` (BFS),
-`hx/cache.py`, `hx/frontends/clang_fe.py` (libclang), `hx/frontends/verilator_fe.py`
-(verilator XML), `hx/frontends/lsp_fe.py` (JSON-RPC client + call hierarchy),
-`hx/frontends/spice_fe.py` over `hx/netlist/` (profiles, lexer, parser, grammar,
-index, resolver, hashing, ngspice oracle) with `hx/tools.py` (optional-tool
-registry) and `dev/scripts/netlist_coverage.py` (apragma and sky130 coverage run), `hx/diff.py`,
-`hx/project.py` (config, snapshots, update, watch, hook), `hx/mcp_server.py`, `hx/annotations.py`,
-`hx/serve/app.py` (FastAPI), `hx/export.py`, `hx/viewer/` (vanilla JS app +
-vendored Cytoscape/dagre, no build step), `hx/cli.py`, `tests/fixtures/{c,sv,rust,python,spice}/`
+Layout: `hx/model.py` (IR), `hx/ids.py` (stable ids, lexer), `hx/values.py` (wide
+values), `hx/graphio.py` (the one graph reader; in-memory schema upgrades),
+`hx/paths.py` (project-root and graph discovery), `hx/provenance.py`
+(`meta.provenance`), `hx/traverse.py` (BFS), `hx/cache.py`, `hx/fsutil.py` (atomic
+writes, file lock), `hx/frontends/clang_fe.py` (libclang), `hx/frontends/verilator_fe.py`
+(verilator XML), `hx/frontends/lsp_fe.py` (JSON-RPC client + call hierarchy) with
+`hx/rustsyntax.py` (Rust token splitting), `hx/frontends/spice_fe.py` over
+`hx/netlist/` (profiles with the pinned Xyce inventory `xyce_devices.json`, lexer,
+parser, grammar, index, resolver, hashing, ngspice oracle, `xyce.py` Xyce/XDM
+checks, `query.py` saved-graph net/uses queries) with `hx/tools.py` (optional-tool
+registry), `dev/scripts/netlist_coverage.py` (apragma and sky130 coverage run) and
+`dev/scripts/hardening_coverage.py` (pinned Codex/Xyce/XDM acceptance runner), `hx/diff.py`,
+`hx/project.py` (config, snapshots, update, watch, hook, migrate), `hx/mcp_server.py`, `hx/annotations.py`,
+`hx/serve/app.py` (FastAPI), `hx/export.py`, `hx/viewer/` (vanilla JS `app.js`,
+`circuit.js` net queries shared with the Node tests, `patch.js`, vendored
+Cytoscape/dagre, no build step), `hx/cli.py`, `hx/schema/hx-{1,2,3,4}.schema.json`,
+`tests/fixtures/{c,c_macros,c_scoped,c_variants,cpp,cpp_rec,sv,sv_adv,rust,rust_hardening,python,spice,xyce,legacy,viewer}/`
 (fixture projects; `tests/test_conformance.py` runs the same invariants over
 every frontend whose toolchain is installed). Headless check of the viewer:
 `google-chrome --headless=new --screenshot --virtual-time-budget=3000 "http://127.0.0.1:8765/?live=0"`.
-
-## License
-
-This project is licensed under the [MIT License](LICENSE).
 
 ## Rust and circuit review in 0.5.0
 
@@ -595,3 +609,7 @@ records. Static exports support the same connectivity navigation.
 The explicit `dev/scripts/hardening_coverage.py` runner uses a pinned Codex
 workspace and installed Xyce/XDM tools, writes replayable acceptance artifacts,
 and exits nonzero on failed stages. See the Rust guide and netlist tutorial.
+
+## License
+
+This project is licensed under the [MIT License](LICENSE).

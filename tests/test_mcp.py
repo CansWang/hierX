@@ -105,3 +105,41 @@ def test_extract_uses_tracked_netlist_options(tmp_path):
     assert cfg["dialect"] == "ngspice" and cfg["search_paths"] == ["lib"] and cfg["depth"] == 1 and not cfg.get("include_callers")
     txt = asyncio.run(_call(srv, "extract", {"entry": "ota.sp:nope"}))
     assert txt.startswith("extract failed: EntryNotFound")
+
+
+def test_lookup_ambiguity_query_errors_search_kind_and_history_points(cproj, monkeypatch):
+    """The documented 'ambiguous; candidates' answers, the netlist tools on a graph without circuit data, kind-filtered
+    search, a timestamp for diff_since, and a save failure reported as text."""
+    root = str(cproj)
+    project.track(root, "src/main.c:app_run", depth=3, jobs=1)
+    project.update(root)
+    gp = project.graph_path(root, "src/main.c:app_run")
+    import json
+    g = json.load(open(gp))
+    twin = dict(g["nodes"]["c:src/dma.c::dma_start"], id="c:src/other.c::dma_start")
+    g["nodes"][twin["id"]] = twin
+    tid = next(t for t in g["types"] if t.endswith("struct dma_chan"))
+    g["types"]["c:include/other.h::struct dma_chan"] = dict(g["types"][tid], id="c:include/other.h::struct dma_chan")
+    with open(gp, "w") as fh:
+        json.dump(g, fh)
+    srv = build_server(root)
+    out = asyncio.run(_call(srv, "get_function", {"id": "dma_start"}))
+    assert out.startswith("ambiguous; candidates:") and "c:src/other.c::dma_start" in out and "c:src/dma.c::dma_start" in out
+    out = asyncio.run(_call(srv, "get_type", {"id": "struct dma_chan"}))
+    assert out.startswith("ambiguous; candidates:") and "c:include/other.h::struct dma_chan" in out
+    assert asyncio.run(_call(srv, "get_type", {"id": "struct nope"})).startswith("type not in graph")
+    for tool, args in (("get_net", {"net": "vdd"}), ("netlist_uses", {"target": "/amp", "kind": "definition"})):
+        out = asyncio.run(_call(srv, tool, args))
+        assert "no circuit data" in out and "extract a netlist first" in out
+    types_only = asyncio.run(_call(srv, "search", {"query": "dma", "kind": "type"}))
+    assert "struct dma_chan" in types_only and "c:src/dma.c::dma_start" not in types_only
+    assert asyncio.run(_call(srv, "diff_since", {"since": "2000-01-01T00:00:00Z"})).startswith("no history for")
+    project.snapshot(root, "src/main.c:app_run", gp)
+    out = asyncio.run(_call(srv, "diff_since", {"since": "2000-01-01T00:00:00Z"}))
+    assert out.startswith("# ") and " since " in out.splitlines()[0]                    # the earliest snapshot is used
+
+    def boom(*_a, **_k):
+        raise OSError("disk full")
+    monkeypatch.setattr(project, "save_extraction", boom)
+    out = asyncio.run(_call(srv, "extract", {"entry": "src/hal.c:hal_write32", "depth": 1}))
+    assert out == "save failed: disk full"

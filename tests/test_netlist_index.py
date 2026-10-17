@@ -97,3 +97,20 @@ def test_forward_reference_and_params():
     assert idx.lookup("subckt", (), "five_t_opamp", EMPTY_GUARD).found      # defined after its instances
     assert idx.lookup("param", (), "vdd_val", EMPTY_GUARD).alternatives[0].expr == "1.8"
     assert idx.globals == {"vdd": "VDD"} and idx.title.startswith("Five-transistor")
+
+
+def test_library_reference_errors_are_diagnostics_and_the_selected_section_still_loads():
+    """A missing library file, a missing section, a section that pulls itself and an inline section outside any
+    reference each have their own code; the good section's model is still visible and the unselected one is not."""
+    idx = _index(os.path.join(FIX, "fail", "lib_errors.sp"))
+    by_code = {}
+    for d in idx.diagnostics:
+        by_code.setdefault(d["code"], []).append(d["message"])
+    assert sorted(by_code) == ["include-cycle", "lib-section-skipped", "missing-include", "missing-lib-section"]
+    assert ".lib 'nowhere.lib' not found" in by_code["missing-include"][0]
+    assert "section 'nosuch' not found" in by_code["missing-lib-section"][0]
+    assert "section 'tt' is already being read" in by_code["include-cycle"][0]
+    assert ".lib inline" in by_code["lib-section-skipped"][0]
+    lk = idx.lookup("model", (), "nch", EMPTY_GUARD)
+    assert lk.found and len(lk.alternatives) == 1 and "level=1" in lk.alternatives[0].params_text   # tt once, ff never
+    assert idx.stats["sections"] == [["sections.lib", "tt"]]

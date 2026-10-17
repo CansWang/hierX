@@ -207,3 +207,36 @@ def test_watch_reacts_to_a_newly_created_include_and_a_shadowing_candidate(tmp_p
     assert res3[0].error is None and any(d["code"] == "missing-include" for d in res3[0].graph["circuit"]["diagnostics"])
     sig3 = project.source_signature(str(root), None, extra=project.dependency_files(str(root)))
     assert sig3[str(out / "only_here.inc")] == project.MISSING
+
+
+def test_hook_install_reports_invalid_settings_without_a_traceback(cproj):
+    """A settings.json that is not JSON is a named error with exit 2, never a Python traceback."""
+    (cproj / ".claude").mkdir()
+    (cproj / ".claude" / "settings.json").write_text("{not json")
+    r = run(["hook", "install"], cwd=cproj)
+    assert r.returncode == 2 and "cannot install the hook" in r.stderr and "not valid JSON" in r.stderr and "Traceback" not in r.stderr
+    assert (cproj / ".claude" / "settings.json").read_text() == "{not json"          # nothing rewritten
+
+
+def test_filename_time_parses_both_snapshot_name_forms():
+    import datetime as dt
+    old = project._filename_time("2026-10-14T20-30-12+02-00-abc123-run.json")
+    assert old == dt.datetime(2026, 10, 14, 20, 30, 12, tzinfo=dt.timezone(dt.timedelta(hours=2)))
+    new = project._filename_time("20261014T203012.123456Z-a1b2c3d4e5f6-dirty-run.json")
+    assert new == dt.datetime(2026, 10, 14, 20, 30, 12, 123456, tzinfo=dt.timezone.utc)
+    assert project._filename_time("notes.json") is None and project._filename_time("20261399T000000.000000Z-x.json") is None
+
+
+def test_hook_install_merges_into_an_existing_group_and_watch_can_skip_the_first_update(cproj):
+    root = str(cproj)
+    (cproj / ".claude").mkdir()
+    (cproj / ".claude" / "settings.json").write_text(json.dumps({"hooks": {"Stop": [{"matcher": "", "hooks": [{"type": "command", "command": "echo hi"}]}]}}))
+    path, added = project.install_hook(root, "Stop")
+    settings = json.load(open(path))
+    assert added and [h["command"] for grp in settings["hooks"]["Stop"] for h in grp["hooks"]] == ["echo hi", "hx update --quiet --hook"]
+    assert project.install_hook(root, "Stop") == (path, False)                               # idempotent; the other command stays
+    project.track(root, "src/main.c:app_run", depth=1, jobs=1)
+    runs = project.watch(root, interval=0.01, debounce=0.01, run_first=False, stop=lambda: True)
+    assert runs == 0 and not os.path.exists(project.graph_path(root, "src/main.c:app_run"))   # nothing extracted
+    runs = project.watch(root, interval=0.01, debounce=0.01, run_first=True, max_updates=1)
+    assert runs == 1 and os.path.exists(project.graph_path(root, "src/main.c:app_run"))

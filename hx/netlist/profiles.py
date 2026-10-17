@@ -103,7 +103,16 @@ NGSPICE = replace(
         ".control": "control", ".endc": "control_end", ".csparam": "param"}.items()}},
 )
 
-XYCE_INVENTORY = json.loads(Path(__file__).with_name("xyce_devices.json").read_text())
+def _load_inventory() -> dict:
+    path = Path(__file__).with_name("xyce_devices.json")
+    try:
+        return json.loads(path.read_text())
+    except FileNotFoundError:
+        raise ImportError(f"hx is missing its packaged Xyce device inventory {path}; reinstall hx (the wheel ships hx/netlist/*.json) "
+                          "or restore the file from the repository") from None
+
+
+XYCE_INVENTORY = _load_inventory()
 
 
 def _xyce_families():

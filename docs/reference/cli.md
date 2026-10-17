@@ -42,13 +42,13 @@ source lookup. See [graph selection](configuration.md#find-a-graph-for-serve-or-
 | `serve` | Browser viewer and HTTP API, default `127.0.0.1:8765` | Long-running; Ctrl-C stops it; 2 for handled initialization failures |
 | `export` | HTML next to the graph unless `-o` is supplied | 0 on completion; 2 for handled graph, annotation, or I/O errors |
 | `track` | Replaces/removes one tracked entry table, or lists entries | 0 for normal operations |
-| `update` | Tracked graphs, previous snapshots, and `.hx/last-diff.md` | Per-entry errors are reported in results; inspect the report even with exit 0 |
-| `watch` | Repeated updates after a quiet period | Long-running; `--once` runs one update |
+| `update` | Tracked graphs, previous snapshots, and `.hx/last-diff.md` | 0 when every entry succeeded; 2 when any entry failed or nothing is tracked, except in `--hook` mode, which always exits 0; per-entry errors are in the report either way |
+| `watch` | Repeated updates after a quiet period | Long-running; `--once` runs one update and exits 0; 2 when nothing is tracked |
 | `diff` | Markdown or JSON to stdout or `-o` | Normally 0; `--exit-code` returns 1 for differences; handled missing entry/history returns 2 |
 | `migrate` | Re-extracted tracked graphs and migrated annotations | 0 on success/noop; 2 on reported extraction failure |
-| `hook` | Configuration snippet or settings-file merge | `--hook` update mode deliberately suppresses failures |
+| `hook` | `print` writes the JSON snippet; `install` merges it into `settings.json` | 0 after print or install, including when the hook is already present; 2 when the settings file is not valid JSON or cannot be written. The installed command, `hx update --quiet --hook`, always exits 0 so it never blocks an editing session |
 | `mcp` | stdio protocol, or JSON configuration with `--print-config` | Long-running server; 2 for handled dependency/annotation initialization failures |
-| `netlist check` | Oracle report; `--json` includes rendered closure | 0 agree, 1 mismatch, 2 oracle unavailable or handled extraction failure |
+| `netlist check` | Oracle report with `scope` and `dialect` lines; `--json` includes the rendered closure (ngspice) | 0 agree, 1 mismatch, 2 oracle unavailable (simulator missing, rejected the deck, printed no listing, or exceeded `--timeout`) or handled extraction failure |
 | `netlist net` / `netlist uses` | Read-only saved-graph queries; `--json` returns full records | 0 success, 2 missing/ambiguous item, invalid arguments or graph |
 
 These are command-specific statuses, not a guarantee that every possible I/O

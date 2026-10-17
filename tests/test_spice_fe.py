@@ -306,3 +306,23 @@ def test_standalone_library_replays_from_stored_arguments(tmp_path):
     assert args["deck"] is None
     r = extract(args["entry"], **{k: v for k, v in args.items() if k != "entry"})     # what POST /api/extract does
     assert r.entry == g.entry and r.meta["index"]["deck_role"] == "library" and set(r.nodes) == set(g.nodes)
+
+
+def test_duplicate_definition_ambiguous_model_and_depth_limit_have_their_codes(tmp_path):
+    proj = _proj(tmp_path, "fail")
+    g = extract("duplicate_def.sp:.", root=str(proj), depth=None)
+    assert [d["code"] for d in g.circuit["diagnostics"]] == ["duplicate-definition"] and g.circuit["definitions"]["/dup"]["status"] == "ambiguous"
+    cond = _proj(tmp_path, "conditional")
+    g = extract("independent.sp:.", root=str(cond), depth=None)
+    assert "ambiguous-model" in [d["code"] for d in g.circuit["diagnostics"]] and g.circuit["models"]["/dup"]["status"] == "ambiguous"
+    assert g.nodes["sp:independent.sp::d2"].attrs["model_refs"] == [] and g.nodes["sp:independent.sp::d2"].attrs["model"] == "dup"
+    deep = tmp_path / "deep"
+    deep.mkdir()
+    lines = ["a 66-level chain exceeds MAX_HIER_DEPTH"]
+    for i in range(1, 67):
+        lines += [f".subckt l{i} a b", f"x{i + 1} a b l{i + 1}" if i < 66 else "r1 a b 1k", ".ends"]
+    (deep / "deep.sp").write_text("\n".join(lines + ["x1 n1 0 l1", ".end"]) + "\n")
+    g = extract("deep.sp:.", root=str(deep), depth=None)
+    assert [u.reason for u in g.unresolved] == ["hierarchy deeper than 64 levels"]
+    assert "hierarchy-too-deep" in [d["code"] for d in g.circuit["diagnostics"]]
+    assert max(n.qualname.count(".") for n in g.nodes.values()) == 63 and not any(n.qualname.endswith(".r1") for n in g.nodes.values())

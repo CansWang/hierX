@@ -10,6 +10,7 @@ from ..frontends.base import FrontendError
 from ..tools import resolve_tool
 from .names import fold, path_str
 from .oracle import HxDevice, compare, parse_listing, render_closure, run_ngspice
+import subprocess
 
 _SUM_KEYS = ("compared", "guarded_hx", "guarded_sim", "unmatched", "name_form", "out_of_scope", "out_of_scope_hx", "mismatches")
 
@@ -24,13 +25,17 @@ def check_ngspice(entry: str, *, root: str, exe: Optional[str] = None, dialect: 
     from ..api import extract, split_entry
     exe = resolve_tool("ngspice", exe)
     file, symbol = split_entry(entry)
-    report: dict = {"entry": entry, "oracle": "ngspice", "exe": exe, "status": "unavailable", "summary": None, "mismatches": [], "render": None}
+    report: dict = {"entry": entry, "oracle": "ngspice", "exe": exe, "status": "unavailable", "scope": None, "summary": None,
+                    "mismatches": [], "render": None}
     graph = extract(entry, root=root, depth=None, dialect=dialect, deck=deck, search_paths=list(search_paths), use_cache=True)
     c = graph.circuit
+    report["dialect"] = c["dialect"]
     definition = None
     dgraph = graph
     if c["root"]["kind"] == "definition":
+        report["scope"] = f"definition {graph.nodes[graph.entry].name} per unguarded instance in deck {c['deck']}"
         if c["root"].get("deck_role") != "deck":
+            report["scope"] = f"definition {graph.nodes[graph.entry].name} (no deck context)"
             report["reason"] = ("oracle unavailable: no deck context for a definition-rooted entry (name an instance path, '.', "
                                 "or pass --deck DECK to compare every instance of the definition in that deck)")
             return report
@@ -49,9 +54,27 @@ def check_ngspice(entry: str, *, root: str, exe: Optional[str] = None, dialect: 
             report["reason"] = (f"oracle unavailable: definition '{definition.name}' has no unguarded instance in deck {dgraph.circuit['deck']}"
                                 + (f" ({len(insts)} guarded; ngspice lists the active branch only)" if insts else ""))
             return report
+    subtree = None
+    if definition is None and symbol != ".":
+        entry_node = graph.nodes[graph.entry]
+        if entry_node.kind == "instance":
+            subtree = entry_node.qualname.split("#")[0].split(".")
+            report["scope"] = f"instance {entry_node.qualname}"
+        elif entry_node.kind == "device":
+            subtree = entry_node.qualname.split("#")[0].split(".")[:-1]
+            report["scope"] = f"device {entry_node.qualname} (its enclosing instance " + (path_str(subtree) if subtree else "(deck)") + ")"
+    if report["scope"] is None:
+        report["scope"] = "whole deck"
     render = render_closure(fe.index)
     report["render"] = render
-    proc = run_ngspice(exe, render, os.path.dirname(fe.index.deck), timeout)
+    try:
+        proc = run_ngspice(exe, render, os.path.dirname(fe.index.deck), timeout)
+    except subprocess.TimeoutExpired:
+        report["reason"] = f"oracle unavailable: ngspice timed out after {timeout:g}s"
+        return report
+    except OSError as exc:
+        report["reason"] = f"oracle unavailable: cannot execute ngspice: {exc}"
+        return report
     report["ngspice_exit"] = proc.returncode
     report["ngspice_stderr"] = proc.stderr[-4000:]
     listing = parse_listing(proc.stdout)
@@ -77,10 +100,6 @@ def check_ngspice(entry: str, *, root: str, exe: Optional[str] = None, dialect: 
         report["summary"] = summary
         report["status"] = "agree" if summary["agree"] else "mismatch"
         return report
-    subtree = None
-    if symbol not in (".",):
-        entry_node = graph.nodes[graph.entry]
-        subtree = entry_node.qualname.split("#")[0].split(".") if entry_node.kind == "instance" else (entry_node.qualname.split("#")[0].split(".")[:-1] if entry_node.kind == "device" else None)
     res = compare(devices, listing, fe.profile, hx_models, subtree)
     report.update(res)
     report["status"] = "agree" if res["summary"]["agree"] else "mismatch"
@@ -152,6 +171,10 @@ def ngspice_name_for(letter, segments, flags, device):
 
 def format_report(report: dict, limit: int = 20) -> str:
     lines = [f"oracle      {report['oracle']} ({report['exe']})", f"entry       {report['entry']}", f"status      {report['status']}"]
+    if report.get("scope"):
+        lines.append(f"scope       {report['scope']}")
+    if report.get("dialect"):
+        lines.append(f"dialect     {report['dialect']}")
     if report.get("reason"):
         lines.append(f"reason      {report['reason']}")
     s = report.get("summary")

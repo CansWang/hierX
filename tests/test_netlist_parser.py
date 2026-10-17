@@ -100,3 +100,17 @@ def test_switch_grammar_orders_refs_before_models():
     f, h, k = split("f1 a b vs 2", "F"), split("h1 a b vs 1k", "H"), split("k1 l1 l2 0.5", "K")
     assert (f.refs, f.master, f.value) == (["vs"], None, "2") and (h.refs, h.value) == (["vs"], "1k") and (k.refs, k.value) == (["l1", "l2"], "0.5")
     assert "missing model" in split("w3 out 0 vsense", "W").diagnostics
+
+
+def test_every_structural_error_is_a_diagnostic_and_the_text_is_kept():
+    """Misplaced or operand-less directives never abort: each one is an `unparsed-statement` naming the problem."""
+    fs = _structure(os.path.join(FIX, "fail", "malformed.sp"), "deck")
+    messages = sorted(d["message"] for d in fs.diagnostics if d["code"] == "unparsed-statement")
+    assert messages == sorted([".elseif without .if", ".else without .if", ".endif without .if", ".ends without an open .subckt",
+                               ".endl without .lib section", ".lib without arguments", ".include without a path",
+                               ".model needs a name and a type", ".subckt without a name", "continuation line without a statement",
+                               ".if never closed"])
+    assert {d["code"] for d in fs.diagnostics} == {"unparsed-statement"}
+    kept = [s.raw.text for s in fs.statements if type(s).__name__ == "Unparsed"]
+    assert ".model onlyname" in kept and ".subckt" in kept and "orphan continuation" in kept
+    assert [type(s).__name__ for s in fs.statements if type(s).__name__ in ("Element", "Conditional", "ControlBlock")] == ["Element", "ControlBlock", "Conditional"]

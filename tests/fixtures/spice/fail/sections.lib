@@ -1,0 +1,8 @@
+* corner sections; tt pulls itself (a cycle), ff is never selected
+.lib tt
+.model nch nmos level=1
+.lib "sections.lib" tt
+.endl
+.lib ff
+.model nch nmos level=2
+.endl

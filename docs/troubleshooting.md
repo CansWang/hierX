@@ -15,8 +15,9 @@ defines, language flags, and target SDK headers are available on this machine.
 Install `clang` for automatic resource-header discovery or supply
 `--resource-dir`. Add `-v` to see translation-unit diagnostics.
 
-Use the file defining the entry. C++ namespace-qualified entries containing
-`::` conflict with the final-colon entry separator; use a bare name. C/C++ lookup may use a unique definition in another file and records a note; several
+Use the file defining the entry. The entry separator is the first colon after
+any drive prefix, so namespace-qualified C++ entries (`src/main.cpp:hw::run`) are
+accepted; a bare name also works when it is unique in the file. C/C++ lookup may use a unique definition in another file and records a note; several
 overloads in the same file currently select the first indexed match. HDL/netlist
 entry errors enforce their path/file constraints and offer candidates. A graph can still be written when some translation units fail: inspect
 `meta.index`, `meta.tu_errors`, and the printed warnings.

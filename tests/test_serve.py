@@ -194,3 +194,38 @@ def test_multi_graph_history_and_diff(cproj, extract):
     r = subprocess.run([sys.executable, "-c", "import hx.cli,sys; sys.argv=['hx','serve','--port','1']; print(hx.cli._default_graph(None))"],
                        cwd=cproj, capture_output=True, text=True)
     assert r.returncode == 0
+
+
+def test_extract_endpoint_error_responses_and_failed_runs(served):
+    """The documented 409 (a run in progress) and 400 (no replay arguments) responses, and a failing background
+    extraction that ends in an `extract-error` recorded on /api/status instead of a hung `extracting` flag."""
+    c, cproj, st = served
+    st.extracting = True
+    r = c.post("/api/extract")
+    assert r.status_code == 409 and r.json() == {"status": "already-running"}
+    st.extracting = False
+    gp = cproj / ".hx" / "graph.json"
+    doc = json.loads(gp.read_text())
+    args = doc["meta"].pop("extract_args")
+    gp.write_text(json.dumps(doc))
+    os.utime(gp, (time.time() + 5, time.time() + 5))
+    r = c.post("/api/extract")
+    assert r.status_code == 400 and "meta.extract_args" in r.json()["detail"]
+    doc["meta"]["extract_args"] = dict(args, entry="src/main.c:no_such_function")
+    gp.write_text(json.dumps(doc))
+    os.utime(gp, (time.time() + 10, time.time() + 10))
+    assert c.post("/api/extract").status_code == 202
+    for _ in range(100):
+        status = c.get("/api/status").json()
+        if not status["extracting"]:
+            break
+        time.sleep(0.1)
+    assert not status["extracting"] and status["last_extract_error"].startswith("EntryNotFound")
+    assert json.loads(gp.read_text())["entry"] == "c:src/main.c::app_run"              # the failed run replaced nothing
+
+
+def test_source_without_a_known_root_is_400(tmp_path):
+    with TestClient(create_app(str(tmp_path / ".hx" / "graph.json"))) as c:               # no graph yet, no --root
+        r = c.get("/api/source", params={"file": "src/main.c"})
+        assert r.status_code == 400 and "no project root" in r.json()["detail"]
+        assert c.get("/api/graph").status_code == 404

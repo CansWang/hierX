@@ -26,14 +26,21 @@ are cleared when Rust token corrections change a body hash.
 | `circuit` | Netlist connectivity and declaration data; absent for other frontends |
 
 A node includes `id`, `kind`, `name`, `qualname`, `lang`, `loc`, `signature`,
-`depth`, `body_hash`, `precision`, `params`, `returns`, `globals`, `calls`, and
-frontend-specific `attrs`. `loc` contains a file and line, with optional column
+`storage` (`static`, `extern`, … or null), `depth`, `body_hash`, `precision`,
+`params`, `returns`, `globals`, `calls`, frontend-specific `attrs`, and `runtime`
+(always null; reserved). `loc` contains a file and line, with optional column
 and ending line. Depth is the minimum traversal distance: 0 for the entry,
 positive for callees/children, negative for callers/parents.
 
 `calls` lists expanded target IDs. Use `edges` for arguments, relationship kind,
 call-site locations, and unresolved relationships. Edge kinds include `call`,
-`macro`, `fnptr`, `ref`, and `instance`. An unresolved record can mean a depth
+`macro`, `fnptr`, `ref`, and `instance`; an edge also carries `name` (the spelled
+callee when `to` is null), `macro` (the expanding macro) and `ptr_type` (the
+function-pointer type) when they apply. A type record carries `enumerators`,
+`underlying`/`underlying_ref` (typedefs), `anonymous`, `system` and `used_by`
+(IDs of nodes and types that reference it); a global carries `storage` and
+`scope` (`file`, `function-static` or `member`); an unresolved record may carry
+`family` when it stands for a collapsed overload family. An unresolved record can mean a depth
 boundary, an exclusion, a system header, no definition, or an indirect target;
 read its `reason` rather than assuming extraction failed.
 

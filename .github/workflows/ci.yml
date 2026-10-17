@@ -58,6 +58,8 @@ jobs:
           hx migrate --help
           python -c "import hx.project, hx.mcp_server, hx.diff, hx.graphio, hx.values"
           pyright --version
+      - name: installed-wheel smoke test outside the checkout (package data, netlist and Xyce extraction, queries, export)
+        run: PYTHON=python dev/scripts/wheel_smoke.sh "$RUNNER_TEMP/hx-wheel-smoke"
       - name: developer dependencies (+ Playwright and its Chromium for the browser tests)
         run: |
           python -m pip install ".[dev,e2e]"

@@ -143,3 +143,53 @@ def test_module_hash_tracks_logic_not_layout(svproj):
     core_sv.write_text(csrc.replace("  alu #(.W(W)) u_alu (", "  // c\n  alu #(.W(W)) u_alu ("))
     _, g3 = run(svproj, depth=4)
     assert g3.nodes[fn].body_hash == h0[fn]
+
+
+def test_find_sources_resolution_modes(tmp_path):
+    from hx.frontends.base import FrontendError
+    from hx.frontends.verilator_fe import find_sources
+    root = tmp_path / "proj"
+    (root / "rtl").mkdir(parents=True)
+    (root / ".hx").mkdir()
+    (root / "obj_dir").mkdir()
+    for p in ("rtl/a.sv", "rtl/b.v", "top.sv", ".hx/cached.sv", "obj_dir/gen.sv"):
+        (root / p).write_text("module m; endmodule\n")
+    files, fl = find_sources(str(root), ["rtl/*.sv"], None)
+    assert [os.path.relpath(f, root) for f in files] == ["rtl/a.sv"] and fl is None          # explicit glob
+    files, fl = find_sources(str(root), [], None)
+    assert sorted(os.path.relpath(f, root) for f in files) == ["rtl/a.sv", "rtl/b.v", "top.sv"]   # recursive discovery skips .hx and obj_dir
+    (root / "list.f").write_text("top.sv\n")
+    assert find_sources(str(root), [], None) == ([], str(root / "list.f"))                     # a lone *.f wins over discovery
+    assert find_sources(str(root), [], "list.f") == ([], str(root / "list.f"))                 # root-relative -f
+    assert find_sources(str(root), [], str(root / "list.f")) == ([], str(root / "list.f"))
+    empty = tmp_path / "empty"
+    empty.mkdir()
+    with pytest.raises(FrontendError, match="no SystemVerilog sources found"):
+        find_sources(str(empty), [], None)
+
+
+def test_expression_rendering_fallback_when_source_text_is_unavailable(tmp_path):
+    """`expr_text` renders elaborated XML expressions and `port_text` falls back to it for a connection without source."""
+    import xml.etree.ElementTree as ET
+    from hx import values as _values
+    from hx.frontends.verilator_fe import _XmlIndexer
+    idx = _XmlIndexer("<verilator_xml><files/></verilator_xml>", str(tmp_path))
+    const = str(_values.fmt(_values.encode("32'h10")))
+    cases = {
+        '<concat><varref name="a"/><const name="32\'h10"/></concat>': "{a, " + const + "}",
+        '<sel><varref name="bus"/><const name="3"/></sel>': "bus[3]",
+        '<arraysel><varref name="mem"/><varref name="i"/><varref name="j"/></arraysel>': "mem[i:j]",
+        '<replicate><const name="2"/><varref name="x"/></replicate>': "{2 x}",
+        '<cond><varref name="c"/><varref name="x"/><varref name="y"/></cond>': "c ? x : y",
+        '<membersel name="f"><varref name="s"/></membersel>': "s.f",
+        '<varxref name="q" dotted="u_sub"/>': "u_sub.q",
+        '<not><varref name="a"/></not>': "not(a)",
+        '<add><varref name="a"/><varref name="b"/></add>': "(a add b)",
+        '<mystery><varref name="a"/><varref name="b"/><varref name="c"/></mystery>': "mystery",
+    }
+    for xml, want in cases.items():
+        assert idx.expr_text(ET.fromstring(xml)) == want, xml
+    assert idx.expr_text(None) == "?"
+    assert idx.port_text(ET.fromstring('<port name="d"><concat><varref name="a"/><varref name="b"/></concat></port>')) == ".d({a, b})"
+    assert idx.port_text(ET.fromstring('<port name="clk"><varref name="clk_i"/></port>')) == ".clk(clk_i)"      # shorthand
+    assert idx.port_text(ET.fromstring('<port name="unused"/>')) == ".unused()"

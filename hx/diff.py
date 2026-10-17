@@ -322,11 +322,6 @@ def diff_graphs(old: dict, new: dict) -> dict:
     }
 
 
-def _decl_hashes(rec: dict) -> dict[str, dict]:
-    """declaration identity (`scope/name#<guard_id>`) -> declaration record, for one circuit declaration entry."""
-    return {(d.get("identity") or ""): d for d in rec.get("declarations", [])}
-
-
 def _diff_decls(a: dict, b: dict) -> dict:
     """Netlist declarations (models, definitions, params) compared by their guarded identity: an edited `.model`
     card registers even when every instance keeps its model name; an edit confined to one branch moves one key."""
