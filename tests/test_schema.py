@@ -21,6 +21,7 @@ def test_c_graph_validates(extract):
     v = _validator()
     for kw in ({"depth": 3}, {"depth": 2, "include_callers": True, "include_system": True}, {"depth": 1, "max_nodes": 2}):
         d = extract(**kw).to_dict()
+        assert d["meta"]["evidence_limits"] == ["entry-view-only"]
         errors = sorted(v.iter_errors(d), key=lambda e: list(e.path))
         assert not errors, "\n".join(f"{list(e.path)}: {e.message}" for e in errors[:10])
         assert all(u["from"] in d["nodes"] for u in d["unresolved"])

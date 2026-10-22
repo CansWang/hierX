@@ -612,10 +612,23 @@ MISSING = -1   # signature value for a dependency candidate that does not exist 
 
 
 def dependency_files(root: str) -> dict[str, Optional[int]]:
-    """Files the tracked graphs depend on beyond the source walk: every file a netlist extraction read (inside or
-    outside the root) and every include candidate it probed, missing ones as `None` so that creating one, or an
-    earlier search-path candidate that would shadow the resolved file, changes the signature."""
+    """Observed inputs and missing candidates beyond the source walk.
+
+    Include saved provenance, netlist include probes, and Rust configuration
+    candidates even before the first successful extraction or for older graphs.
+    """
     out: dict[str, Optional[int]] = {}
+    from .api import split_entry
+    from .config_inputs import rust_config_candidates
+    for entry in load_config(root)["entries"]:
+        lang = entry.get("lang", "auto")
+        try:
+            source, _ = split_entry(entry["entry"])
+        except ValueError:
+            continue
+        if lang in ("rust", "rs") or (lang == "auto" and source.endswith(".rs")):
+            out.update(dict.fromkeys(rust_config_candidates(root)))
+            break
     gdir = os.path.join(hx_dir(root), "graphs")
     if not os.path.isdir(gdir):
         return out
@@ -624,9 +637,18 @@ def dependency_files(root: str) -> dict[str, Optional[int]]:
             continue
         try:
             with open(os.path.join(gdir, fn), encoding="utf-8") as fh:
-                meta = json.load(fh).get("meta") or {}
+                doc = json.load(fh)
+                meta = doc.get("meta") or {}
         except (OSError, ValueError):
             continue
+        graph_root = doc.get("root") or root
+        if doc.get("lang") in ("rs", "rust"):
+            out.update(dict.fromkeys(rust_config_candidates(graph_root)))
+        inputs = (meta.get("provenance") or {}).get("inputs") or {}
+        for item in inputs.get("files") or []:
+            path = item.get("path")
+            if isinstance(path, str) and path:
+                out[path if os.path.isabs(path) else os.path.join(graph_root, path)] = None
         for dep in meta.get("deps") or []:
             path = dep if os.path.isabs(dep) else os.path.join(root, dep)
             out[path] = None
@@ -643,7 +665,11 @@ def source_signature(root: str, paths: Optional[Iterable[str]] = None, exts: Ite
     exts = set(exts)
     bases = [os.path.join(root, p) for p in (paths or [])] or [root]
     sig: dict[str, int] = {}
-    for p in extra or ():
+    candidates = set(extra or ())
+    if os.path.isfile(os.path.join(root, "Cargo.toml")):
+        from .config_inputs import rust_config_candidates
+        candidates.update(rust_config_candidates(root))
+    for p in sorted(candidates):
         try:
             sig[p] = os.stat(p).st_mtime_ns
         except OSError:

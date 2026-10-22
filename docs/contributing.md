@@ -27,10 +27,14 @@ installed hx command on PATH. Keep interactive commands, installations, and
 machine-specific paths outside these blocks. Every marked block is exercised by
 the tutorial tests; use a timeout when adding a long-running integration check.
 
-The optional ngspice tutorial check uses the existing `vendor_tool` test marker,
-so a machine without ngspice can still verify native extraction. Enable it as a
-requirement with `HX_REQUIRE_VENDOR_TOOLS=ngspice`. The project's strict
-`HX_REQUIRE_TOOLS=1` policy continues to apply to language frontend checks.
+The ngspice oracle tutorial uses `require_tool("ngspice")`, so
+`HX_REQUIRE_TOOLS=1` requires it alongside the language toolchains. CI installs
+ngspice in the toolchain job. Without strict mode, a missing ngspice skips that
+test; native netlist extraction itself needs no simulator. Optional Xyce/XDM
+checks use the `vendor_tool` marker and become requirements when listed in
+`HX_REQUIRE_VENDOR_TOOLS=xyce,xdm`. The docs-only job excludes toolchain and oracle
+tutorials with `-k "not toolchain and not oracle"`. The policy is implemented in
+`tests/conftest.py` and `.github/workflows/ci.yml`.
 
 ## Keep references tied to source
 

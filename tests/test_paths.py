@@ -205,6 +205,26 @@ def test_project_resolution_is_read_only_and_rejects_malformed_entries(tmp_path)
     assert not (root / ".hx").exists() and not (work / ".hx").exists()
 
 
+@pytest.mark.parametrize("entry", [r"C:\src\main.rs", "C:/src/main.rs", "C:/src/main.rs:"])
+def test_drive_entry_without_symbol_is_rejected_before_discovery(tmp_path, entry):
+    from hx.api import split_entry
+    with pytest.raises(ValueError, match="<file>:<symbol>"):
+        split_entry(entry)
+    with pytest.raises(ValueError, match="<file>:<symbol>"):
+        resolve_project(None, [entry], cwd=tmp_path)
+    assert not list(tmp_path.iterdir())
+
+
+@pytest.mark.parametrize("entry,file,symbol", [
+    (r"C:\src\main.rs:main", r"C:\src\main.rs", "main"),
+    ("C:/src/main.rs:<Item as Trait>::method", "C:/src/main.rs", "<Item as Trait>::method"),
+    ("src/main.cpp:hw::run", "src/main.cpp", "hw::run"),
+])
+def test_qualified_and_drive_entry_symbols_are_preserved(entry, file, symbol):
+    from hx.api import split_entry
+    assert split_entry(entry) == (file, symbol)
+
+
 @pytest.mark.parametrize("command", ["serve", "export"])
 def test_readers_prefer_local_state_then_first_marked_repo(tmp_path, monkeypatch, command):
     root = repo(tmp_path / "repo")

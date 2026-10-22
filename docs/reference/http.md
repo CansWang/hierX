@@ -94,13 +94,16 @@ Body: the replacement annotation document itself. Replaces and normalizes it,
 increments the revision, and broadcasts an `annotations` event. Returns the same
 wrapper as GET. Missing buckets are initialized; a non-object body normalizes to
 an empty annotation document. Use PATCH to preserve unrelated notes.
+Malformed JSON, an empty body, or invalid JSON encoding returns 400 without
+writing annotations, changing the revision, or broadcasting an event.
 
 ## `PATCH /api/annotations`
 
 Body: a JSON object merge patch. Objects merge recursively; arrays replace;
 `null` deletes keys. Writes are locked and persisted atomically. Returns
 `{"rev": N, "annotations": {...}}` and broadcasts `annotations`. A non-object
-patch returns 400.
+patch returns 400. Malformed JSON, an empty body, or invalid JSON encoding also
+returns 400; rejected requests leave stored bytes, revision, and events unchanged.
 
 For the prepared C fixture:
 
@@ -161,7 +164,7 @@ curl -N http://127.0.0.1:8765/events
 |---|---|
 | `hello` | Current annotation `rev` when connecting |
 | `ping` | Keepalive timestamp `t`, normally after 15 idle seconds |
-| `graph` | `reason` (`file-changed` or `extract`) and graph `name` |
+| `graph` | `reason` (`file-created`, `file-changed`, `file-deleted`, or `extract`) and graph `name` |
 | `annotations` | `rev`, optionally `reason: file-changed` |
 | `extract-start` | Entry argument `entry` and optional graph `name` |
 | `extract-done` | Stable entry ID `entry`, node count `nodes`, and graph `name` |
@@ -169,3 +172,13 @@ curl -N http://127.0.0.1:8765/events
 
 A graph notification tells clients to fetch the current graph; it does not embed
 the graph. Annotation notifications similarly trigger a fresh annotation request.
+Polling emits one event for each observed creation, modification, or deletion;
+unchanged files do not repeat events. Changes between polling intervals can be
+missed.
+
+When the selected graph disappears, the viewer retains its name, clears the
+graph, detail, source, and diff views, and disables graph actions. It keeps the
+live connection and queued annotation saves, updates the graph picker, and
+recovers automatically when that graph returns. Choosing another available graph
+remains possible. Delayed responses for a previous graph cannot restore stale
+content after a switch or deletion. Reconnecting refreshes current state.

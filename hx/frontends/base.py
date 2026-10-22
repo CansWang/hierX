@@ -66,6 +66,10 @@ class TypeRecord:
 class Frontend(ABC):
     lang: str = "?"
 
+    def evidence_limits(self) -> list[str]:
+        """Known omission codes; an empty list is not proof of completeness."""
+        return []
+
     def provenance_inputs(self) -> dict[str, Optional[int]]:
         """Observed absolute input paths and mtimes; None represents a missing input.
 

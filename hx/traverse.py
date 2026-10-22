@@ -223,6 +223,7 @@ def extract_graph(fe: Frontend, entry_file: str, entry_symbol: str, opts: Traver
     if opts.include_callers and not b.truncated:
         b.callers(entry_key)
     graph.meta["truncated"] = b.truncated
+    graph.meta["evidence_limits"] = sorted({"entry-view-only", *fe.evidence_limits()})
     graph.meta["options"] = {
         "depth": opts.depth, "type_depth": opts.type_depth, "include_callers": opts.include_callers,
         "include_system": opts.include_system, "exclude": list(opts.exclude), "max_nodes": opts.max_nodes,

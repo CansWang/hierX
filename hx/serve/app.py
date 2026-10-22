@@ -40,6 +40,7 @@ class State:
         self.ann_path = os.path.abspath(ann_path)
         self.root = os.path.abspath(root) if root else None
         self.allow_extract = allow_extract
+        self.main_name = "graph" if os.path.basename(self.graph_path) == "graph.json" else os.path.splitext(os.path.basename(self.graph_path))[0]
         self.rev = 0                        # bumps on every annotations change made through the API
         self.extracting = False
         self.last_extract_error: Optional[str] = None
@@ -57,14 +58,13 @@ class State:
         """Served graphs: the main one first, then tracked graphs under .hx/graphs."""
         out = []
         seen = set()
-        main_name = "graph" if os.path.basename(self.graph_path) == "graph.json" else os.path.splitext(os.path.basename(self.graph_path))[0]
-        if os.path.exists(self.graph_path):
-            out.append({"name": main_name, "path": self.graph_path})
+        if os.path.isfile(self.graph_path):
+            out.append({"name": self.main_name, "path": self.graph_path})
             seen.add(self.graph_path)
         if self.graphs_dir and os.path.isdir(self.graphs_dir):
             for f in sorted(os.listdir(self.graphs_dir)):
                 p = os.path.join(self.graphs_dir, f)
-                if f.endswith(".json") and f != ANNOTATIONS_NAME and p not in seen:
+                if f.endswith(".json") and f != ANNOTATIONS_NAME and p not in seen and os.path.isfile(p):
                     out.append({"name": f[:-5], "path": p})
         return out
 
@@ -123,22 +123,27 @@ class State:
         if which == "ann":
             self._mtimes["ann"] = self._mtime(self.ann_path)
         else:
-            key = "graph:" + (name or self.graph_list()[0]["name"] if self.graph_list() else "graph")
+            key = "graph:" + (name or self.main_name)
             self._mtimes[key] = self._mtime(self.resolve(name))
 
-    def poll_files(self) -> list[tuple[str, Optional[str]]]:
-        """[('ann', None) | ('graph', name)] for every file whose mtime moved since the last poll."""
-        changed: list[tuple[str, Optional[str]]] = []
+    def poll_files(self) -> list[tuple[str, Optional[str], str]]:
+        """Return (kind, name, reason), including one event per deletion/recreation."""
+        changed: list[tuple[str, Optional[str], str]] = []
         m = self._mtime(self.ann_path)
         if m != self._mtimes.get("ann"):
             self._mtimes["ann"] = m
-            changed.append(("ann", None))
-        for g in self.graph_list():
-            key = "graph:" + g["name"]
-            m = self._mtime(g["path"])
-            if m != self._mtimes.get(key):
+            changed.append(("ann", None, "file-changed"))
+        current = {"graph:" + g["name"]: self._mtime(g["path"]) for g in self.graph_list()}
+        previous = {key for key in self._mtimes if key.startswith("graph:")}
+        for key in sorted(previous | current.keys()):
+            old, m = self._mtimes.get(key), current.get(key)
+            if m != old:
+                reason = "file-deleted" if m is None else "file-created" if old is None else "file-changed"
+                changed.append(("graph", key[len("graph:"):], reason))
+            if m is None:
+                self._mtimes.pop(key, None)
+            else:
                 self._mtimes[key] = m
-                changed.append(("graph", g["name"]))
         return changed
 
 
@@ -165,8 +170,9 @@ def create_app(graph_path: str, annotations_path: Optional[str] = None, root: Op
     def index() -> HTMLResponse:
         with open(os.path.join(VIEWER_DIR, "index.html"), encoding="utf-8") as fh:
             html = fh.read()
-        cfg = {"mode": "serve", "allow_extract": st.allow_extract}
-        html = html.replace("window.HX_CONFIG = {mode: \"serve\"};", f"window.HX_CONFIG = {json.dumps(cfg)};")
+        cfg = {"mode": "serve", "allow_extract": st.allow_extract, "graph_name": st.main_name}
+        config_json = json.dumps(cfg).replace("<", "\\u003c")
+        html = html.replace("window.HX_CONFIG = {mode: \"serve\"};", f"window.HX_CONFIG = {config_json};")
         return HTMLResponse(html)
 
     @app.get("/api/status")
@@ -257,9 +263,15 @@ def create_app(graph_path: str, annotations_path: Optional[str] = None, root: Op
             raise HTTPException(500, str(e))
         return {"rev": st.rev, "annotations": doc}
 
+    async def annotation_body(request: Request) -> Any:
+        try:
+            return await request.json()
+        except ValueError as exc:  # includes JSONDecodeError and UnicodeDecodeError
+            raise HTTPException(400, "annotation body must be valid JSON") from exc
+
     @app.put("/api/annotations")
     async def put_annotations(request: Request) -> dict:
-        body = await request.json()
+        body = await annotation_body(request)
         doc = ann_mod.replace_file(st.ann_path, body if isinstance(body, dict) else {})
         st.note_written("ann")
         st.rev += 1
@@ -268,7 +280,7 @@ def create_app(graph_path: str, annotations_path: Optional[str] = None, root: Op
 
     @app.patch("/api/annotations")
     async def patch_annotations(request: Request) -> dict:
-        body = await request.json()
+        body = await annotation_body(request)
         if not isinstance(body, dict):
             raise HTTPException(400, "merge patch must be a JSON object")
         doc = ann_mod.patch_file(st.ann_path, body)
@@ -371,9 +383,9 @@ def _run_extract(st: State, args: dict, name: Optional[str] = None) -> None:
 async def _watch_files(st: State, interval: float) -> None:
     while True:
         await asyncio.sleep(interval)
-        for which, name in st.poll_files():
+        for which, name, reason in st.poll_files():
             if which == "graph":
-                st.broadcast("graph", {"reason": "file-changed", "name": name})
+                st.broadcast("graph", {"reason": reason, "name": name})
             else:
                 st.rev += 1
                 st.broadcast("annotations", {"rev": st.rev, "reason": "file-changed"})

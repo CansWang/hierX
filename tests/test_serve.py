@@ -23,7 +23,7 @@ def served(cproj, extract):
 def test_index_and_static(served):
     c, _, st = served
     r = c.get("/")
-    assert r.status_code == 200 and 'window.HX_CONFIG = {"mode": "serve", "allow_extract": true};' in r.text
+    assert r.status_code == 200 and 'window.HX_CONFIG = {"mode": "serve", "allow_extract": true, "graph_name": "graph"};' in r.text
     assert c.get("/static/app.js").status_code == 200
     assert c.get("/static/patch.js").status_code == 200 and "root.hxPatch" in c.get("/static/patch.js").text
     assert c.get("/static/vendor/cytoscape.min.js").status_code == 200
@@ -58,6 +58,28 @@ def test_delete_patches_persist(served):
     assert nid not in doc["nodes"] and doc["view"]["pinned_positions"] == {}
     on_disk = json.load(open(cproj / ".hx" / "annotations.json"))
     assert on_disk["nodes"] == {} and on_disk["view"]["pinned_positions"] == {}
+
+
+@pytest.mark.parametrize("method", ["put", "patch"])
+@pytest.mark.parametrize("body", [b"{", b"", b'"\xff"'])
+def test_invalid_annotation_json_has_no_side_effects(served, monkeypatch, method, body):
+    client, root, state = served
+    client.patch("/api/annotations", json={"nodes": {"n": {"note": "keep"}}})
+    path = root / ".hx/annotations.json"
+    original, rev = path.read_bytes(), state.rev
+    events = []
+    monkeypatch.setattr(state, "broadcast", lambda *args: events.append(args))
+    response = getattr(client, method)("/api/annotations", content=body,
+                                       headers={"content-type": "application/json"})
+    assert response.status_code == 400 and "valid JSON" in response.json()["detail"]
+    assert path.read_bytes() == original and state.rev == rev and events == []
+
+
+def test_non_object_annotation_put_keeps_documented_normalization(served):
+    client, _, _ = served
+    client.patch("/api/annotations", json={"nodes": {"n": {"note": "replace"}}})
+    response = client.put("/api/annotations", json=[])
+    assert response.status_code == 200 and response.json()["annotations"]["nodes"] == {}
 
 
 def test_source_confined_to_root(served):
@@ -156,6 +178,56 @@ def test_extract_disabled(cproj, extract):
     with TestClient(create_app(str(gp), allow_extract=False)) as c:
         assert c.post("/api/extract").status_code == 403
         assert '"allow_extract": false' in c.get("/").text
+
+
+def test_graph_poll_reports_each_lifecycle_transition_once(tmp_path):
+    from hx.serve.app import State
+    primary = tmp_path / ".hx/graph.json"
+    graphs = primary.parent / "graphs"
+    graphs.mkdir(parents=True)
+    primary.write_text("{}")
+    tracked = graphs / "tracked.json"
+    tracked.write_text("{}")
+    state = State(str(primary), str(primary.parent / "annotations.json"), None, True)
+    assert state.poll_files() == []
+    stamps = {p: p.stat().st_mtime_ns for p in (primary, tracked)}
+    primary.unlink()
+    tracked.unlink()
+    assert state.poll_files() == [("graph", "graph", "file-deleted"), ("graph", "tracked", "file-deleted")]
+    assert state.poll_files() == []
+    for path, stamp in stamps.items():
+        path.write_text("{}")
+        os.utime(path, ns=(stamp, stamp))  # recreation counts even with the original timestamp
+    assert state.poll_files() == [("graph", "graph", "file-created"), ("graph", "tracked", "file-created")]
+    assert state.poll_files() == []
+    (graphs / "directory.json").mkdir()
+    assert state.poll_files() == []
+    os.utime(tracked, ns=(stamps[tracked] + 1000, stamps[tracked] + 1000))
+    assert state.poll_files() == [("graph", "tracked", "file-changed")]
+
+
+def test_deleted_graph_sse_reasons_and_recreation(live_server):
+    import httpx
+    base, root, _ = live_server
+    path = root / ".hx/graph.json"
+    saved = path.read_bytes()
+    def event(lines):
+        name = None
+        for line in lines:
+            if line.startswith("event: "):
+                name = line[7:]
+            if line.startswith("data: "):
+                return name, json.loads(line[6:])
+    with httpx.Client(base_url=base, timeout=10) as client:
+        with client.stream("GET", "/events") as response:
+            lines = response.iter_lines()
+            assert event(lines)[0] == "hello"
+            path.unlink()
+            assert event(lines) == ("graph", {"reason": "file-deleted", "name": "graph"})
+            assert client.get("/api/graph").status_code == 404
+            path.write_bytes(saved)
+            assert event(lines) == ("graph", {"reason": "file-created", "name": "graph"})
+            assert client.get("/api/graph").status_code == 200
 
 
 def test_multi_graph_history_and_diff(cproj, extract):

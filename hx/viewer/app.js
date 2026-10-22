@@ -42,7 +42,7 @@ const S = {
   depthMax: 3, showFiles: true, showGhosts: true, showRefs: true, layout: "LR",
   collapsed: new Set(), hidden: new Set(), treeOpen: new Set(), search: "",
   cy: null, queue: [], flushing: false, dirty: false, es: null, sourceCache: new Map(),
-  graphName: "", graphs: [], diff: null, diffBase: "", history: [],
+  graphName: CFG.graph_name || "", graphs: [], diff: null, diffBase: "", loadEpoch: 0, pickerEpoch: 0,
 };
 const api = (path, params) => { const u = new URL(path, location.origin); if (S.graphName) u.searchParams.set("name", S.graphName); for (const [k, v] of Object.entries(params || {})) if (v != null) u.searchParams.set(k, v); return u.pathname + u.search; };
 
@@ -182,12 +182,15 @@ function diffBadge(id) {
   const lbl = {"d-add": "+ new", "d-chg": "~ changed", "d-rm": "− removed"}[c];
   return h("span", {class: "badge " + c}, lbl);
 }
-async function loadHistory() {
-  if (!SERVE) return;
+async function loadHistory(epoch = S.loadEpoch) {
+  if (!SERVE || !S.graph) return;
+  let snapshots;
   try {
     const hres = await fetch(api("/api/history"));
-    S.history = hres.ok ? (await hres.json()).snapshots : [];
-  } catch (e) { S.history = []; }
+    snapshots = hres.ok ? (await hres.json()).snapshots : [];
+  } catch (e) { snapshots = []; }
+  if (epoch !== S.loadEpoch || !S.graph) return;
+  S.history = snapshots;
   const sel = $("#diff-base");
   const cur = S.diffBase;
   sel.replaceChildren(h("option", {value: ""}, S.history.length ? "no diff" : "no snapshots yet"));
@@ -203,13 +206,20 @@ function snapshotLabel(sn) {
 }
 function diffStamp() { return S.diff.since_generated || S.diff.since || "baseline"; }
 async function applyDiff(base) {
+  if (!S.graph) return;
+  const epoch = S.loadEpoch;
   S.diffBase = base || "";
   if (!S.diffBase) { S.diff = null; renderAll(); setStatus(""); updateHash(); return; }
   try {
     const r = await fetch(api("/api/diff", {since: S.diffBase}));
     if (!r.ok) throw new Error((await r.json()).detail || r.statusText);
-    S.diff = await r.json();
-  } catch (err) { S.diff = null; setStatus("diff failed: " + err.message, true); return; }
+    const diff = await r.json();
+    if (epoch !== S.loadEpoch || S.diffBase !== base || !S.graph) return;
+    S.diff = diff;
+  } catch (err) {
+    if (epoch === S.loadEpoch && S.diffBase === base && S.graph) { S.diff = null; setStatus("diff failed: " + err.message, true); }
+    return;
+  }
   const s = S.diff.summary;
   const st = $("#status"); st.classList.remove("err");
   st.replaceChildren("diff vs " + diffStamp().slice(0, 19).replace("T", " ") + " · functions ",
@@ -217,7 +227,7 @@ async function applyDiff(base) {
     h("span", {class: "d-chg"}, "~" + s.nodes_changed), " · types ~" + s.types_changed + " · edges +" + s.edges_added + " −" + s.edges_removed);
   renderAll(); updateHash();
 }
-function renderAll() { renderTree(); if (S.cy) renderGraph({fit: false}); renderDetail(); }
+function renderAll() { if (!S.graph) return; renderTree(); if (S.cy) renderGraph({fit: false}); renderDetail(); }
 
 // ------------------------------------------------------------------ hide / show (eye)
 // A hidden node is removed from the drawing together with every edge touching it and everything that is only
@@ -257,11 +267,16 @@ function eyeButton(id) {
   return sp;
 }
 async function takeBaseline() {
-  const r = await fetch(api("/api/snapshot"), {method: "POST"});
-  if (!r.ok) { setStatus("baseline failed: " + r.statusText, true); return; }
-  const j = await r.json();
-  await loadHistory();
-  setStatus("baseline " + (j.snapshot || "").slice(0, 19).replace("T", " ") + " saved");
+  if (!S.graph) return;
+  const epoch = S.loadEpoch;
+  try {
+    const r = await fetch(api("/api/snapshot"), {method: "POST"});
+    if (!r.ok) throw new Error(r.statusText);
+    const j = await r.json();
+    if (epoch !== S.loadEpoch || !S.graph) return;
+    await loadHistory(epoch);
+    if (epoch === S.loadEpoch && S.graph) setStatus("baseline " + (j.snapshot || "").slice(0, 19).replace("T", " ") + " saved");
+  } catch (err) { if (epoch === S.loadEpoch && S.graph) setStatus("baseline failed: " + err.message, true); }
 }
 function changesSection(root) {
   const d = S.diff; if (!d) return;
@@ -327,6 +342,7 @@ function renderRemoved(d, id) {
 
 // ------------------------------------------------------------------ selection
 function select(kind, id, {push = true, fromGraph = false} = {}) {
+  if (!S.graph) return;
   if (S.sel && push && (S.sel.kind !== kind || S.sel.id !== id)) S.history.push(S.sel);
   S.sel = kind ? {kind, id, context: kind === "net" ? S.netContext : ""} : null;
   if (S.history.length > 50) S.history.shift();
@@ -368,6 +384,7 @@ function treeRow({id, label, depthLabel, cls, edge, children, open, onToggle, ki
   return row;
 }
 function renderTree() {
+  if (!S.graph) return;
   const picker = $("#circuit-view");
   picker.hidden = !S.graph.circuit;
   picker.value = S.circuitView;
@@ -655,6 +672,7 @@ function tagParallelEdges(els) {
 }
 
 function renderGraph({fit = true} = {}) {
+  if (!S.graph) return;
   if (!S.cy) {
     S.cy = cytoscape({container: $("#cy"), style: buildStyle(), minZoom: 0.1, maxZoom: 4, boxSelectionEnabled: false});
     bindGraphEvents(S.cy);
@@ -734,6 +752,7 @@ function noteBox(current, onChange) {
   return h("textarea", {class: "note", placeholder: "notes (markdown-ish, saved per symbol id)", onchange: (ev) => onChange(ev.target.value.trim() || null)}, current || "");
 }
 function renderDetail() {
+  if (!S.graph) return;
   const d = $("#detail"); d.replaceChildren();
   if (!S.sel) { d.append(h("p", {class: "muted"}, "Select a function in the tree or graph. Double-click a node to collapse its subtree; drag to pin; the eye on a tree row (or h) hides a module and everything only reachable through it.")); return; }
   const {kind, id} = S.sel;
@@ -1010,6 +1029,7 @@ function renderEdge(d, e) {
 // ------------------------------------------------------------------ source
 async function showSource(n, hlLine) {
   const holder = $("#source-holder"); if (!holder || !SERVE) return;
+  const epoch = S.loadEpoch;
   let start = Math.max(1, n.loc.line), end = n.loc.end_line || n.loc.line + 30;
   let span = Math.min(400, end - start + 1);
   if (hlLine && (hlLine < start || hlLine > start + span - 1 || end - start + 1 > 400)) { start = Math.max(1, hlLine - 60); span = 120; }   // navigate to a distant call site
@@ -1019,8 +1039,10 @@ async function showSource(n, hlLine) {
     if (!data) {
       const r = await fetch(api("/api/source", {file: n.loc.file, line: start, span}));
       if (!r.ok) throw new Error((await r.json()).detail || r.statusText);
-      data = await r.json(); S.sourceCache.set(key, data);
+      data = await r.json();
     }
+    if (epoch !== S.loadEpoch || !S.graph || !holder.isConnected) return;
+    S.sourceCache.set(key, data);
     const siteLines = new Set((S.idx.out[n.id] || []).filter((e) => e.loc && e.loc.file === n.loc.file).map((e) => e.loc.line));
     holder.replaceChildren(h("div", {class: "src"}, data.lines.map((text, i) => {
       const ln = data.start + i;
@@ -1028,7 +1050,7 @@ async function showSource(n, hlLine) {
     })));
     if (hlLine) { const el = holder.querySelector(".ln.hl"); if (el) el.scrollIntoView({block: "center"}); }
   } catch (err) {
-    holder.replaceChildren(h("div", {class: "errbox"}, "source unavailable: " + err.message));
+    if (epoch === S.loadEpoch && S.graph && holder.isConnected) holder.replaceChildren(h("div", {class: "errbox"}, "source unavailable: " + err.message));
   }
 }
 
@@ -1053,19 +1075,57 @@ function readHash() {
   if (p.get("diff")) S.diffBase = p.get("diff").replace(/ /g, "+");   // a hand-typed '+' in the hash arrives as a space
   return p.get("sel") ? {kind: p.get("kind") || "node", id: p.get("sel")} : null;
 }
-async function loadData() {
+async function refreshGraphs() {
+  if (!SERVE) return;
+  const request = ++S.pickerEpoch;
+  try {
+    const r = await fetch("/api/graphs");
+    if (!r.ok) return;
+    const graphs = await r.json();
+    if (request !== S.pickerEpoch) return;
+    S.graphs = graphs;
+  } catch (e) { return; }
+  const pick = $("#graph-pick");
+  pick.replaceChildren(...S.graphs.map((x) => h("option", {value: x.name}, x.name + "  (" + shortId(x.entry || "") + ", " + x.nodes + ")")));
+  if (!S.graphs.some((x) => x.name === S.graphName)) pick.prepend(h("option", {value: S.graphName, disabled: true}, S.graphName + " (unavailable)"));
+  pick.hidden = pick.options.length < 2;
+  pick.value = S.graphName;
+}
+function graphControls(available) {
+  for (const id of ["search", "depth", "opt-files", "opt-ghosts", "opt-refs", "layout", "btn-fit", "btn-relayout", "btn-extract", "diff-base", "btn-baseline", "circuit-view"]) $("#" + id).disabled = !available;
+  $("#btn-extract").disabled = !available || !CFG.allow_extract;
+}
+function clearGraph() {
+  S.graph = null; S.idx = null; S.sel = null; S.history = []; S.diff = null; S.diffBase = "";
+  S.sourceCache.clear(); S.collapsed.clear(); S.hidden.clear(); S.treeOpen.clear(); S.netContext = "";
+  if (S.cy) { S.cy.destroy(); S.cy = null; }
+  $("#tree").replaceChildren(); $("#detail").replaceChildren();
+  $("#diff-base").replaceChildren(h("option", {value: ""}, "no snapshots yet"));
+  $("#entry-label").textContent = S.graphName; $("#entry-label").title = S.graphName;
+  $("#banner").replaceChildren(); $("#banner").hidden = true;
+  graphControls(false);
+}
+function graphUnavailable(error) {
+  clearGraph();
+  const message = "Graph “" + S.graphName + "” is unavailable. Waiting for it to return; you can also choose another graph.";
+  $("#detail").append(h("div", {class: "errbox"}, message));
+  $("#banner").append(h("div", {class: "unavailable"}, message)); $("#banner").hidden = false;
+  document.title = "hx · " + S.graphName + " (unavailable)";
+  setStatus(error, true); updateHash();
+}
+async function loadData(epoch) {
   if (SERVE) {
-    try { S.graphs = await (await fetch("/api/graphs")).json(); } catch (e) { S.graphs = []; }
-    if (S.graphName && !S.graphs.some((x) => x.name === S.graphName)) S.graphName = "";
-    const pick = $("#graph-pick");
-    pick.replaceChildren(...S.graphs.map((x) => h("option", {value: x.name}, x.name + "  (" + shortId(x.entry || "") + ", " + x.nodes + ")")));
-    pick.hidden = S.graphs.length < 2;
-    if (!S.graphName && S.graphs.length) S.graphName = S.graphs[0].name;
-    pick.value = S.graphName;
+    const annotationRev = S.rev;
+    await refreshGraphs();
+    if (epoch !== S.loadEpoch) return false;
     const [g, a] = await Promise.all([fetch(api("/api/graph")).then((r) => { if (!r.ok) throw new Error("graph: " + r.status); return r.json(); }),
       fetch("/api/annotations").then((r) => r.json())]);
-    S.graph = g; S.ann = a.annotations; S.rev = a.rev;
-    await loadHistory();
+    if (epoch !== S.loadEpoch) return false;
+    S.graph = g;
+    // Annotations are project-wide. Graph changes must not discard pending saves.
+    if (!S.queue.length && !S.flushing && S.rev === annotationRev) { S.ann = a.annotations; S.rev = a.rev; }
+    await loadHistory(epoch);
+    if (epoch !== S.loadEpoch) return false;
   } else {
     S.graph = JSON.parse($("#hx-graph").textContent);
     const a = JSON.parse($("#hx-annotations").textContent || "{}");
@@ -1078,6 +1138,9 @@ async function loadData() {
   $("#entry-label").textContent = S.graph.entry;
   $("#entry-label").title = S.graph.entry + " · " + snapshotLabel({generated: S.graph.generated, ts: "", provenance: (S.graph.meta || {}).provenance});
   document.title = "hx · " + shortId(S.graph.entry);
+  $("#banner").querySelectorAll(".unavailable").forEach((x) => x.remove());
+  graphControls(true);
+  return true;
 }
 function notice(text) {   // persistent notice in the banner strip (the status line is overwritten by later events)
   const b = $("#banner"); if (!b) { setStatus(text, true); return; }
@@ -1096,45 +1159,57 @@ function showMigrationBanner() {
   }
   b.hidden = !b.children.length;
 }
-async function reloadGraph() {
-  const keep = S.sel;
-  await loadData();
-  showMigrationBanner();
-  renderTree(); renderGraph({fit: false});
-  if (keep && ["net", "definition", "model"].includes(keep.kind) &&
-      !((S.graph.circuit || {})[keep.kind === "net" ? "nets" : keep.kind === "definition" ? "definitions" : "models"] || {})[keep.id]) {
-    select(null, null, {push: false}); setStatus("selected circuit item is absent after reload");
-  } else if (keep) select(keep.kind, keep.id, {push: false}); else renderDetail();
+async function reloadGraph({selection = S.sel, fit = false} = {}) {
+  const epoch = ++S.loadEpoch, keep = selection;
   S.sourceCache.clear();
-  if (S.diffBase) await applyDiff(S.diffBase);
-  else setStatus("graph reloaded " + fmtTime() + " · " + Object.keys(S.graph.nodes).length + " nodes");
+  try {
+    if (!await loadData(epoch)) return;
+    showMigrationBanner();
+    renderTree(); renderGraph({fit: fit || !S.cy});
+    if (keep && ["net", "definition", "model"].includes(keep.kind) &&
+        !((S.graph.circuit || {})[keep.kind === "net" ? "nets" : keep.kind === "definition" ? "definitions" : "models"] || {})[keep.id]) {
+      select(null, null, {push: false}); setStatus("selected circuit item is absent after reload");
+    } else if (keep) select(keep.kind, keep.id, {push: false}); else renderDetail();
+    if (S.diffBase) await applyDiff(S.diffBase);
+    else setStatus("graph reloaded " + fmtTime() + " · " + Object.keys(S.graph.nodes).length + " nodes");
+    updateHash();
+  } catch (err) { if (epoch === S.loadEpoch) graphUnavailable(err.message); }
 }
 async function switchGraph(name) {
-  S.graphName = name; S.diff = null; S.diffBase = ""; S.sel = null; S.history = []; S.collapsed = new Set(); S.hidden = new Set();
-  await loadData();
-  renderTree(); renderGraph(); renderDetail(); updateHash();
-  setStatus("");
+  S.graphName = name; clearGraph(); updateHash();
+  await reloadGraph({fit: true});
 }
 function connectEvents() {
   if (!LIVE || !window.EventSource) return;
   const es = new EventSource("/events"); S.es = es;
+  let connected = false;
   es.addEventListener("graph", (ev) => {
-    let name = null; try { name = JSON.parse(ev.data).name; } catch (e) { /* ignore */ }
-    if (name && S.graphName && name !== S.graphName) { setStatus("graph " + name + " updated " + fmtTime()); return; }
-    reloadGraph().catch((e) => setStatus("reload failed: " + e.message, true));
+    let name = null, reason = null; try { ({name, reason} = JSON.parse(ev.data)); } catch (e) { /* ignore */ }
+    if (name && S.graphName && name !== S.graphName) { void refreshGraphs(); return; }
+    if (reason === "file-deleted") { ++S.loadEpoch; graphUnavailable("graph file deleted"); void refreshGraphs(); return; }
+    void reloadGraph();
   });
   es.addEventListener("annotations", async (ev) => {
     const rev = JSON.parse(ev.data).rev;
     if (rev === S.rev || S.queue.length || S.flushing) return;   // our own write, or ours still in flight
-    const a = await (await fetch("/api/annotations")).json();
-    S.ann = a.annotations; S.rev = a.rev; rerenderSoft(); setStatus("annotations updated elsewhere " + fmtTime());
+    const annotationRev = S.rev;
+    try {
+      const a = await (await fetch("/api/annotations")).json();
+      if (S.queue.length || S.flushing || S.rev !== annotationRev) return;
+      S.ann = a.annotations; S.rev = a.rev; rerenderSoft(); setStatus("annotations updated elsewhere " + fmtTime());
+    } catch (err) { setStatus("annotation refresh failed: " + err.message, true); }
   });
   es.addEventListener("extract-start", () => { setStatus("re-extracting…"); $("#btn-extract").disabled = true; });
   es.addEventListener("extract-done", () => { loadHistory(); });
-  es.addEventListener("extract-done", (ev) => { const d = JSON.parse(ev.data); setStatus("extracted " + d.nodes + " nodes " + fmtTime()); $("#btn-extract").disabled = false; });
-  es.addEventListener("extract-error", (ev) => { setStatus("extract failed: " + JSON.parse(ev.data).error, true); $("#btn-extract").disabled = false; });
+  es.addEventListener("extract-done", (ev) => { const d = JSON.parse(ev.data); setStatus("extracted " + d.nodes + " nodes " + fmtTime()); $("#btn-extract").disabled = !S.graph || !CFG.allow_extract; });
+  es.addEventListener("extract-error", (ev) => { setStatus("extract failed: " + JSON.parse(ev.data).error, true); $("#btn-extract").disabled = !S.graph || !CFG.allow_extract; });
   es.onerror = () => setStatus("live connection lost; retrying…", true);
-  es.addEventListener("hello", () => { if ($("#status").classList.contains("err")) setStatus(""); });
+  es.addEventListener("hello", async () => {
+    const reconnect = connected; connected = true;
+    const epoch = S.loadEpoch;
+    await refreshGraphs();
+    if (epoch === S.loadEpoch && (reconnect || !S.graph || !S.graphs.some((x) => x.name === S.graphName))) void reloadGraph();
+  });
 }
 function bindUI() {
   $("#circuit-view").addEventListener("change", ev => { S.circuitView = ev.target.value; renderTree(); updateHash(); });
@@ -1190,13 +1265,9 @@ async function init() {
   else { try { const t = localStorage.getItem("hx-theme"); if (t && t !== "auto") document.documentElement.dataset.theme = t; } catch (e) { /* ignore */ } }
   const initialSel = readHash();
   bindUI();
-  try { await loadData(); } catch (err) { $("#detail").replaceChildren(h("div", {class: "errbox"}, "failed to load graph: " + err.message)); setStatus(String(err.message), true); return; }
-  showMigrationBanner();
-  try { renderTree(); renderGraph(); } catch (err) { console.error(err); setStatus("render failed: " + err.message, true); }
-  try { if (initialSel) select(initialSel.kind, initialSel.id, {push: false}); else renderDetail(); } catch (err) { console.error(err); }
-  if (SERVE && S.diffBase) { try { $("#diff-base").value = S.diffBase; await applyDiff(S.diffBase); } catch (err) { console.error(err); } }
+  await reloadGraph({selection: initialSel, fit: true});
   connectEvents();
-  if (!SERVE) setStatus("static export · generated " + S.graph.generated);
+  if (!SERVE && S.graph) setStatus("static export · generated " + S.graph.generated);
 }
 window.HX_DEBUG = {buildElements, visibleSet, buildStyle, buildIndex, toggleHidden, showAllHidden, hidden: () => S.hidden, state: () => S,   // hooks for tests and bisection
   setGraph: (g) => { S.graph = g; S.idx = buildIndex(g); S.collapsed = new Set(); S.hidden = new Set(); S.depthMax = 99; S.diff = null; }};

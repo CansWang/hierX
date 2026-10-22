@@ -358,6 +358,9 @@ class LspFrontend(Frontend):
     # ---------------------------------------------------------------- lifecycle
     def build_index(self) -> None:
         t0 = time.time()
+        if self.server == "rust":
+            from ..config_inputs import rust_config_candidates, snapshot_inputs
+            self._provenance_deps = snapshot_inputs(rust_config_candidates(self.root))
         self.client = LspClient(self.cmd, self.root, self.verbose, self.log_path)
         self.client.initialize()
         self.client.wait_ready(self.timeout)
@@ -366,6 +369,9 @@ class LspFrontend(Frontend):
 
     def provenance_inputs(self) -> dict[str, Optional[int]]:
         return dict(getattr(self, "_provenance_deps", {}))
+
+    def evidence_limits(self) -> list[str]:
+        return ["lsp-call-omissions"]
 
     def close(self) -> None:
         if self.client:

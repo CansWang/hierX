@@ -20,14 +20,26 @@ Phase II roadmap remain ordinary Markdown.
   survive regeneration through stable symbol IDs.
 - **Next.** Phase II adds authored architecture intent and composed contracts,
   bindings to extracted structure, conformance findings, and evidence from
-  compiled native project tests. These capabilities are planned, not implemented.
+  compiled native project tests. Contract design can proceed while the readiness
+  findings below are addressed; conformance acceptance must pass the readiness
+  gate. These capabilities are planned, not implemented.
 
-## Current status (2026-10-18)
+<a id="current-status-2026-10-18"></a>
 
-The reviewed implementation is commit **`39202cf`**, package **0.5.0**, graph
-schema **hx/4**, and annotation schema **hx-ann/1**. The working tree was clean
-when this baseline was verified. The [README](../../README.md) and
+## Current status (2026-10-21)
+
+The reviewed baseline is **`fa9e712`**, whose changes since implementation commit
+**`39202cf`** are documentation-only. Phase II.0 readiness code is now implemented
+in the working tree, pending a user commit. The package remains **0.5.0**, graph
+schema **hx/4**, and annotation schema **hx-ann/1**. The [README](../../README.md) and
 [tutorials/API references](../../docs/index.md) describe the implemented interface.
+
+Frontends produce a shared, bounded graph through `hx.api` and traversal. Graph
+I/O, persistence, history, provenance, and diff support the CLI, Python, HTTP,
+MCP, viewer, and export interfaces. Human annotations are stored separately.
+This is the implemented extraction and review foundation for Phase II. Readiness
+changes add evidence-limit metadata, shared Rust configuration discovery, strict
+annotation JSON parsing, drive-entry validation, and graph availability handling.
 
 | Completed capability | Implemented baseline |
 | --- | --- |
@@ -38,12 +50,29 @@ when this baseline was verified. The [README](../../README.md) and
 | Queries and automation | CLI and Python interfaces, HTTP service, MCP queries, tracking, polling watch, hooks, and saved-graph net/uses queries. |
 | Hardening and distribution | Rust identity/token fixes, pinned Codex acceptance runner, independent syn audit, ngspice/Xyce/XDM checks, deterministic fake-simulator failures, migration tests, and isolated installed-wheel smoke in CI. |
 
-The baseline review ran the strict suite with `HX_REQUIRE_TOOLS=1` and
-`HX_REQUIRE_VENDOR_TOOLS=xyce,xdm`: **417 passed in 154.64 s, no skips**. The
-strict MkDocs build also passed. The **414-test, 91.8% line-coverage** result
-belongs to the earlier Phase 1.2 run; coverage was not remeasured for this
-baseline. Production acceptance and wheel-smoke results retain the dates and
-revisions of their original runs in the folded history.
+The pre-implementation 2026-10-21 review ran:
+
+```bash
+PATH="$PWD/.venv/bin:$HOME/.cargo/bin:$PATH" HX_REQUIRE_TOOLS=1 HX_REQUIRE_VENDOR_TOOLS=xyce,xdm .venv/bin/python -m pytest -q -ra
+```
+
+Result: **417 passed in 195.67 s, no skips**. Strict MkDocs and all **five Node
+viewer unit tests** also passed. All **22 explicit test references** in the
+dialect matrix resolved, and all **10 SSOT folds** retained continuous HTML
+without internal blank lines. MkDocs does not include `dev/ssot`; its build alone
+does not validate this file's links or Typora behavior.
+
+The **414-test, 91.8% line-coverage** result belongs to Phase 1.2; coverage was not
+remeasured for this review. Production acceptance and wheel-smoke results retain
+the dates and revisions of their original runs in the folded history. The findings
+below retain their baseline reproductions. Implementation verification is recorded
+separately so it does not replace historical results.
+
+**Phase II.0 implementation verification:** **451 passed in 169.92 s, no skips**
+with the strict required-tool and Xyce/XDM settings above; all **five Node tests**,
+strict MkDocs, and the installed-wheel smoke passed. No new coverage or production
+Codex acceptance measurement is claimed. The installed-wheel check includes Rust
+extraction; the full production corpus is not rebuilt here.
 
 <details>
 <summary>Implemented storage, annotations, and verification workflow</summary>
@@ -68,14 +97,47 @@ revisions of their original runs in the folded history.
 - **Precision and coverage constrain conclusions.** Depth/node limits,
   exclusions, unresolved dispatch, generated targets, and LSP precision must
   accompany a check. Absence of an edge in a bounded graph cannot establish
-  a repository-wide prohibition.
+  a repository-wide prohibition. A language server can omit indirect calls
+  entirely: the Rust fixture's `cb(&ch.desc, n as i32)` has neither an edge nor
+  an unresolved record. An empty `unresolved[]` is therefore not a completeness
+  certificate, even with unlimited traversal depth.
 - **Provenance is observed evidence.** Current source and option fingerprints
   support comparison; they do not capture every compiler/server input or prove
-  replayability. There is no binding to a test build, binary, or execution yet.
+  replayability. Rust toolchain/Cargo candidates are now observed before indexing
+  and watched (R2); environment overrides and server-private inputs remain outside
+  a complete build identity.
+  There is no binding to a test build, binary, or execution yet.
 - **Existing review signals have distinct meanings.** Annotation verification
   records human review against a source hash. `hx diff` compares two extracted
   implementations. Neither is an architecture-contract verdict or test result;
   `runtime` remains reserved and null.
+
+## Review findings and follow-up register (2026-10-21)
+
+P1 addresses evidence soundness and freshness, P2 runtime correctness, and P3
+lower-priority validation/documentation work. Reproductions used temporary
+workspaces; no saved project graphs or annotations were changed. Source links
+identify the implementation locations; reproductions describe the reviewed
+baseline before the fixes. R2–R5 now have code and regression coverage in the
+uncommitted Phase II.0 changes. R1 has metadata support but still needs II.2
+evaluator checks; R6 retains its documented behavior. No new command, endpoint,
+or schema major is introduced.
+
+| ID / priority | Classification and status | Reproduction and impact | Remedy and acceptance criteria |
+| --- | --- | --- | --- |
+| **R1 / P1** | Confirmed frontend limitation; incorrect SSOT claim corrected here. **Evidence metadata implemented; conformance follow-up open.** | Extract `src/dma.rs:dma_start` from a temporary copy of `tests/fixtures/rust` with unlimited depth. The callback at line 60 has no edge or unresolved record and no frontend error. The earlier claim that all indirect calls become ghosts could justify false absence-based passes. See the [Rust guide](../../docs/guides/rust.md) and [LSP frontend](../../hx/frontends/lsp_fe.py). | State the coverage required by each obligation/frontend relation. II.2 must return `not established` when omitted calls could affect the obligation, including cases with an empty unresolved list; witnessed forbidden dependencies can still establish violations. Implemented: optional sorted `meta.evidence_limits` emits `entry-view-only` for every frontend and `lsp-call-omissions` for LSP; missing/empty metadata is unknown coverage. The deterministic omitted-call test in [test_lsp_fe.py](../../tests/test_lsp_fe.py) checks empty edges/unresolved/errors, schema validation, save/load/export, legacy absence, and unchanged structural diff. |
+| **R2 / P1** | Confirmed configuration-discovery gap. **Implemented; fix revision pending commit.** | Compare `project.source_signature(root)` before and after creating `rust-toolchain.toml` and `.cargo/config.toml`: the signature is unchanged. Default watching misses these build inputs, and current recognized-config provenance does not cover them. See [watching](../../hx/project.py) and [provenance](../../hx/provenance.py). | Discover relevant Rust toolchain and Cargo configuration inputs explicitly, including missing candidates. Test creation, edit, and deletion, watch-triggered refresh, and input fingerprint changes. II.3 must reject stale evidence when relevant configuration changes. Implemented in [config_inputs.py](../../hx/config_inputs.py), the LSP frontend, and project watching. [test_config_inputs.py](../../tests/test_config_inputs.py) covers root/ancestor/Cargo-home and legacy/missing candidates, startup races, restricted watch paths before extraction, saved provenance, and live Rust extraction. |
+| **R3 / P2** | Confirmed annotation HTTP error-handling bug. **Implemented; fix revision pending commit.** | Send malformed JSON, such as `{`, to annotation PATCH: HTTP 500, with existing bytes unchanged. Both write handlers parse JSON without translating decode errors. See [annotation routes](../../hx/serve/app.py). | Return HTTP 400 with a useful JSON error for malformed PUT/PATCH bodies. Verify that stored annotations, revision, and emitted annotation events are unchanged after rejection. Implemented: both routes reject malformed/empty/invalid-encoding JSON with 400. [test_serve.py](../../tests/test_serve.py) checks bytes, revision, and events remain unchanged and preserves the documented non-object PUT behavior. |
+| **R4 / P2** | Confirmed graph lifecycle bug. **Implemented; fix revision pending commit.** | Initialize server state with a tracked graph, delete that file, then call `State.poll_files()`: no change event is returned although the graph disappears from discovery. A connected viewer can retain stale content. See [server watching](../../hx/serve/app.py). | Detect deletion and refresh graph availability. Test deleting primary and tracked graphs, a clear unavailable state for the selected graph, and recovery after recreation; unchanged files must not emit repeated events. Implemented: one creation/deletion event per observed transition; selected graph identity persists while content/actions clear, queued annotations survive, and recreation recovers. [Server tests](../../tests/test_serve.py) and [browser tests](../../tests/test_e2e_viewer.py) cover primary/tracked files, initial absence, picker refresh, delayed graph/source/history/diff responses, and annotation revision resets after a server restart. |
+| **R5 / P3** | Confirmed entry-validation bug. **Implemented; fix revision pending commit.** | `split_entry(r'C:\src\main.rs')` returns a truncated filename and the whole input as a symbol instead of rejecting the missing separator. See [entry parsing](../../hx/api.py). | Reject a drive-qualified path without `:symbol` before filesystem access. Preserve valid drive paths with symbols and qualified names such as `src/main.cpp:hw::run`. Implemented and covered by drive-path rejection and qualified-symbol preservation cases in [test_paths.py](../../tests/test_paths.py). |
+| **R6 / P2** | Documented data-loss risk; **compatibility proposal**, not an undocumented bug. | After saving a note, PUT `[]` to `/api/annotations`: HTTP 200 and an empty annotation document. The [HTTP reference](../../docs/reference/http.md#put-apiannotations) explicitly documents this normalization. | Proposed hardening: accept only object PUT bodies and reject other JSON values with HTTP 400 before any write/revision/event. Preserve intentional clearing with `{}`. This changes documented behavior and needs coordinated API documentation, release notes, and regression tests; it is outside the readiness gate. |
+| **R7 / P3** | Documentation drift. **Corrected in this amendment.** | Contributor instructions called the ngspice tutorial vendor-opt-in, but `test_netlist_oracle_tutorial` calls `require_tool("ngspice")` and CI installs it. | Align [contributor instructions](../../docs/contributing.md) with the [required/vendor policy](../../tests/conftest.py): `HX_REQUIRE_TOOLS=1` requires ngspice; Xyce/XDM vendor requirements remain opt-in. |
+
+Close an implementation finding only with a fix revision and its acceptance
+results; retain its reproduction and original classification. The implementation
+rows above identify verified working-tree changes; add the commit pointer when
+they are committed. R1's metadata does not establish evaluator coverage, and
+R6 remains a proposal until the documented behavior is deliberately changed.
 
 ## Phase II — Architecture contracts (planned)
 
@@ -97,6 +159,28 @@ a deliberate dependency violation, and real native tests. Extend to pinned Codex
 examples after the controlled cases establish the semantics. Continue existing
 frontend and circuit regression coverage throughout.
 
+### II.0 — Readiness stabilization
+
+The **readiness foundation is implemented**, pending a user commit: R2–R5 code,
+regressions, and R1 evidence-limit metadata. Current graph/annotation schemas and
+symbol IDs remain compatible. Rust configuration candidates are shared between
+extraction and watch, captured before server startup, and retained when missing.
+The viewer clears a deleted selected graph without changing its identity or
+losing pending notes, then recovers on recreation.
+
+**Implementation acceptance:** focused tests exercise R1 metadata and R2–R5
+failures, followed by the strict suite, Node tests, strict docs, and installed-wheel
+smoke. Final results are recorded in Current status and the dated log. Coverage
+and full production Codex acceptance retain their earlier measurements.
+
+**Conformance acceptance remains gated:** II.2 must consume evidence limitations
+and return `not established` when an obligation lacks adequate coverage, including
+omitted calls with empty unresolved lists. R1 stays open until these evaluator
+checks exist; emitting metadata alone cannot establish a verdict. R6 remains a
+separate compatibility proposal, and R7's contributor-policy correction is done.
+The next implementation stage is II.1's authored intent, composition, bindings,
+and controlled Rust fixture; native-test execution remains II.3.
+
 ### II.1 — Intent, composition, and component bindings
 
 - Design authored contracts for components, provided/required interfaces,
@@ -110,7 +194,9 @@ frontend and circuit regression coverage throughout.
   graph fields cannot serve as persistent contract storage.
 - Bind components explicitly through stable symbols and documented selectors.
   Make zero matches, ambiguous matches, and overlapping ownership visible. Retain
-  each input graph's revision, extraction options, and coverage boundaries.
+  each input graph's revision, extraction options, and coverage boundaries. Scope
+  identity by source project and build configuration; matching relative paths and
+  symbol IDs in different projects do not establish a shared component.
 - Define deterministic reconciliation of overlapping entry views before combining
   them. Deduplicate compatible shared evidence; surface conflicting symbol
   records or build configurations instead of silently overwriting them. Preserve
@@ -119,13 +205,16 @@ frontend and circuit regression coverage throughout.
 **Acceptance gate:** a controlled Rust fixture binds and projects a nested
 architecture reproducibly. Empty, ambiguous, overlapping, and incompatible-input
 cases produce explicit diagnostics; equivalent input ordering yields the same
-projection. Parent/child connection and obligation examples are documented.
+projection. Two projects with the same relative symbol ID remain distinguishable.
+Parent/child connection and obligation examples are documented.
 
 ### II.2 — Structural conformance and explanations
 
 - Evaluate supported interface and dependency obligations against the component
   projection. Begin with required relationships, permitted/prohibited dependencies,
-  and parent/child wiring; state which frontend relations each check can use.
+  and parent/child wiring; state which frontend relations each check can use and
+  what coverage each verdict requires. Include known frontend omissions alongside
+  reported unresolved targets and extraction errors.
 - Give each obligation one result: **satisfied**, **violated**, or **not
   established**. A witnessed forbidden dependency can establish a violation even
   in a partial graph. A positive result requires adequate evidence for that
@@ -137,32 +226,37 @@ projection. Parent/child connection and obligation examples are documented.
   violation or an evidence gap.
 
 **Acceptance gate:** allowed dependencies, deliberate violations, missing required
-interfaces, failed composition, truncated views, and unresolved dispatch produce
-explainable, distinguishable results. Repeated evaluation is deterministic and
-read-only with respect to authored intent and saved graphs.
+interfaces, failed composition, truncated views, incompatible configurations,
+and unresolved or omitted indirect calls produce explainable, distinguishable
+results. An empty unresolved list must not turn a coverage gap into a satisfied
+absence-based obligation. Repeated evaluation is deterministic and read-only
+with respect to authored intent and saved graphs.
 
 ### II.3 — Compiled native-test evidence
 
 - Build and run the project's native tests, beginning with Cargo tests in the
   controlled Rust fixture. Link named test obligations to selected test results;
-  merely having tests in a package does not discharge every obligation.
+  merely having tests in a package does not discharge every obligation. A zero
+  exit status with zero selected tests or only ignored tests cannot satisfy a
+  test obligation; record the selected and actually executed tests.
 - Associate evidence with the contract revision, source state, extraction/build
   configuration, target/features, toolchain, build artifact identity, and test
   invocation. Extend the evidence model beyond current observed-input provenance
-  wherever those inputs are needed to establish that the records match.
+  wherever those inputs are needed to establish that the records match, including
+  relevant Rust toolchain/Cargo configuration and build-affecting environment.
 - Retain build and execution outcomes and small diagnostic reports. Distinguish
-  compilation failure, test failure, unavailable tools, missing evidence, and
-  stale evidence. Changed contracts, sources, or relevant configurations require
-  fresh matching evidence before a test obligation can be satisfied.
+  compilation failure, test failure, timeout, unavailable tools, missing evidence,
+  and stale evidence. Changed contracts, sources, or relevant configurations
+  require fresh matching evidence before a test obligation can be satisfied.
 - Keep compilation, successful execution, and demonstrated architectural paths
   distinct. Passing a linked test establishes its recorded test outcome; proving
   a particular call path or coverage needs later instrumentation. Generated
   executable contract tests are deferred beyond this initial native-test scope.
 
 **Acceptance gate:** actual Rust builds and test runs cover passing and failing
-tests, build failure, unavailable tools, missing test selection, and stale
-source/contract/configuration evidence. Matching results link to their obligations
-without altering structural verdicts or human review marks.
+tests, build failure, unavailable tools, timeouts, zero selected/only ignored
+tests, and stale source/contract/configuration evidence. Matching results link to
+their obligations without altering structural verdicts or human review marks.
 
 ### II.4 — Review integration and production acceptance
 
@@ -200,7 +294,7 @@ The existing strict suite, strict docs build, and installed-wheel smoke stay gre
   frontend precision and bounded traversal rather than assume these are solved.
 
 ## Principles
-1. **Never drop silently.** Anything reached but not expanded goes into `unresolved[]` with a reason (beyond depth, no definition, system header, excluded, function pointer, truncated).
+1. **Make observed gaps explicit.** Targets reported by a frontend but not expanded retain unresolved reasons (depth, missing definition, exclusion, truncation, or unsupported target). A frontend can omit relationships entirely, especially indirect LSP calls; describe those capability limits separately. Absence of unresolved records does not prove complete extraction.
 2. **IDs are a contract.** `<lang>:<relpath>::<qualname>` forms are stable across regeneration of the same build configuration; C++ IDs include parameter types to distinguish overloads, with hashes for residual collisions. A C/C++ type that differs between translation units carries `@<8hex>` (hx/3). Annotations key on IDs, and an identity rule change bumps the schema major with a migration.
 3. **Exactness is labelled.** Every node carries `precision` (`exact` | `lsp` | `syntax`); every param carries `dir_source` (`explicit` | `heuristic` | `user`). The viewer never pretends.
 4. **Regeneration is cheap.** Per-TU cache keyed by source+header mtimes; a re-run after an agent edit re-parses only what changed.
@@ -212,13 +306,17 @@ The existing strict suite, strict docs build, and installed-wheel smoke stay gre
 - **Macro-heavy register code** → macro spans + spelled args; `kind: macro` edges.
 - **Large repos** → per-TU cache + multiprocessing + depth/max-nodes limits.
 - **LSP frontends less exact** → `precision` surfaced in the viewer.
-- **Dynamic dispatch / fn-pointers unresolved** → always listed in `unresolved[]`, shown as ghost nodes.
+- **Dynamic dispatch / function pointers omitted** → unresolved records cover reported targets, while frontend omissions need explicit coverage limits (R1); II.2 must not infer completeness from an empty list.
+- **Build-input identity incomplete** → observed fingerprints remain useful but cannot certify a matching test build; Rust configuration discovery is implemented (R2); bind relevant source/configuration/toolchain/artifact identity in II.3.
+- **Toolchain drift** → ordinary CI installs floating Rust `stable`, while production acceptance pins source and tools. Preserve each run's actual identities and keep reproducible acceptance distinct from compatibility checks against newer tools.
+- **Invalid writes and stale live views** → reject malformed annotation requests without side effects (R3) and handle graph deletion/recreation (R4). Treat stricter PUT normalization as an explicit compatibility change (R6).
 
 ## Conventions
 - Python 3.10+, dataclasses over pydantic for the IR, no network at runtime, vendored browser libs.
 - Tests: `python -m pytest -q` from the repo root (venv at `.venv`). Fixture projects are copied to a temp dir per test.
 - Do not commit on the user's behalf; the user decides when to commit.
 - Keep this file's Status log current.
+- Validate SSOT links, anchors, and continuous HTML folds separately from MkDocs; use Typora to verify edited folded bodies. A prose-only amendment needs documentation checks, not a new full-suite/coverage/production-acceptance claim.
 
 ## Completed work and retained design history
 
@@ -457,7 +555,7 @@ runtime reservation is retained here as history, not a Phase II prerequisite.
 ## Status log
 
 <details>
-<summary>Dated implementation, validation, and planning record (2026-10-09–2026-10-18)</summary>
+<summary>Dated implementation, validation, and planning record (2026-10-09–2026-10-21)</summary>
 <ul>
 <li><strong>2026-10-09</strong> — Plan approved. Phase 1 implemented and verified (30 tests; cJSON, libuv smoke). Additions vs. original plan: top-level <code>globals{}</code> table, edge kind <code>ref</code>, operator kinds via libclang C API. Viewer tech adjusted from "TypeScript via esbuild" to vanilla ES modules + vendored libraries so there is no build step.</li>
 <li><strong>2026-10-09</strong> — Phase 2 done. <code>hx serve</code> (FastAPI + uvicorn, lifespan watcher polling graph/annotations mtimes, SSE), <code>hx export</code>, <code>hx/annotations.py</code> (merge patch, recursive prune), viewer in <code>hx/viewer/</code> (vanilla JS, Cytoscape 3.34.3 + dagre 0.8.5 vendored). 42 tests (SSE tests run a real uvicorn thread because Starlette's TestClient buffers whole responses). Verified with headless Chrome screenshots in light and dark mode, console clean. Viewer extras beyond plan: <code>?theme=</code>, <code>?live=0</code>, caller side in tree, per-reason unresolved groups, global read/write panel, edge detail page.</li>
@@ -479,5 +577,7 @@ runtime reservation is retained here as history, not a Phase II prerequisite.
 <li><strong>2026-10-16</strong> — Review follow-ups 1.3 (the two P2 findings the reviewer left open on 1.2; both were in committed code). Packaging: <code>dev/scripts/wheel_smoke.sh</code> ran its package-data check with <code>python -</code> from the caller's directory, so from the checkout root (locally and in the CI step) <code>import hx</code> resolved to the source tree, not the installed wheel; the check now runs from the (absolute) work directory with isolated Python (<code>-I</code>) and exits unless <code>hx.__file__</code> lies under the fresh venv, printing the imported path. Oracle: a device-rooted <code>hx netlist check</code> extracted a graph holding that device alone (plus the targets of its <code>ref</code> edges) while the listing was cut to the ENCLOSING instance, so every sibling was <code>missing-in-hx</code> (a deck-level device entry saw the whole listing); present since 7e010e4. Now <code>compare(..., subtree=P, device=NAME)</code> narrows BOTH sides to the one device (scope line <code>device x1.r1</code>; instance and definition entries unchanged); the selector comes from the entry's occurrence (<code>occ.path</code>), never from the display qualname, whose dots are escaped (<code>x1.r\.foo</code>; the instance branch shared that flaw); and a listing row spelled exactly as an in-scope hx device expects is in scope BEFORE the tolerant <code>strip_letters</code> decode, which cannot carry a bare-letter or dotted device name (ngspice 45.2 lists <code>r a b 4k</code> inside <code>x1</code> as <code>r.x1.r</code> and <code>r.foo</code> as <code>r.x1.r.foo</code>; the subtree filter used to drop such rows and report <code>missing-in-ngspice</code>). Tests: <code>test_netlist_oracle_fakes.py::test_fake_ngspice_device_entry_narrows_both_sides_to_that_device</code> (sibling, deck-level, <code>ref</code>-target <code>out_of_scope_hx</code>, <code>x1.r\.foo</code>, <code>x1.r</code>, instance and whole-deck counts) and <code>::test_fake_ngspice_wrong_net_on_odd_names_is_never_zero_comparison_agreement</code> (one <code>net</code> mismatch with one device compared, never zero-comparison agreement); <code>test_netlist_oracle.py::test_device_scope_keeps_exact_spellings_and_narrows_both_sides</code> (pure <code>compare</code>) and live assertions in <code>::test_live_agreement</code> (<code>ota.sp:xa.m_load_1</code>, <code>ota.sp:f1</code>, fixture <code>oracle/odd_names/odd_names.sp</code>). Docs: the README oracle bullet, the netlist tutorial and the dialect matrix's oracle row name the device scope.</li>
 <li><strong>2026-10-18</strong> — Baseline review and Phase II direction. Reviewed implementation commit <code>39202cf</code> (clean tree): the strict suite passed <strong>417 tests in 154.64 s, no skips</strong>, with <code>HX_REQUIRE_TOOLS=1 HX_REQUIRE_VENDOR_TOOLS=xyce,xdm</code> and the virtualenv/Cargo executables on PATH; strict MkDocs passed. The Phase 1.2 414-test / 91.8% coverage result is retained under its original entry, without claiming a new coverage or production-acceptance run. Reorganized this SSOT around current capabilities, evidence boundaries, the planned architecture contract/composition/binding/evaluation flow, native build/test evidence, and review integration. The user selected expandable in-place history and native project tests for the initial compiled-test scope; generated executable contract tests remain deferred. Completed phase details, implementation map, original headings, and dated findings remain in this file. The new Phase II is distinct from the historical viewer/server Phase 2 and introduces no implemented API. Artifact retention: cleanup removed nine rebuildable target/environment directories, reclaiming <strong>52.97 GiB</strong>; <strong>3.68 GiB</strong> remained in the artifact root. All <strong>109,718</strong> retained file/symlink entries verified unchanged with no errors; small cache diagnostics were archived. The cleanup record is <code>~/hx-review-artifacts/cleanup-20261018T235532Z/manifest.json</code>, with <code>cache-diagnostics.tar.gz</code> beside it; passing production reports remain at <code>~/hx-review-artifacts/hierx-0.5/rust-acceptance/</code>. Future runs rebuild the caches. SSOT revision validation: strict MkDocs and all three documentation reference tests passed. A GFM preview in Chromium verified all ten expandable sections; all existing anchors except the intentionally updated status date, all seven local links and their fragments, all ten completed milestone bodies, and all 17 pre-existing dated entries were preserved or resolved. This documentation edit did not rerun the full suite, coverage, or production acceptance.</li>
 <li><strong>2026-10-18</strong> — Typora folding correction. The preceding revision verified GFM rendering in Chromium, which did not verify Typora live preview. Typora splits HTML blocks at blank lines and leaves Markdown inside them unparsed. Converted the ten folded bodies to continuous HTML with rendered headings, lists, links, and code blocks; code newlines are represented as HTML entities to preserve their displayed whitespace without splitting the containing block. Historical content and heading identifiers are retained; folded sections are now edited as HTML. The current baseline and Phase II roadmap remain Markdown. Validation: all ten folded bodies opened and closed in the installed Typora 1.14.9 using a temporary document and isolated profile/display; browser comparison preserved historical text, heading identifiers, links, and code whitespace, and strict MkDocs passed. The existing editor session was left untouched and the isolated test editor was closed. No full-suite, coverage, or production-acceptance rerun was needed for this document-format correction.</li>
+<li><strong>2026-10-21</strong> — Repository review and Phase II readiness amendment. Reviewed clean checkout <code>fa9e712</code>, whose changes since implementation baseline <code>39202cf</code> are documentation-only. Strict suite: <strong>417 passed in 195.67 s, no skips</strong>, with <code>HX_REQUIRE_TOOLS=1 HX_REQUIRE_VENDOR_TOOLS=xyce,xdm</code> and virtualenv/Cargo tools on PATH; all five Node viewer unit tests and strict MkDocs passed. All 22 explicit dialect-matrix test references resolved. Temporary-workspace probes reproduced a Rust callback omitted from both edges and unresolved records, missed Rust toolchain/Cargo configuration creation in default watching, malformed annotation JSON returning HTTP 500, graph deletion without a watcher event, and incorrect splitting of a drive-qualified entry without a symbol. Non-object annotation PUT clears notes as explicitly documented; stricter validation is recorded as a compatibility proposal. Added the R1–R7 register with evidence, priorities, status, remedies, and acceptance criteria; corrected the unconditional unresolved-call claim and ngspice contributor policy. The user selected a readiness gate: contract design may proceed, while conformance acceptance requires R1–R4 checks. Expanded the roadmap with project/configuration-scoped identity, coverage-aware verdicts, and native-test selection, timeout, and freshness cases. This amendment changes documentation only; implementation findings remain open. Historical reports and dated text are retained; coverage, installed-wheel smoke, and production acceptance were not rerun. Amendment validation: strict MkDocs and seven documentation/reference and simulator-free tutorial tests passed (six toolchain/oracle tests deselected); all local links/fragments and previous heading anchors resolved. Nine folds and every historical status entry were preserved byte-for-byte; all ten folds remain continuous HTML. The updated status-log fold opened and closed in installed Typora using a temporary document and isolated profile/display.</li>
+<li><strong>2026-10-21</strong> — Phase II.0 readiness foundation implemented in the working tree, pending a user commit. R2–R5 have code and regression coverage: shared Rust configuration candidates cover ancestors, Cargo home, legacy spellings and missing files, are captured before LSP startup, and remain watched with restricted source paths and before a first successful extraction; malformed annotation JSON returns 400 without writes/revisions/events; drive-qualified entries require a symbol separator; server creation/deletion events drive an unavailable viewer state that preserves graph identity and queued notes, recovers on recreation, and rejects stale graph/source/history/diff responses. Annotation refresh also tolerates server revision resets. R1 adds sorted optional <code>meta.evidence_limits</code> with <code>entry-view-only</code> and LSP <code>lsp-call-omissions</code>; empty/absent limits do not establish completeness. hx/4, hx-ann/1, symbol IDs and documented non-object annotation PUT normalization remain compatible. Final strict suite: <strong>451 passed in 169.92 s, no skips</strong>, with <code>HX_REQUIRE_TOOLS=1 HX_REQUIRE_VENDOR_TOOLS=xyce,xdm</code> and virtualenv/Cargo tools on PATH. All five Node tests and strict MkDocs passed. The installed-wheel smoke passed from an unrelated directory with package-data checks and netlist, Xyce and Rust extractions. One preliminary run had 449 passes and one failure in the new rapid-edit watch test because the edit could retain its timestamp; the test now sets a distinct timestamp explicitly. Coverage and the full production Codex corpus were not rerun. All ten SSOT folds retain continuous HTML; nine historical folds, all 20 HEAD status entries and the preceding review amendment are preserved, 34 previous heading anchors remain, and all 24 local links/fragments resolve. The updated status-log fold opened and closed in installed Typora using a temporary document and isolated profile/display. Verification logs and small reports are in <code>~/hx-review-artifacts/hierx-0.5/readiness-20261021-PRGGPo/</code>. R1 evaluator safeguards remain open for II.2; R6 remains a separate compatibility proposal. The next implementation stage is II.1 intent/composition/bindings on a controlled Rust fixture, with native compiled-test evidence in II.3.</li>
 </ul>
 </details>

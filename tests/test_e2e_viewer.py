@@ -138,6 +138,169 @@ def test_selection_restored_and_sse_round_trip_reaches_the_dom(browser, c_server
     ctx.close()
 
 
+def test_annotation_revision_reset_after_server_restart_is_adopted(browser, c_server):
+    import httpx
+    s, _ = c_server
+    nid = "c:src/dma.c::dma_start"
+    ctx, page, errors, _ = _open(browser, s.url + f"/#kind=node&sel={nid}")
+    try:
+        for i in range(3):
+            response = httpx.patch(s.url + "/api/annotations", json={"nodes": {nid: {"note": f"before {i}"}}})
+            assert response.status_code == 200
+        page.wait_for_function("() => HX_DEBUG.state().rev === 3")
+        # Annotation revisions belong to a running server, not the persisted file.
+        s.app.state.hx.rev = 0
+        response = httpx.patch(s.url + "/api/annotations", json={"nodes": {nid: {"note": "after restart"}}})
+        assert response.json()["rev"] == 1
+        page.wait_for_function("() => HX_DEBUG.state().rev === 1")
+        assert page.locator("#detail textarea.note").input_value() == "after restart"
+        assert errors == []
+    finally:
+        ctx.close()
+
+
+def test_graph_deletion_clears_view_preserves_notes_and_recovers(browser, layout_fail_server):
+    s, proj = layout_fail_server
+    gp = proj / ".hx" / "graph.json"
+    original = gp.read_bytes()
+    tracked = proj / ".hx" / "graphs"
+    tracked.mkdir()
+    (tracked / "other.json").write_bytes(original)
+    nid = json.loads(original)["entry"]
+    ctx, page, errors, _ = _open(browser, s.url + f"/#kind=node&sel={nid}")
+    try:
+        page.locator("#btn-baseline").click()
+        page.wait_for_function("() => document.querySelector('#diff-base').options.length > 1")
+        page.locator("#diff-base").select_option(index=1)
+        page.wait_for_function("() => !!HX_DEBUG.state().diff")
+        note = page.locator("#detail textarea.note")
+        note.fill("keep this queued note")
+        note.dispatch_event("change")
+        gp.unlink()
+        page.wait_for_function("() => HX_DEBUG.state().graph === null")
+        assert page.evaluate("() => { const s = HX_DEBUG.state(); return [s.graphName, s.idx, s.cy, s.sel, s.diff, s.history.length, s.sourceCache.size]; }") == ["graph", None, None, None, None, 0, 0]
+        assert page.locator("#tree .row").count() == 0
+        assert "unavailable" in page.locator("#detail").inner_text()
+        assert "graph=graph" in page.url
+        for control in ("btn-fit", "btn-relayout", "btn-baseline", "btn-extract", "diff-base", "search"):
+            assert page.locator("#" + control).is_disabled()
+        # The graph picker remains usable; queued project-wide annotations finish saving.
+        page.wait_for_function("() => !HX_DEBUG.state().queue.length && !HX_DEBUG.state().flushing")
+        assert _ann(proj)["nodes"][nid]["note"] == "keep this queued note"
+        assert page.locator("#graph-pick").input_value() == "graph"
+        gp.write_bytes(original)
+        page.wait_for_function("() => !!HX_DEBUG.state().graph && !!HX_DEBUG.state().cy")
+        assert page.locator("#btn-baseline").is_enabled()
+        assert page.locator("#banner .unavailable").count() == 0
+        assert page.evaluate("() => HX_DEBUG.state().graphName") == "graph"
+        assert page.evaluate("id => HX_DEBUG.state().ann.nodes[id].note", nid) == "keep this queued note"
+        assert errors == []
+    finally:
+        ctx.close()
+
+
+def test_nonselected_graph_lifecycle_refreshes_picker_and_missing_initial_graph_recovers(browser, layout_fail_server):
+    s, proj = layout_fail_server
+    gp = proj / ".hx" / "graph.json"
+    original = gp.read_bytes()
+    gp.unlink()
+    tracked = proj / ".hx" / "graphs"
+    tracked.mkdir()
+    other = tracked / "other.json"
+    other.write_bytes(original)
+    ctx, page, errors, requests = _open(browser, s.url)
+    try:
+        assert "unavailable" in page.locator("#detail").inner_text()
+        assert page.evaluate("() => HX_DEBUG.state().graphName") == "graph"
+        assert any(u.endswith("/events") for u in requests)
+        gp.write_bytes(original)
+        page.wait_for_function("() => !!HX_DEBUG.state().graph")
+        epoch = page.evaluate("() => HX_DEBUG.state().loadEpoch")
+        other.unlink()
+        page.wait_for_function("() => ![...document.querySelector('#graph-pick').options].some(x => x.value === 'other')")
+        assert page.evaluate("() => HX_DEBUG.state().loadEpoch") == epoch
+        other.write_bytes(original)
+        page.wait_for_function("() => [...document.querySelector('#graph-pick').options].some(x => x.value === 'other')")
+        page.locator("#graph-pick").select_option("other")
+        page.wait_for_function("() => HX_DEBUG.state().graphName === 'other' && !!HX_DEBUG.state().graph")
+        other.unlink()
+        page.wait_for_function("() => HX_DEBUG.state().graph === null")
+        assert page.evaluate("() => HX_DEBUG.state().graphName") == "other"
+        page.locator("#graph-pick").select_option("graph")
+        page.wait_for_function("() => HX_DEBUG.state().graphName === 'graph' && !!HX_DEBUG.state().graph")
+        assert errors == []
+    finally:
+        ctx.close()
+
+
+def test_delayed_graph_response_cannot_replace_new_selection(browser, layout_fail_server):
+    s, proj = layout_fail_server
+    gp = proj / ".hx" / "graph.json"
+    original = json.loads(gp.read_text())
+    tracked = proj / ".hx" / "graphs"
+    tracked.mkdir()
+    other = dict(original, generated="2026-10-21T01:02:03Z")
+    (tracked / "other.json").write_text(json.dumps(other))
+    ctx, page, errors, _ = _open(browser, s.url)
+    held = []
+    try:
+        def delay(route):
+            if "name=graph" in route.request.url:
+                held.append((route, route.fetch()))
+            else:
+                route.continue_()
+
+        page.route("**/api/graph?*", delay)
+        gp.write_text(json.dumps(dict(original, generated="2026-10-21T02:03:04Z")))
+        page.wait_for_function("() => HX_DEBUG.state().loadEpoch > 1")
+        # Pump Playwright callbacks until the old graph response is held.
+        deadline = time.monotonic() + 5
+        while not held and time.monotonic() < deadline:
+            page.wait_for_timeout(20)
+        assert held
+        page.locator("#graph-pick").select_option("other")
+        page.wait_for_function("() => HX_DEBUG.state().graph?.generated === '2026-10-21T01:02:03Z'")
+        for route, response in held:
+            route.fulfill(response=response)
+        page.wait_for_timeout(100)
+        assert page.evaluate("() => [HX_DEBUG.state().graphName, HX_DEBUG.state().graph.generated]") == ["other", other["generated"]]
+        assert errors == []
+    finally:
+        ctx.close()
+
+
+def test_delayed_source_history_and_diff_cannot_restore_deleted_graph(browser, c_server):
+    s, proj = c_server
+    ctx, page, errors, _ = _open(browser, s.url)
+    held = {}
+    try:
+        page.locator("#btn-baseline").click()
+        page.wait_for_function("() => document.querySelector('#diff-base').options.length > 1")
+
+        def delay(route):
+            held[route.request.url.split("/api/")[1].split("?")[0]] = (route, route.fetch())
+
+        for endpoint in ("source", "history", "diff"):
+            page.route(f"**/api/{endpoint}?*", delay)
+        page.locator('#tree .row[title="c:src/main.c::app_run"]').first.click()
+        page.locator("#diff-base").select_option(index=1)
+        page.locator("#btn-baseline").click()
+        deadline = time.monotonic() + 5
+        while len(held) < 3 and time.monotonic() < deadline:
+            page.wait_for_timeout(20)
+        assert set(held) == {"source", "history", "diff"}
+        (proj / ".hx/graph.json").unlink()
+        page.wait_for_function("() => HX_DEBUG.state().graph === null")
+        for route, response in held.values():
+            route.fulfill(response=response)
+        page.wait_for_timeout(100)
+        assert page.evaluate("() => { const s = HX_DEBUG.state(); return [s.graph, s.diff, s.history.length, s.sourceCache.size]; }") == [None, None, 0, 0]
+        assert "unavailable" in page.locator("#detail").inner_text()
+        assert errors == []
+    finally:
+        ctx.close()
+
+
 def test_source_navigation_to_a_distant_call_site(browser, c_server):
     s, cproj = c_server
     nid = "c:src/main.c::app_run"

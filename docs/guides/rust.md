@@ -27,6 +27,12 @@ server. Struct fields do not include memory sizes or offsets; globals are not
 extracted. Indirect calls and closures may be absent. hx starts a language server
 for each extraction, so repeated runs still incur startup and indexing time.
 Use [tracking](../reference/configuration.md) to retain extraction options.
+Graphs record `entry-view-only` and `lsp-call-omissions` in
+[`meta.evidence_limits`](../reference/graph.md#evidence-limits). An empty
+`unresolved` list does not establish complete call coverage. Cargo and toolchain
+configuration candidates, including missing files, are recorded before indexing
+and watched independently of source-path filters; see
+[configuration inputs](../reference/configuration.md#rust-configuration-inputs).
 
 Qualified entries retain their full Rust spelling. For trait implementations use
 `'src/lib.rs:<Item as Convert<String>>::convert'`; ambiguous bare methods list

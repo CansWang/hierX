@@ -44,6 +44,23 @@ function-pointer type) when they apply. A type record carries `enumerators`,
 boundary, an exclusion, a system header, no definition, or an indirect target;
 read its `reason` rather than assuming extraction failed.
 
+## Evidence limits
+
+New extractions include optional `meta.evidence_limits`: a sorted, unique list
+of stable limitation codes. This is additive within hx/4 and requires no migration.
+
+| Code | Meaning |
+|---|---|
+| `entry-view-only` | The graph is a bounded view from one entry, not a complete repository architecture. All current frontends emit this code. |
+| `lsp-call-omissions` | The language server can omit calls entirely, without producing an edge, unresolved record, or error. Rust and Python LSP extractions emit this code. |
+
+Missing or empty limits mean coverage is unknown, not complete. Inspect these
+codes together with traversal options, `meta.truncated`, precision, unresolved
+records, and errors. Even an unlimited-depth graph with an empty unresolved list
+cannot establish that a prohibited dependency is absent from the repository.
+These codes describe evidence; architecture-contract verdicts are not implemented.
+Metadata changes alone do not change symbol IDs or structural diff results.
+
 ## Extraction provenance
 
 New Python and CLI extractions include optional `meta.provenance` (version 1).
@@ -71,6 +88,12 @@ Verilator design/argument files, netlist dependencies/include probes, and LSP
 documents read by hx plus nearby recognized project configurations. Cache hits
 retain observations. Available dependency timestamps and before/after hashing
 checks flag detected file changes.
+
+Rust extraction also records missing and present Cargo/toolchain configuration
+candidates from the invocation root and its ancestors, plus Cargo home. Their
+timestamps are captured before language-server startup, so detected creation,
+edit, or deletion during indexing marks the input as changed. See
+[configuration discovery](configuration.md#rust-configuration-inputs).
 
 Coverage remains observed: server-private inputs, environment settings, and
 changes that hx cannot detect are not fully captured. This metadata is useful

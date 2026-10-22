@@ -74,6 +74,7 @@ def test_rust_hierarchy(rust_fe):
     assert depths["rs:src/dma.rs::prog_desc"] == 2 and depths["rs:src/hal.rs::write32"] == 2
     assert "rs:src/dma.rs::DmaError" not in g.nodes                      # tuple-struct constructor is not a function
     assert all(n.precision == "lsp" for n in g.nodes.values())
+    assert g.meta["evidence_limits"] == ["entry-view-only", "lsp-call-omissions"]
     start = g.nodes["rs:src/dma.rs::dma_start"]
     assert [(p.name, p.type, p.dir, p.dir_source) for p in start.params] == [("ch", "&mut DmaChan", "inout", "heuristic"), ("buf", "&[u8]", "in", "heuristic")]
     assert start.params[0].type_ref == "rs:src/dma.rs::struct DmaChan" and start.returns.type == "Result<usize, DmaError>"
@@ -89,6 +90,43 @@ def test_rust_hierarchy(rust_fe):
     reasons = {u.name: u.reason for u in g.unresolved}
     assert reasons["min"] == "outside project root (library)" and reasons["DmaError"].startswith("not a function")
     assert "write_volatile" in reasons
+
+
+def test_omitted_lsp_call_keeps_limit_without_unresolved_records(tmp_path, monkeypatch):
+    """An empty server answer must not erase its known call-discovery limitation."""
+    import json
+    from pathlib import Path
+    import jsonschema
+    from hx.frontends.base import FunctionRecord
+    from hx.model import Graph, Loc, Node
+    from hx.export import build_html
+    from hx.diff import diff_graphs
+    (tmp_path / "main.rs").write_text("fn entry(cb: fn()) { cb(); }\n")
+    fe = LspFrontend(str(tmp_path))
+    nid = "rs:main.rs::entry"
+    monkeypatch.setattr(fe, "_req", lambda *args, **kwargs: [])
+    monkeypatch.setattr(fe, "locate_entry", lambda *args: nid)
+    monkeypatch.setattr(fe, "stable_id", lambda key: nid)
+    monkeypatch.setattr(fe, "function", lambda key: FunctionRecord(
+        Node(id=nid, kind="function", name="entry", qualname="entry", lang="rs", loc=Loc("main.rs", 1),
+             signature="fn entry(cb: fn())", precision="lsp"),
+        fe._outgoing({"name": "entry"}, (tmp_path / "main.rs").as_uri()), [], []))
+    graph = extract_graph(fe, "main.rs", "entry", TraverseOptions(depth=None), str(tmp_path))
+    assert graph.edges == graph.unresolved == [] and fe.errors == []
+    limits = ["entry-view-only", "lsp-call-omissions"]
+    assert graph.meta["evidence_limits"] == limits
+    path = tmp_path / "graph.json"
+    graph.save(str(path))
+    loaded = Graph.load(str(path)).to_dict()
+    schema = json.loads((Path(__file__).parents[1] / "hx/schema/hx-4.schema.json").read_text())
+    jsonschema.validate(loaded, schema)
+    assert loaded["meta"]["evidence_limits"] == limits
+    html = build_html(loaded)
+    exported = json.loads(html.split('id="hx-graph">', 1)[1].split("</script>", 1)[0])
+    assert exported["meta"]["evidence_limits"] == limits
+    loaded["meta"].pop("evidence_limits")
+    assert "evidence_limits" not in Graph.from_dict(loaded).meta
+    assert not diff_graphs(graph.to_dict(), loaded)["summary"]["any"]
 
 
 def test_rust_callers(rust_fe):

@@ -179,3 +179,24 @@ not stop other entries; inspect `UpdateResult.error` or the update report.
 The watcher skips generated/build directories by default while still tracking
 known build-description filenames, such as `compile_commands.json` and
 `Cargo.toml`. It polls modification times; it does not use inotify.
+
+### Rust configuration inputs
+
+Rust extraction and watching share configuration discovery. Candidates include
+`Cargo.toml`, `Cargo.lock`, `rust-toolchain`, `rust-toolchain.toml`, `.cargo/config`,
+and `.cargo/config.toml` at the extraction root and each ancestor, plus `config`
+and `config.toml` under `$CARGO_HOME` (default `~/.cargo`). Relative `CARGO_HOME`
+paths are resolved from the extraction root, where the language server starts.
+Both legacy and current spellings are observed; hx does not resolve their
+precedence or inspect credentials. This follows the working-directory scope of
+[Cargo configuration](https://doc.rust-lang.org/cargo/reference/config.html#hierarchical-structure)
+and [Rustup toolchain files](https://rust-lang.github.io/rustup/overrides.html).
+
+Missing candidates are retained so creation, editing, and deletion change the
+watch signature. These inputs remain watched with restricted `watch.paths`,
+before the first successful extraction of a tracked Rust entry, and with
+`run_first=False` in the Python watch API. Saved provenance inputs also contribute
+dependencies, including paths outside the project; older Rust graphs use candidate
+discovery even without provenance. This observes potential inputs rather than
+proving which configuration was effective. Environment overrides, server-private
+inputs, and edits that preserve timestamps remain outside this freshness guarantee.

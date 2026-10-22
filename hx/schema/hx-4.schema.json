@@ -46,8 +46,14 @@
     },
     "meta": {
       "type": "object",
-      "description": "extract_args, options, index stats, notes, truncated, migration, and optional observed extraction provenance",
+      "description": "extract_args, options, index stats, notes, truncated, evidence limits, migration, and optional observed extraction provenance",
       "properties": {
+        "evidence_limits": {
+          "type": "array",
+          "items": {"type": "string"},
+          "uniqueItems": true,
+          "description": "Known limitation codes; absent or empty is not a completeness guarantee."
+        },
         "provenance": {
           "$ref": "#/$defs/provenance"
         }

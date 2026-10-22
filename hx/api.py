@@ -16,7 +16,7 @@ def split_entry(entry: str) -> tuple[str, str]:
     start = 2 if len(entry) > 2 and entry[1] == ":" and entry[2] in "/\\" else 0
     cut = entry.find(":", start)
     file, symbol = entry[:cut], entry[cut + 1:]
-    if not file or not symbol:
+    if cut < 0 or not file or not symbol:
         raise ValueError(f"entry must be <file>:<symbol>, got {entry!r}")
     return file, symbol
 
