@@ -1,0 +1,18 @@
+# Comparison only: exact-row anchors are not visible boundary pins.
+direction: right
+source: Source {
+  shape: sql_table
+  seed: u32
+  enabled: bool
+  sample: u32
+  valid: bool
+}
+sink: Sink {
+  shape: sql_table
+  sample: u32
+  valid: bool
+  result: u32
+  accepted: bool
+}
+source.sample -> sink.sample: data
+source.valid -> sink.valid: status

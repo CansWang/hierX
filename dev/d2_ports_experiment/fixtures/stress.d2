@@ -1,0 +1,30 @@
+...@pins
+source: "Source with a longer descriptive title" {
+  class: hx-block
+  link: "__HX_CODE_source__"
+  out_valid: "validity of the supplied sample: bool" {class: hx-output; link: "__HX_CODE_source.out_valid__"}
+  out_sample: "sample: u32" {class: hx-output; link: "__HX_CODE_source.out_sample__"}
+  in_valid: "enabled: bool" {class: hx-input; link: "__HX_CODE_source.in_valid__"}
+  in_sample: "seed: u32" {class: hx-input; link: "__HX_CODE_source.in_sample__"}
+  in_extra: "additional input description: u32" {class: hx-input; link: "__HX_CODE_source.in_extra__"}
+  out_extra: "additional output description: u32" {class: hx-output; link: "__HX_CODE_source.out_extra__"}
+}
+sink: Sink {
+  class: hx-block
+  link: "__HX_CODE_sink__"
+  out_valid: "accepted: bool" {class: hx-output; link: "__HX_CODE_sink.out_valid__"}
+  in_sample: "sample: u32" {class: hx-input; link: "__HX_CODE_sink.in_sample__"}
+  out_sample: "result: u32" {class: hx-output; link: "__HX_CODE_sink.out_sample__"}
+  in_valid: "valid: bool" {class: hx-input; link: "__HX_CODE_sink.in_valid__"}
+}
+observer: Observer {
+  class: hx-block
+  link: "__HX_CODE_observer__"
+  in_sample: "sample: u32" {class: hx-input; link: "__HX_CODE_observer.in_sample__"}
+  in_valid: "valid: bool" {class: hx-input; link: "__HX_CODE_observer.in_valid__"}
+  out_sample: "result: u32" {class: hx-output; link: "__HX_CODE_observer.out_sample__"}
+  out_valid: "accepted: bool" {class: hx-output; link: "__HX_CODE_observer.out_valid__"}
+}
+source.out_sample -> sink.in_sample: sample data {class: hx-wire}
+source.out_valid -> sink.in_valid: validity flag {class: hx-wire}
+source.out_sample -> observer.in_sample: sample data copy {class: hx-wire}

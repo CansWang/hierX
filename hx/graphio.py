@@ -1,12 +1,15 @@
 """The one way to read a graph document.
 
-Every reader (CLI, server, differ, MCP, exporter, `Graph.load`) goes through `load_graph_dict`, which
+Readers use the shared parsing/upgrading pipeline, normally through `load_graph_dict`, which
   * parses JSON with `values.parse_int_token`, so integers wider than JavaScript's 2**53 become canonical
     strings and a 5,000-digit legacy number never hits CPython's int<->str digit limit;
   * accepts older schema majors (hx/1 through hx/3) and upgrades them IN MEMORY through the `MIGRATIONS` chain,
     attaching one composed `MigrationReport` under `meta.migration`; nothing
     on disk is touched;
   * refuses any other major.
+
+Snapshot consumers can call `load_graph_text` and `upgrade` on the exact bytes
+they hash, avoiding a second file read.
 """
 from __future__ import annotations
 

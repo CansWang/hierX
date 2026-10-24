@@ -1,0 +1,17 @@
+...@pins
+pipeline: Pipeline {
+  class: hx-block
+  link: "__HX_CODE_pipeline__"
+  in_sample: "seed: u32" {class: hx-input; link: "__HX_CODE_pipeline.in_sample__"}
+  in_valid: "enabled: bool" {class: hx-input; link: "__HX_CODE_pipeline.in_valid__"}
+  out_sample: "result: u32" {class: hx-output; link: "__HX_CODE_pipeline.out_sample__"}
+  out_valid: "accepted: bool" {class: hx-output; link: "__HX_CODE_pipeline.out_valid__"}
+  first: @worker
+  second: @worker
+  in_sample -> first.in_sample: input data {class: hx-exposure}
+  in_valid -> first.in_valid: input status {class: hx-exposure}
+  first.out_sample -> second.in_sample: data {class: hx-wire}
+  first.out_valid -> second.in_valid: status {class: hx-wire}
+  second.out_sample -> out_sample: output data {class: hx-exposure}
+  second.out_valid -> out_valid: output status {class: hx-exposure}
+}

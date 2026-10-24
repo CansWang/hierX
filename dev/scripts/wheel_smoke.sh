@@ -22,7 +22,7 @@ HX="$WORK/venv/bin/hx"
 echo "== package data present (hx imported from the fresh venv, not the checkout)"
 cd "$WORK"
 "$WORK/venv/bin/python" -I - <<'PY'
-import importlib.resources as r, os, sys
+import importlib.resources as r, importlib.util, os, sys
 import hx
 where = os.path.realpath(os.path.dirname(hx.__file__))
 venv = os.path.realpath(sys.prefix)
@@ -35,7 +35,26 @@ missing = [n for n in need if not pkg.joinpath(n).is_file()]
 vendor = [p.name for p in pkg.joinpath("viewer/vendor").iterdir()] if pkg.joinpath("viewer/vendor").is_dir() else []
 if missing or not vendor:
     sys.exit(f"missing package data: {missing or 'viewer/vendor/*'}")
+retired = ["contracts", "schema/hx-contract-1.schema.json", "schema/hx-bindings-1.schema.json", "schema/hx-projection-1.schema.json"]
+leaked = [name for name in retired if pkg.joinpath(name).exists()]
+if leaked or importlib.util.find_spec("hx.contracts") is not None:
+    sys.exit(f"retired TOML feature leaked into wheel: {leaked}")
 print("   ok:", len(need), "files +", len(vendor), "vendored viewer libraries, imported from", where)
+PY
+echo "== retired contract command is unavailable"
+if "$HX" contract --help >"$WORK/retired-command.log" 2>&1; then
+  echo "retired contract command is still available" >&2
+  exit 1
+else
+  status=$?
+  [ "$status" -eq 2 ] || { cat "$WORK/retired-command.log" >&2; exit 1; }
+fi
+"$WORK/venv/bin/python" -I - "$WORK/retired-command.log" <<'PY'
+from pathlib import Path
+import sys
+message = Path(sys.argv[1]).read_text()
+assert "invalid choice: 'contract'" in message and "Traceback" not in message, message
+print("   normal unknown-command exit 2; retired package and schemas absent")
 PY
 echo "== commands from an unrelated directory"
 cp -r "$REPO/tests/fixtures/spice/ota" "$WORK/ota"

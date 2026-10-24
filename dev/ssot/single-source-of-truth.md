@@ -17,20 +17,30 @@ Phase II roadmap remain ordinary Markdown.
   and hardware, with navigable evidence and concise changes after an edit.
 - **Implemented.** Build-aware extraction → generated graph → browser review,
   annotations, structural diff, and CLI/Python/MCP queries. Human annotations
-  survive regeneration through stable symbol IDs.
-- **Next.** Phase II adds authored architecture intent and composed contracts,
-  bindings to extracted structure, conformance findings, and evidence from
-  compiled native project tests. Contract design can proceed while the readiness
-  findings below are addressed; conformance acceptance must pass the readiness
-  gate. These capabilities are planned, not implemented.
+  survive regeneration through stable symbol IDs. The experimental Phase II.1
+  TOML contract feature is [retired and archived](retired-toml-contracts.md).
+- **Direction.** Accept D2 syntax for new architecture sketches, interpreted by
+  Hx using upstream parsing rather than a D2 compiler fork. Start with blocks,
+  individually named input/output ports, explicit connections, nested exposures,
+  and code navigation. Direct ELK rendering remains unverified; the failed stock-D2
+  results remain historical evidence. TOML contract commands/APIs have been
+  withdrawn; their source and acceptance evidence remain in the reference archive.
+  [Buses, wide ports, and bundle expansion](#deferred-work-and-continuing-boundaries)
+  move to future work. The [interface design](architecture-contract-interface.md)
+  records the accepted syntax decision and staged scope. Further semantic checks
+  and testcase generation remain deferred.
 
 <a id="current-status-2026-10-18"></a>
+<a id="current-status-2026-10-21"></a>
+<a id="current-status-2026-10-22"></a>
 
-## Current status (2026-10-21)
+## Current status (2026-10-23)
 
-The reviewed baseline is **`fa9e712`**, whose changes since implementation commit
-**`39202cf`** are documentation-only. Phase II.0 readiness code is now implemented
-in the working tree, pending a user commit. The package remains **0.5.0**, graph
+The committed baseline is **`1302535`**, which contains the verified Phase II.0
+readiness foundation. The uncommitted Phase II.1 TOML intent/composition/bindings
+prototype has been removed from the active package after a verified reference
+snapshot; see the [retirement index](retired-toml-contracts.md). The package remains
+**0.5.0**, graph
 schema **hx/4**, and annotation schema **hx-ann/1**. The [README](../../README.md) and
 [tutorials/API references](../../docs/index.md) describe the implemented interface.
 
@@ -48,6 +58,7 @@ annotation JSON parsing, drive-entry validation, and graph availability handling
 | Annotations | Human-owned notes, tags, parameter overrides, source-hash review marks, shared managed storage, and guarded legacy import. |
 | Viewer and change review | Source/type navigation, browser workflow tests, live reload, standalone export, structural diff, circuit net highlighting, definition/model navigation, and dedicated circuit changes. |
 | Queries and automation | CLI and Python interfaces, HTTP service, MCP queries, tracking, polling watch, hooks, and saved-graph net/uses queries. |
+| Architecture authoring experiment | Private D2 v0.9.0 fixtures, independent boundary-pin/route/label checks, and real code-navigation clicks. None of the four tested engine/profiles qualifies; no migration or production D2 API is implemented. |
 | Hardening and distribution | Rust identity/token fixes, pinned Codex acceptance runner, independent syn audit, ngspice/Xyce/XDM checks, deterministic fake-simulator failures, migration tests, and isolated installed-wheel smoke in CI. |
 
 The pre-implementation 2026-10-21 review ran:
@@ -74,6 +85,42 @@ strict MkDocs, and the installed-wheel smoke passed. No new coverage or producti
 Codex acceptance measurement is claimed. The installed-wheel check includes Rust
 extraction; the full production corpus is not rebuilt here.
 
+**Historical Phase II.1 implementation verification (2026-10-21; feature now retired):** **508 passed in 178.59 s, no
+skips**, with the same strict tool requirements. All **five Node tests**, strict
+MkDocs, and installed-wheel smoke passed. The wheel includes all three new
+schemas and executes contract validation and Rust projection outside the checkout.
+The tutorial's **three Cargo tests** pass; baseline and bypass projections retain
+source witnesses and coverage limits. Coverage and the production Codex corpus
+were not rerun. Reports: `~/hx-review-artifacts/hierx-0.5/contracts-20261021-xet9w4vz/`.
+The [retirement snapshot](retired-toml-contracts.md) preserves that implementation
+and its reports; these results do not describe the remaining active feature set.
+
+**Historical D2 experiment (2026-10-22):** the separate development harness tests ELK, Dagre, TALA, and
+ELK with zero horizontal padding on flat, nested reused-child, and editing-stress
+cases at 100%/150% zoom. All compile; none meets the visible boundary-pin gate.
+All **72 focused tests** pass (13 private oracle/browser tests, 56 existing
+contract tests, and three documentation-reference tests); strict MkDocs passes.
+The oracle tests include real title/pin navigation against the existing
+viewer and a cancelled-click negative case. The Rust example passes two Cargo
+tests. See the [experiment and reproduction instructions](../d2_ports_experiment/README.md)
+and `~/hx-review-artifacts/hierx-0.5/d2-ports-20261022-l9_xc0uu/run/` for the
+matrix, original SVGs, geometry, screenshots, code-click outcomes, and findings.
+This private experiment does not rerun or replace the recorded 508-test, wheel,
+coverage, or production Codex acceptance results.
+
+**TOML retirement verification (2026-10-23):** the remaining strict suite passed
+**451 tests in 170.41 s, no skips**, with required tools and Xyce/XDM enabled.
+The 57 TOML-feature tests were archived and removed, rather than skipped. All
+**13 private D2 oracle/browser tests passed in 9.14 s**. Strict MkDocs passed.
+A wheel built from a clean temporary source snapshot passed installed-wheel
+smoke outside the checkout, including netlist, Xyce, and Rust extraction. It
+contained ten required data files and four vendored viewer libraries, no retired
+contract package/schemas, and rejected `hx contract` with the normal usage exit 2.
+Shared graph-reader behavior and the D2 experiment are unchanged. No new coverage
+or production Codex acceptance measurement is claimed. The
+[retirement index](retired-toml-contracts.md) identifies the verified source/report
+archive and separate current verification logs.
+
 <details>
 <summary>Implemented storage, annotations, and verification workflow</summary>
 <ul>
@@ -88,8 +135,11 @@ extraction; the full production corpus is not rebuilt here.
 
 - **A saved graph is an entry view.** Workspace indexing by a frontend does not
   make its bounded output a whole-repository architecture. Multiple tracked
-  entries remain separate graphs; overlap and conflicting configurations have
-  no architecture-level reconciliation yet.
+  entries remain separate graphs. The retired II.1 prototype reconciled compatible
+  saved views and quarantined conflicting evidence within declared project/build
+  domains. That behavior is archived reference material, not an active projection
+  API or evidence of whole-repository coverage. Future D2 bindings need their own
+  implementation and acceptance.
 - **Extracted relations have a defined scope.** Calls, references, instances,
   reached types, and global accesses are useful evidence. They are not a complete
   module/package dependency model or runtime dataflow. A frontend's `module`
@@ -118,50 +168,85 @@ P1 addresses evidence soundness and freshness, P2 runtime correctness, and P3
 lower-priority validation/documentation work. Reproductions used temporary
 workspaces; no saved project graphs or annotations were changed. Source links
 identify the implementation locations; reproductions describe the reviewed
-baseline before the fixes. R2–R5 now have code and regression coverage in the
-uncommitted Phase II.0 changes. R1 has metadata support but still needs II.2
-evaluator checks; R6 retains its documented behavior. No new command, endpoint,
-or schema major is introduced.
+baseline before the fixes. R2–R5 are closed by **`1302535`** and the Phase II.0
+acceptance results above. R1 has evidence-limit metadata but still needs
+II.2 evaluator checks, now deferred with conformance work; R6 retains its
+documented behavior. Graph and annotation
+schema majors remain compatible. II.1's authored/projection formats and CLI/Python
+interfaces are retired reference material; their removal does not close R1.
 
 | ID / priority | Classification and status | Reproduction and impact | Remedy and acceptance criteria |
 | --- | --- | --- | --- |
 | **R1 / P1** | Confirmed frontend limitation; incorrect SSOT claim corrected here. **Evidence metadata implemented; conformance follow-up open.** | Extract `src/dma.rs:dma_start` from a temporary copy of `tests/fixtures/rust` with unlimited depth. The callback at line 60 has no edge or unresolved record and no frontend error. The earlier claim that all indirect calls become ghosts could justify false absence-based passes. See the [Rust guide](../../docs/guides/rust.md) and [LSP frontend](../../hx/frontends/lsp_fe.py). | State the coverage required by each obligation/frontend relation. II.2 must return `not established` when omitted calls could affect the obligation, including cases with an empty unresolved list; witnessed forbidden dependencies can still establish violations. Implemented: optional sorted `meta.evidence_limits` emits `entry-view-only` for every frontend and `lsp-call-omissions` for LSP; missing/empty metadata is unknown coverage. The deterministic omitted-call test in [test_lsp_fe.py](../../tests/test_lsp_fe.py) checks empty edges/unresolved/errors, schema validation, save/load/export, legacy absence, and unchanged structural diff. |
-| **R2 / P1** | Confirmed configuration-discovery gap. **Implemented; fix revision pending commit.** | Compare `project.source_signature(root)` before and after creating `rust-toolchain.toml` and `.cargo/config.toml`: the signature is unchanged. Default watching misses these build inputs, and current recognized-config provenance does not cover them. See [watching](../../hx/project.py) and [provenance](../../hx/provenance.py). | Discover relevant Rust toolchain and Cargo configuration inputs explicitly, including missing candidates. Test creation, edit, and deletion, watch-triggered refresh, and input fingerprint changes. II.3 must reject stale evidence when relevant configuration changes. Implemented in [config_inputs.py](../../hx/config_inputs.py), the LSP frontend, and project watching. [test_config_inputs.py](../../tests/test_config_inputs.py) covers root/ancestor/Cargo-home and legacy/missing candidates, startup races, restricted watch paths before extraction, saved provenance, and live Rust extraction. |
-| **R3 / P2** | Confirmed annotation HTTP error-handling bug. **Implemented; fix revision pending commit.** | Send malformed JSON, such as `{`, to annotation PATCH: HTTP 500, with existing bytes unchanged. Both write handlers parse JSON without translating decode errors. See [annotation routes](../../hx/serve/app.py). | Return HTTP 400 with a useful JSON error for malformed PUT/PATCH bodies. Verify that stored annotations, revision, and emitted annotation events are unchanged after rejection. Implemented: both routes reject malformed/empty/invalid-encoding JSON with 400. [test_serve.py](../../tests/test_serve.py) checks bytes, revision, and events remain unchanged and preserves the documented non-object PUT behavior. |
-| **R4 / P2** | Confirmed graph lifecycle bug. **Implemented; fix revision pending commit.** | Initialize server state with a tracked graph, delete that file, then call `State.poll_files()`: no change event is returned although the graph disappears from discovery. A connected viewer can retain stale content. See [server watching](../../hx/serve/app.py). | Detect deletion and refresh graph availability. Test deleting primary and tracked graphs, a clear unavailable state for the selected graph, and recovery after recreation; unchanged files must not emit repeated events. Implemented: one creation/deletion event per observed transition; selected graph identity persists while content/actions clear, queued annotations survive, and recreation recovers. [Server tests](../../tests/test_serve.py) and [browser tests](../../tests/test_e2e_viewer.py) cover primary/tracked files, initial absence, picker refresh, delayed graph/source/history/diff responses, and annotation revision resets after a server restart. |
-| **R5 / P3** | Confirmed entry-validation bug. **Implemented; fix revision pending commit.** | `split_entry(r'C:\src\main.rs')` returns a truncated filename and the whole input as a symbol instead of rejecting the missing separator. See [entry parsing](../../hx/api.py). | Reject a drive-qualified path without `:symbol` before filesystem access. Preserve valid drive paths with symbols and qualified names such as `src/main.cpp:hw::run`. Implemented and covered by drive-path rejection and qualified-symbol preservation cases in [test_paths.py](../../tests/test_paths.py). |
+| **R2 / P1** | Confirmed configuration-discovery gap. **Closed in `1302535`; II.0 acceptance passed.** | Compare `project.source_signature(root)` before and after creating `rust-toolchain.toml` and `.cargo/config.toml`: the signature is unchanged. Default watching misses these build inputs, and current recognized-config provenance does not cover them. See [watching](../../hx/project.py) and [provenance](../../hx/provenance.py). | Discover relevant Rust toolchain and Cargo configuration inputs explicitly, including missing candidates. Test creation, edit, and deletion, watch-triggered refresh, and input fingerprint changes. II.3 must reject stale evidence when relevant configuration changes. Implemented in [config_inputs.py](../../hx/config_inputs.py), the LSP frontend, and project watching. [test_config_inputs.py](../../tests/test_config_inputs.py) covers root/ancestor/Cargo-home and legacy/missing candidates, startup races, restricted watch paths before extraction, saved provenance, and live Rust extraction. |
+| **R3 / P2** | Confirmed annotation HTTP error-handling bug. **Closed in `1302535`; II.0 acceptance passed.** | Send malformed JSON, such as `{`, to annotation PATCH: HTTP 500, with existing bytes unchanged. Both write handlers parse JSON without translating decode errors. See [annotation routes](../../hx/serve/app.py). | Return HTTP 400 with a useful JSON error for malformed PUT/PATCH bodies. Verify that stored annotations, revision, and emitted annotation events are unchanged after rejection. Implemented: both routes reject malformed/empty/invalid-encoding JSON with 400. [test_serve.py](../../tests/test_serve.py) checks bytes, revision, and events remain unchanged and preserves the documented non-object PUT behavior. |
+| **R4 / P2** | Confirmed graph lifecycle bug. **Closed in `1302535`; II.0 acceptance passed.** | Initialize server state with a tracked graph, delete that file, then call `State.poll_files()`: no change event is returned although the graph disappears from discovery. A connected viewer can retain stale content. See [server watching](../../hx/serve/app.py). | Detect deletion and refresh graph availability. Test deleting primary and tracked graphs, a clear unavailable state for the selected graph, and recovery after recreation; unchanged files must not emit repeated events. Implemented: one creation/deletion event per observed transition; selected graph identity persists while content/actions clear, queued annotations survive, and recreation recovers. [Server tests](../../tests/test_serve.py) and [browser tests](../../tests/test_e2e_viewer.py) cover primary/tracked files, initial absence, picker refresh, delayed graph/source/history/diff responses, and annotation revision resets after a server restart. |
+| **R5 / P3** | Confirmed entry-validation bug. **Closed in `1302535`; II.0 acceptance passed.** | `split_entry(r'C:\src\main.rs')` returns a truncated filename and the whole input as a symbol instead of rejecting the missing separator. See [entry parsing](../../hx/api.py). | Reject a drive-qualified path without `:symbol` before filesystem access. Preserve valid drive paths with symbols and qualified names such as `src/main.cpp:hw::run`. Implemented and covered by drive-path rejection and qualified-symbol preservation cases in [test_paths.py](../../tests/test_paths.py). |
 | **R6 / P2** | Documented data-loss risk; **compatibility proposal**, not an undocumented bug. | After saving a note, PUT `[]` to `/api/annotations`: HTTP 200 and an empty annotation document. The [HTTP reference](../../docs/reference/http.md#put-apiannotations) explicitly documents this normalization. | Proposed hardening: accept only object PUT bodies and reject other JSON values with HTTP 400 before any write/revision/event. Preserve intentional clearing with `{}`. This changes documented behavior and needs coordinated API documentation, release notes, and regression tests; it is outside the readiness gate. |
 | **R7 / P3** | Documentation drift. **Corrected in this amendment.** | Contributor instructions called the ngspice tutorial vendor-opt-in, but `test_netlist_oracle_tutorial` calls `require_tool("ngspice")` and CI installs it. | Align [contributor instructions](../../docs/contributing.md) with the [required/vendor policy](../../tests/conftest.py): `HX_REQUIRE_TOOLS=1` requires ngspice; Xyce/XDM vendor requirements remain opt-in. |
 
 Close an implementation finding only with a fix revision and its acceptance
 results; retain its reproduction and original classification. The implementation
-rows above identify verified working-tree changes; add the commit pointer when
-they are committed. R1's metadata does not establish evaluator coverage, and
+rows above identify committed fixes and their acceptance evidence. R1's metadata does not establish evaluator coverage, and
 R6 remains a proposal until the documented behavior is deliberately changed.
 
-## Phase II — Architecture contracts (planned)
+<a id="phase-ii-architecture-contracts-planned"></a>
+<a id="phase-ii-architecture-contracts-in-progress"></a>
 
-The goal is to describe high-level intent and testcase obligations, compose them
-into an architecture, and compare that intent with parsed implementation evidence
-and compiled native project-test results. No contract model, composition engine,
-component projection, conformance evaluator, or test-evidence binding exists yet.
+## Phase II — Architecture authoring and composition (revised direction)
+
+The immediate goal is readable architectural authoring and presentation with
+blocks, named input/output ports on block boundaries, labelled connections,
+nested blocks exposing child ports, and clickable code links. Keep this small Hx
+concept separate from contractual meaning. **D2 syntax is selected for new
+architecture sketches.** Reuse upstream D2 parsing with an Hx interpretation
+layer rather than maintaining a D2 compiler fork. Begin with ordinary,
+individually named ports and connections; defer buses, wide ports/signals, and
+bundle expansion. The next experiment tests direct ELK layout with native ports
+and hierarchy. Interpretation/parser integration and rendering remain
+unimplemented and unverified, while the authoring syntax decision is accepted.
+This deliberately relaxes the earlier requirement that stock D2 produce all
+geometry.
+
+The separate [interface design note](architecture-contract-interface.md) explains
+the current service-interface model, the new experiment and its acceptance
+criteria, future bus/width support, and the retained earlier TOML input/output
+proposal. Arrows between dataflow ports describe data or signal flow. This
+amendment records the syntax decision and scope; parser integration, rendering,
+public APIs, and migration remain unimplemented.
+
+The experimental TOML contract model, loader, bindings, projection, and commands
+have been withdrawn from the active package. The
+[reference snapshot](retired-toml-contracts.md) preserves their source, tests,
+schemas, documentation, and original acceptance reports. Projection's useful
+evidence-reconciliation ideas remain coupled to the old model in that snapshot;
+no generic backend has been extracted. D2 bindings and migration are not
+implemented. Conformance evaluation, native-test evidence binding, and generated
+testcases remain deferred.
 This **Phase II** is a new development stage; the historical **Phase 2** below
 is the completed viewer/server milestone.
 
 ```text
-Authored intent + composed contracts ────────────────┐
-Source + build configuration → hx graphs → bindings ├→ conformance findings
-Native project tests → build/run evidence ──────────┘
+D2 authoring → Hx blocks/individual ports/connections → direct ELK → Hx presentation
+                                                           ↓
+                              boundary-pin/connection/code-navigation acceptance
+Source + build configuration → existing hx graphs and source viewer
 ```
 
-The initial vertical slice uses a small Rust project with composed components,
-a deliberate dependency violation, and real native tests. Extend to pinned Codex
-examples after the controlled cases establish the semantics. Continue existing
-frontend and circuit regression coverage throughout.
+The first experiment uses a separate safe Rust fixture and the existing source
+viewer. Native tests keep that example executable; they are not architectural
+test evidence. Its failed stock-D2 results remain unchanged below. The next
+experiment tests ordinary named ports, explicit wires, nested individual-port
+exposures, and code links. Bus/bundle and width-specific handling move to future
+work. Extend to production examples only after a candidate passes the controlled
+presentation and navigation gates. Continue existing
+frontend and circuit regression coverage. The earlier conformance/test-evidence
+design is retained below for a future decision, with its original acceptance
+conditions.
 
 ### II.0 — Readiness stabilization
 
-The **readiness foundation is implemented**, pending a user commit: R2–R5 code,
+The **readiness foundation is committed in `1302535`**: R2–R5 code,
 regressions, and R1 evidence-limit metadata. Current graph/annotation schemas and
 symbol IDs remain compatible. Rust configuration candidates are shared between
 extraction and watch, captured before server startup, and retained when missing.
@@ -178,37 +263,132 @@ and return `not established` when an obligation lacks adequate coverage, includi
 omitted calls with empty unresolved lists. R1 stays open until these evaluator
 checks exist; emitting metadata alone cannot establish a verdict. R6 remains a
 separate compatibility proposal, and R7's contributor-policy correction is done.
-The next implementation stage is II.1's authored intent, composition, bindings,
-and controlled Rust fixture; native-test execution remains II.3.
+The retired II.1 reference supplied authored intent, composition, bindings, and a
+controlled Rust fixture. Its code and evidence are archived. II.2 and native-test
+evidence ingestion in II.3 remain deferred while the D2 authoring/presentation
+implementation is developed.
 
-### II.1 — Intent, composition, and component bindings
+<a id="ii1-intent-composition-and-component-bindings"></a>
 
-- Design authored contracts for components, provided/required interfaces,
-  permitted dependencies, nested contracts, and testcase obligations. Composition
-  must check child connections and the parent's obligations as well as each
-  child's individual checks; passing children alone do not establish the parent.
-- Keep human intent separate from regenerated graphs and annotations. Define the
-  contract, projection, finding, and test-evidence interfaces before implementation;
-  no schema name, command spelling, or endpoint is introduced by this roadmap.
-  Existing graph round-tripping ignores unknown fields, so arbitrary top-level
-  graph fields cannot serve as persistent contract storage.
-- Bind components explicitly through stable symbols and documented selectors.
-  Make zero matches, ambiguous matches, and overlapping ownership visible. Retain
-  each input graph's revision, extraction options, and coverage boundaries. Scope
-  identity by source project and build configuration; matching relative paths and
-  symbol IDs in different projects do not establish a shared component.
-- Define deterministic reconciliation of overlapping entry views before combining
-  them. Deduplicate compatible shared evidence; surface conflicting symbol
-  records or build configurations instead of silently overwriting them. Preserve
-  witnesses back to the input graphs and source locations.
+### II.1 — Intent, composition, and component bindings (retired reference)
 
-**Acceptance gate:** a controlled Rust fixture binds and projects a nested
-architecture reproducibly. Empty, ambiguous, overlapping, and incompatible-input
-cases produce explicit diagnostics; equivalent input ordering yields the same
-projection. Two projects with the same relative symbol ID remain distinguishable.
-Parent/child connection and obligation examples are documented.
+**Retired from the active package on 2026-10-23.** The following describes the
+historical prototype, not a current API. Its
+[format reference and Rust tutorial](retired-toml-contracts.md#archived-source)
+are in the verified reference archive. No conformance evaluator or test-evidence
+ingestion was included.
 
-### II.2 — Structural conformance and explanations
+- Authored `hx-contract/1` TOML supplies named components, provided/required
+  logical interfaces, local reusable child files, explicit connections/exposures/
+  delegation, declared dependencies and qualified test obligations. Missing
+  includes, cycles, invalid wiring/types, duplicate names and unconnected child
+  requirements produce diagnostics. Parent and child obligations are retained
+  together; a future II.2 evaluator must not infer parent success from children.
+- Separate `hx-bindings/1` TOML names projects, configurations and saved graphs.
+  Exact IDs and project-relative file patterns bind qualified component instances;
+  provided interfaces bind directly owned symbols or explicitly expose child
+  ports. One direct owner per `(project, configuration, node ID)`; ancestors
+  aggregate descendants. Empty selectors, absent symbols, ownership overlaps,
+  duplicate declarations and foreign interface ownership are errors. Unassigned
+  observations remain visible.
+- Reconciliation compares shared known source/build observations and symbol
+  definitions. Entry/depth and observed-file subsets may differ: whole option and
+  input-set hashes are retained, not required to match. Conflicts, unstable inputs,
+  unreadable graphs and unsettled migrated identities quarantine a domain while
+  retaining available manifests. Unknown coverage/provenance remains unknown.
+- `hx.contracts` and `hx contract validate/project` expose deterministic reports,
+  text or JSON. `hx-projection/1` preserves authored intent, memberships, interfaces,
+  source witnesses, graph provenance, unresolved records, errors and evidence
+  limits. All inputs are read-only; optional output must be a new derived file.
+  Existing `hx/4`, annotations, MCP and viewer flows are unchanged.
+- The safe Rust fixture contains application → service → storage, two nested
+  instances of one cache contract, three ordinary Cargo tests, and a bypass entry
+  with a witnessed application → storage call. The bypass is projected, not yet
+  assigned a conformance verdict; Cargo outcomes are not ingested as evidence.
+
+**Historical acceptance:** the archived [unit tests](retired-toml-contracts.md#archived-source) cover composition,
+selectors, scoped identity, conflicting inputs, read-only output, schemas, and
+ordering. Archived [live tests](retired-toml-contracts.md#archived-source) execute the published
+Cargo/extraction/projection tutorial and reconcile overlapping Rust entry views.
+Equivalent declaration/observation order preserves the semantic projection;
+exact-byte input hashes change when authored or saved input bytes change.
+The archived installed-wheel smoke exercised those commands outside the checkout.
+Historical results remain in Current status and the dated log; current packaging
+instead verifies that the retired feature is absent.
+
+### II.1a — D2 boundary-port feasibility experiment (completed; gate failed)
+
+The [private harness](../d2_ports_experiment/README.md) keeps D2 v0.9.0 outside the
+production dependency/CLI surface. It uses unmodified ELK, Dagre, and TALA engines,
+plus native ELK zero horizontal padding. Hx measures SVG output and supplies code
+links; it never moves a pin or repairs a route. The small Python fixture records
+are an independent test oracle, not another architecture input format or parser.
+
+**Required demonstration:** multiple named inputs on left borders and outputs on
+right borders; wires reaching the correct visible pins with readable labels;
+nested imported/reused children with explicit exposure wires; actual clicks on
+block titles and port glyphs opening the expected code and signature. Pin centres
+and wire tips have a two-SVG-unit tolerance, independent of browser zoom. Table-row
+anchors are a comparison only and cannot satisfy the visible-pin requirement.
+
+**Observed result:** none of the four profiles passes all three cases at either
+100% or 150% zoom. Circle children remain inside containers; even zero-padding
+ELK leaves centres at least five units from their assigned borders. D2's native
+link icons obscure the ten-unit pin centres. Block-title links generally work;
+some nested/stress layouts also have endpoint and label problems. Original SVGs
+and exact per-case metrics are retained, without post-layout geometry changes.
+Profiles that fail the initial gate are not repeated; a future passing profile
+must also pass two further compilations with stable identities/topology.
+
+**Decision:** keep the TOML implementation and do not start a D2 migration from
+this result. Reconsider D2's role or evaluate another presentation approach in a
+separately scoped experiment. A port-aware renderer would change the selected
+pure-D2 constraint and is a future option, not an implemented workaround. These
+fixtures do not establish impossibility for every D2 encoding. Before any
+integration, a candidate must pass the same boundary-pin, exposure, label, click,
+and edit-stability gates. Parameter/return ports currently link to the owning
+function; exact token highlighting and semantic/dataflow claims remain outside
+the experiment.
+
+### II.1b — Hx/D2 interpretation and direct ELK layout (next experiment; unverified)
+
+D2 syntax is accepted for architecture authoring. First reuse upstream parsing
+and interpret architecture metadata in Hx for blocks, individually named ports,
+explicit connections, nested port exposures, and code bindings. Test direct ELK
+layout and Hx presentation rather than a D2 compiler fork.
+[ELK Layered](https://eclipse.dev/elk/reference/algorithms/org-eclipse-elk-layered.html)
+documents native ports, port constraints, and compound/cross-hierarchy layout;
+that motivates this candidate and does not establish feasibility for Hx.
+
+**Immediate acceptance:** demonstrate multiple named input/output boundary pins,
+explicit connections between those pins, nested exposure of individual child
+ports, distinct reused-instance identities, and working code links from blocks
+and ports. Opposite-flow scalar connections remain separate wires. Retain the
+two-SVG-unit geometry tolerance, 100%/150% zoom checks, edit-stress cases, and two
+further stability runs after an initial pass. Keep missing measurements or
+unresolved code targets explicit.
+Full criteria are in the [interface design note](architecture-contract-interface.md#next-experiment-hxd2-interpretation-and-direct-elk-layout).
+
+This relaxes the stock-D2-only geometry constraint for the new experiment.
+Preserve II.1a and its original artifacts/results; direct ELK gets separate
+evidence. Preserve the retired TOML implementation in its external archive and
+retain the earlier TOML dataflow proposal as a historical reference. D2 syntax is
+selected, but its implementation does not gain a projection backend from this
+retirement. Move bus/bundle definitions, wide ports/signals, bundle
+expansion, mixed-direction bundles, and child-bundle exposures to the
+[future plan](architecture-contract-interface.md#future-plan-buses-and-wide-ports);
+they are not initial acceptance gates. Type compatibility,
+required-connection obligations, behavioral validation, and
+testcase generation remain deferred. This amendment implements documentation
+only and does not select a production renderer or migrate authored contracts.
+
+<a id="ii2-structural-conformance-and-explanations"></a>
+
+### II.2 — Structural conformance and explanations (deferred)
+
+Future D2 implementation bindings and component projection are not implemented.
+The retired prototype is a reference for later evidence handling, not an active
+backend on which these checks can run.
 
 - Evaluate supported interface and dependency obligations against the component
   projection. Begin with required relationships, permitted/prohibited dependencies,
@@ -232,7 +412,9 @@ results. An empty unresolved list must not turn a coverage gap into a satisfied
 absence-based obligation. Repeated evaluation is deterministic and read-only
 with respect to authored intent and saved graphs.
 
-### II.3 — Compiled native-test evidence
+<a id="ii3-compiled-native-test-evidence"></a>
+
+### II.3 — Compiled native-test evidence (deferred)
 
 - Build and run the project's native tests, beginning with Cargo tests in the
   controlled Rust fixture. Link named test obligations to selected test results;
@@ -258,7 +440,12 @@ tests, build failure, unavailable tools, timeouts, zero selected/only ignored
 tests, and stale source/contract/configuration evidence. Matching results link to
 their obligations without altering structural verdicts or human review marks.
 
-### II.4 — Review integration and production acceptance
+<a id="ii4-review-integration-and-production-acceptance"></a>
+
+### II.4 — Review integration and production acceptance (deferred)
+
+Resume this conformance/test-evidence integration only after an explicit scope
+decision. A future presentation integration has its own preceding gate above.
 
 - Expose the same conformance findings and native-test evidence through CLI,
   viewer, standalone export, and MCP. Support component navigation, source
@@ -280,6 +467,17 @@ The existing strict suite, strict docs build, and installed-wheel smoke stay gre
 
 ## Deferred work and continuing boundaries
 
+- **Buses and wide ports:** defer bus/bundle definitions, width/vector/lane
+  handling, width-labelled wide signals, bundle collapse/expansion,
+  mixed-direction bundle roles, and parent exposure of complete child bundles.
+  Start with individually named ports and explicit wires. The
+  [future interface plan](architecture-contract-interface.md#future-plan-buses-and-wide-ports)
+  retains the wide-signal, expandable-bundle, mixed-direction-handshake-bundle,
+  and nested-bundle demonstrations with code links for a later phase.
+- **Contractual semantics:** further type compatibility and required-connection
+  checks, behavioral obligations, conformance evaluation, native-test evidence
+  ingestion, and testcase generation are deferred. The retired TOML prototype is
+  reference material only; the D2 experiment introduces no new verdicts.
 - **HSPICE/Spectre:** defer syntax support until the relevant tools are available.
   Preserve the native SPICE/ngspice/Xyce scope and independent oracle boundaries
   in the [dialect matrix](netlist-dialect-matrix.md). Numeric model-bin selection,
@@ -302,6 +500,12 @@ The existing strict suite, strict docs build, and installed-wheel smoke stay gre
 6. **Human-owned data lives apart from generated data.** `graph.json` vs `annotations.json`.
 
 ## Risks / mitigations
+- **D2 boundary ports do not qualify** → preserve measured failures and original
+  SVGs; archive the retired TOML prototype and require a new candidate to pass
+  the presentation gate
+  before migration. Test the explicit Hx/D2 interpretation and direct ELK path
+  separately; no hidden repairs of the original D2 output or table-anchor
+  substitutions. Direct ELK support is documented upstream, not yet verified here.
 - **Cross-compiler flags break libclang** → `--target` + sysroot auto-detect, `--extra-arg` escape hatch, per-TU error list in `meta.tu_errors`.
 - **Macro-heavy register code** → macro spans + spelled args; `kind: macro` edges.
 - **Large repos** → per-TU cache + multiprocessing + depth/max-nodes limits.
@@ -555,7 +759,7 @@ runtime reservation is retained here as history, not a Phase II prerequisite.
 ## Status log
 
 <details>
-<summary>Dated implementation, validation, and planning record (2026-10-09–2026-10-21)</summary>
+<summary>Dated implementation, validation, and planning record (2026-10-09–2026-10-23)</summary>
 <ul>
 <li><strong>2026-10-09</strong> — Plan approved. Phase 1 implemented and verified (30 tests; cJSON, libuv smoke). Additions vs. original plan: top-level <code>globals{}</code> table, edge kind <code>ref</code>, operator kinds via libclang C API. Viewer tech adjusted from "TypeScript via esbuild" to vanilla ES modules + vendored libraries so there is no build step.</li>
 <li><strong>2026-10-09</strong> — Phase 2 done. <code>hx serve</code> (FastAPI + uvicorn, lifespan watcher polling graph/annotations mtimes, SSE), <code>hx export</code>, <code>hx/annotations.py</code> (merge patch, recursive prune), viewer in <code>hx/viewer/</code> (vanilla JS, Cytoscape 3.34.3 + dagre 0.8.5 vendored). 42 tests (SSE tests run a real uvicorn thread because Starlette's TestClient buffers whole responses). Verified with headless Chrome screenshots in light and dark mode, console clean. Viewer extras beyond plan: <code>?theme=</code>, <code>?live=0</code>, caller side in tree, per-reason unresolved groups, global read/write panel, edge detail page.</li>
@@ -579,5 +783,11 @@ runtime reservation is retained here as history, not a Phase II prerequisite.
 <li><strong>2026-10-18</strong> — Typora folding correction. The preceding revision verified GFM rendering in Chromium, which did not verify Typora live preview. Typora splits HTML blocks at blank lines and leaves Markdown inside them unparsed. Converted the ten folded bodies to continuous HTML with rendered headings, lists, links, and code blocks; code newlines are represented as HTML entities to preserve their displayed whitespace without splitting the containing block. Historical content and heading identifiers are retained; folded sections are now edited as HTML. The current baseline and Phase II roadmap remain Markdown. Validation: all ten folded bodies opened and closed in the installed Typora 1.14.9 using a temporary document and isolated profile/display; browser comparison preserved historical text, heading identifiers, links, and code whitespace, and strict MkDocs passed. The existing editor session was left untouched and the isolated test editor was closed. No full-suite, coverage, or production-acceptance rerun was needed for this document-format correction.</li>
 <li><strong>2026-10-21</strong> — Repository review and Phase II readiness amendment. Reviewed clean checkout <code>fa9e712</code>, whose changes since implementation baseline <code>39202cf</code> are documentation-only. Strict suite: <strong>417 passed in 195.67 s, no skips</strong>, with <code>HX_REQUIRE_TOOLS=1 HX_REQUIRE_VENDOR_TOOLS=xyce,xdm</code> and virtualenv/Cargo tools on PATH; all five Node viewer unit tests and strict MkDocs passed. All 22 explicit dialect-matrix test references resolved. Temporary-workspace probes reproduced a Rust callback omitted from both edges and unresolved records, missed Rust toolchain/Cargo configuration creation in default watching, malformed annotation JSON returning HTTP 500, graph deletion without a watcher event, and incorrect splitting of a drive-qualified entry without a symbol. Non-object annotation PUT clears notes as explicitly documented; stricter validation is recorded as a compatibility proposal. Added the R1–R7 register with evidence, priorities, status, remedies, and acceptance criteria; corrected the unconditional unresolved-call claim and ngspice contributor policy. The user selected a readiness gate: contract design may proceed, while conformance acceptance requires R1–R4 checks. Expanded the roadmap with project/configuration-scoped identity, coverage-aware verdicts, and native-test selection, timeout, and freshness cases. This amendment changes documentation only; implementation findings remain open. Historical reports and dated text are retained; coverage, installed-wheel smoke, and production acceptance were not rerun. Amendment validation: strict MkDocs and seven documentation/reference and simulator-free tutorial tests passed (six toolchain/oracle tests deselected); all local links/fragments and previous heading anchors resolved. Nine folds and every historical status entry were preserved byte-for-byte; all ten folds remain continuous HTML. The updated status-log fold opened and closed in installed Typora using a temporary document and isolated profile/display.</li>
 <li><strong>2026-10-21</strong> — Phase II.0 readiness foundation implemented in the working tree, pending a user commit. R2–R5 have code and regression coverage: shared Rust configuration candidates cover ancestors, Cargo home, legacy spellings and missing files, are captured before LSP startup, and remain watched with restricted source paths and before a first successful extraction; malformed annotation JSON returns 400 without writes/revisions/events; drive-qualified entries require a symbol separator; server creation/deletion events drive an unavailable viewer state that preserves graph identity and queued notes, recovers on recreation, and rejects stale graph/source/history/diff responses. Annotation refresh also tolerates server revision resets. R1 adds sorted optional <code>meta.evidence_limits</code> with <code>entry-view-only</code> and LSP <code>lsp-call-omissions</code>; empty/absent limits do not establish completeness. hx/4, hx-ann/1, symbol IDs and documented non-object annotation PUT normalization remain compatible. Final strict suite: <strong>451 passed in 169.92 s, no skips</strong>, with <code>HX_REQUIRE_TOOLS=1 HX_REQUIRE_VENDOR_TOOLS=xyce,xdm</code> and virtualenv/Cargo tools on PATH. All five Node tests and strict MkDocs passed. The installed-wheel smoke passed from an unrelated directory with package-data checks and netlist, Xyce and Rust extractions. One preliminary run had 449 passes and one failure in the new rapid-edit watch test because the edit could retain its timestamp; the test now sets a distinct timestamp explicitly. Coverage and the full production Codex corpus were not rerun. All ten SSOT folds retain continuous HTML; nine historical folds, all 20 HEAD status entries and the preceding review amendment are preserved, 34 previous heading anchors remain, and all 24 local links/fragments resolve. The updated status-log fold opened and closed in installed Typora using a temporary document and isolated profile/display. Verification logs and small reports are in <code>~/hx-review-artifacts/hierx-0.5/readiness-20261021-PRGGPo/</code>. R1 evaluator safeguards remain open for II.2; R6 remains a separate compatibility proposal. The next implementation stage is II.1 intent/composition/bindings on a controlled Rust fixture, with native compiled-test evidence in II.3.</li>
+<li><strong>2026-10-21</strong> — Phase II.1 intent/composition/bindings implemented in the working tree, pending a user commit. The preceding readiness foundation is now committed as <code>1302535</code>; R2–R5 are closed with its recorded 451-test acceptance, while R1 evaluator safeguards remain open for II.2 and R6 remains a compatibility proposal. Added reusable local <code>hx-contract/1</code> TOML, separate <code>hx-bindings/1</code> TOML, the <code>hx.contracts</code> Python API, <code>hx contract validate/project</code>, and versioned <code>hx-projection/1</code> reports. Composition validates qualified instances, port types, child wiring/exposure/delegation, cycles and duplicates. Scoped bindings enforce direct ownership and parent aggregation. Projection reconciles shared known build/source observations without requiring equal whole-view option/input hashes; conflicting or unsettled evidence is quarantined, unknown provenance stays explicit, and relationships retain source witnesses. Authored inputs, graphs and annotations remain read-only; output requires a new derived file. No architectural verdict, native-test evidence ingestion, MCP or viewer integration is added. A safe Rust fixture reuses two cache contracts, passes three Cargo tests, and projects both application → service → storage and a deliberate application → storage bypass. Final strict suite: <strong>508 passed in 178.59 s, no skips</strong>, with <code>HX_REQUIRE_TOOLS=1 HX_REQUIRE_VENDOR_TOOLS=xyce,xdm</code>. All five Node tests, strict MkDocs and installed-wheel smoke passed, including 13 package-data files, four vendored libraries, the new schemas and both contract commands outside the checkout. Regression coverage includes malformed inputs, composition, empty/overlapping/foreign bindings, scoped identity, conflicting revisions/build settings/symbols, unknown or incomplete evidence, immutable inputs, equivalent-order semantics, legacy Rust migration, and live overlapping entry views. Exact-byte input hashes intentionally change when input bytes change. SSOT history and heading anchors are preserved; all ten folds remain continuous HTML. Small reports and logs are retained at <code>~/hx-review-artifacts/hierx-0.5/contracts-20261021-xet9w4vz/</code>; temporary build environments are rebuildable. Coverage and full Codex production acceptance were not rerun. Next: II.2 structural conformance with explicit coverage-aware results; II.3 native-test evidence binding follows.</li>
+<li><strong>2026-10-22</strong> — D2 boundary-port feasibility experiment implemented privately under <code>dev/d2_ports_experiment/</code>. Revised direction: retain a small Hx model of blocks, named input/output ports, and connections while investigating D2 authoring/presentation; defer further contractual meaning, type/required-connection checks, behavioral obligations, native-test evidence ingestion, and testcase generation. Existing TOML commands and projection behavior remain in place. Official unmodified D2 v0.9.0, verified against the release asset digest, supplies all geometry; Hx only measures SVG and supplies navigation metadata. ELK/default, Dagre/default, TALA/default, and ELK/zero-padding each compile flat, nested imported/reused-child, and editing-stress cases. All <strong>12 renders / 24 zoom views fail</strong> the visible boundary-pin gate; no profile qualifies. Pin centres remain inside containers, including a minimum five-unit distance for zero-padding ELK against the two-unit tolerance. Native link icons obscure all pin centres; <strong>62 of 64 block-title clicks</strong> reach the expected Hx function/signature/source, with Dagre nested-label overlap obstructing the other two. Some nested/stress cases also fail endpoint or label checks. Three native table-row controls compile but cannot qualify as visible pins. No layout repairs, fallback renderer, production D2 API/dependency, or TOML migration is added. Result exit 1 records a completed negative experiment, with zero unresolved bindings or measurement errors; passing profiles alone would trigger two further stability runs. Verification: <strong>72 focused tests passed in 9.81 s</strong> (13 private oracle/browser, 56 existing contracts, three documentation-reference tests), strict MkDocs passed, and the separate Rust fixture passed two Cargo tests. Mutation tests reject displaced/missing pins, wrong endpoints, missing exposure, overlapped labels, broken targets, unmeasurable markers, and a cancelled actual browser click. Reports, original SVGs, measurements, screenshots, native-test logs, versions and hashes are retained at <code>~/hx-review-artifacts/hierx-0.5/d2-ports-20261022-l9_xc0uu/</code>; disposable tools/builds are removed. Decision: keep TOML, reconsider D2's role or another presentation approach before a separately scoped integration experiment, and retain II.2–II.4 as deferred designs. This result does not prove every possible D2 encoding fails. All ten SSOT folds retain continuous HTML; nine historical folds, previous dated entries, heading anchors and local links are preserved or resolve. The final status fold was opened and closed in isolated Typora. No new full-suite, installed-wheel, coverage, or production Codex acceptance measurement is claimed.</li>
+<li><strong>2026-10-23</strong> — Architecture contract interface direction documented in <a href="architecture-contract-interface.md">architecture-contract-interface.md</a> beside this SSOT. Retain TOML authoring and add an explicit design for named inputs/outputs whose arrows represent data or signal flow. The note distinguishes existing <code>provides</code>/<code>requires</code> service connections from proposed dataflow ports, illustrates producer/consumer composition with structured <code>from</code>/<code>to</code> connections, and retains quoted arrow strings as optional future shorthand. Boundary pins, readable wire labels, nested exposures, reused instance identities, and code navigation remain presentation requirements; renderer selection is separate. Proposed examples are not accepted <code>hx-contract/1</code> syntax. Existing service contracts and validation retain their meaning; further semantic checks and testcase generation remain deferred. Updated the current direction and roadmap links while retaining D2 findings and historical verification dates. This documentation change adds no parser, schema, CLI, or viewer behavior. Strict MkDocs passed; all five TOML fragments parse, the current connection matches the fixture, and the proposed endpoint and shorthand examples agree. Small documentation and editor-verification reports are retained at <code>~/hx-review-artifacts/hierx-0.5/contract-interface-20261023-783itglu/</code>.</li>
+<li><strong>2026-10-23</strong> — Hx/D2 interpretation and direct ELK experiment direction recorded in this SSOT and the <a href="architecture-contract-interface.md#next-experiment-hxd2-interpretation-and-direct-elk-layout">interface design note</a>. First reuse existing D2 syntax/parsing with Hx architecture interpretation rather than maintaining a D2 compiler fork, then test direct ELK layout and Hx presentation. This explicitly relaxes the earlier stock-D2-only geometry constraint. Four required demonstrations are a width-labelled wide signal, expandable bundle, forward data/valid with reverse ready, and nested child-bundle exposure, all with boundary pins and working code links. Retain the two-unit geometry, zoom, edit-stress, and repeat-stability gates. Upstream ELK capabilities motivate the candidate; no direct-ELK feasibility result is claimed. The completed stock-D2 section, original failures/artifacts, and prior dated entries remain unchanged. Implemented TOML contracts/commands remain available, the earlier TOML dataflow examples remain a reference, and type compatibility, behavioral validation, and testcase generation stay deferred. This amendment changes repository documentation only; it adds no parser, renderer, schema migration, or public API. Strict MkDocs and local link/anchor/example checks passed. Small reports and editor-verification evidence are retained at <code>~/hx-review-artifacts/hierx-0.5/d2-elk-direction-20261023-cvg91jmt/</code>.</li>
+<li><strong>2026-10-23</strong> — D2 syntax accepted for new Hx architecture sketches, with upstream parsing and an Hx interpretation layer rather than a compiler fork. Updated this SSOT and the <a href="architecture-contract-interface.md">interface design</a> to distinguish the accepted authoring decision from unimplemented parser integration and unverified direct ELK rendering. Immediate scope is blocks, individually named input/output boundary ports, explicit wires, nested individual-port exposures, and code navigation. Bus/bundle definitions, wide ports/signals, width/vector/lane handling, bundle expansion, mixed-direction bundles, and complete child-bundle exposures move to the <a href="architecture-contract-interface.md#future-plan-buses-and-wide-ports">future plan</a>; the reduced ordinary-port scope supersedes the preceding four-case proposal for immediate acceptance. Independent scalar connections may still run in opposite directions. The earlier bus/width demonstrations remain future acceptance requirements. Implemented TOML contracts/commands, historical examples, stock-D2 results, and prior dated entries remain intact. This decision changes documentation only; it adds no parser, renderer, public API, or automatic migration. Further semantic validation and testcase generation remain deferred. Strict MkDocs passed; documentation and editor checks are recorded at <code>~/hx-review-artifacts/hierx-0.5/d2-syntax-decision-20261023-dkchdgaf/</code>.</li>
+<li><strong>2026-10-23</strong> — Retired the uncommitted Phase II.1 TOML contract feature after verifying a reference archive containing source, schemas, fixtures, tests, integration files, and all original acceptance reports. The <a href="retired-toml-contracts.md">retirement index</a> records its checksum, manifest, baseline commit, and separate-checkout restoration instructions. Removed the loader/projection API, <code>hx contract</code> commands, three schemas, 25 feature files, and associated public docs, example preparation, and positive packaging checks. Preserved projection unchanged in the archive, without extracting a generic backend. Committed extraction/provenance/evidence-limit/viewer foundations and D2 experiment files remain unchanged; shared graph-reader edits are documentation-only, and TOML project configuration remains supported. All 26 prior dated entries and stock-D2 results are retained. Verification: <strong>451 remaining strict tests passed in 170.41 s, no skips</strong>, with required tools and Xyce/XDM; 57 feature-specific tests were archived/removed. All <strong>13 private D2 oracle/browser tests passed in 9.14 s</strong>, and strict MkDocs passed. A clean installed wheel passed outside-checkout netlist/Xyce/Rust smoke, contained ten data files and four vendored libraries, omitted the retired package/schemas, and rejected the old command with usage exit 2. Small current reports are retained beside the archive at <code>~/hx-review-artifacts/hierx-0.5/toml-contracts-retired-20261023T232122Z/</code>. Original acceptance reports remain byte-identical; coverage and production Codex acceptance were not rerun. D2 syntax remains selected, its interpretation/rendering remains unimplemented, and buses/wide ports remain deferred. Changes are uncommitted.</li>
 </ul>
 </details>
