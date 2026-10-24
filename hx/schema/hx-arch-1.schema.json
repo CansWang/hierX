@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://hierx.dev/schema/hx-arch-1.schema.json",
+  "title": "Hx authored architecture document",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "valid", "blocks", "ports", "connections", "bindings", "inputs", "diagnostics", "tools"],
+  "properties": {
+    "schema": {"const": "hx-arch/1"},
+    "valid": {"type": "boolean"},
+    "blocks": {"type": "array", "items": {"allOf": [
+      {"$ref": "#/$defs/object"},
+      {"type": "object", "required": ["parent"], "properties": {"parent": {"type": ["string", "null"]}}}
+    ], "unevaluatedProperties": false}},
+    "ports": {"type": "array", "items": {"allOf": [
+      {"$ref": "#/$defs/object"},
+      {"type": "object", "required": ["block", "direction"], "properties": {"block": {"type": "string"}, "direction": {"enum": ["in", "out"]}}}
+    ], "unevaluatedProperties": false}},
+    "connections": {"type": "array", "items": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "source", "target", "label", "kind", "sources"],
+      "properties": {"id": {"type": "string"}, "source": {"type": "string"}, "target": {"type": "string"}, "label": {"type": "string"}, "kind": {"enum": ["wire", "exposure"]}, "sources": {"$ref": "#/$defs/sources"}}
+    }},
+    "bindings": {"type": "object", "additionalProperties": {
+      "type": "object", "additionalProperties": false, "required": ["symbol", "status"],
+      "properties": {"symbol": {"type": "string"}, "status": {"enum": ["resolved", "unresolved"]}, "signature": {"type": "string"}, "loc": {"type": ["object", "null"]}}
+    }},
+    "inputs": {"type": "array", "items": {
+      "type": "object", "additionalProperties": false, "required": ["file", "sha256"],
+      "properties": {"file": {"type": "string"}, "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}, "kind": {"const": "code-graph"}}
+    }},
+    "diagnostics": {"type": "array", "items": {
+      "type": "object", "additionalProperties": false, "required": ["code", "subject", "message", "severity", "sources"],
+      "properties": {"code": {"type": "string"}, "subject": {"type": "string"}, "message": {"type": "string"}, "severity": {"enum": ["error", "warning"]}, "sources": {"$ref": "#/$defs/sources"}}
+    }},
+    "tools": {"type": "object", "additionalProperties": false, "required": ["d2_version", "d2_commit", "bridge_protocol"],
+      "properties": {"d2_version": {"type": "string"}, "d2_commit": {"type": "string"}, "bridge_protocol": {"type": "string"}}},
+    "code_urls": {"type": "object", "additionalProperties": {"type": "string"}}
+  },
+  "$defs": {
+    "sources": {"type": "array", "items": {"type": "object", "additionalProperties": false,
+      "properties": {"file": {"type": "string"}, "line": {"type": "integer", "minimum": 1}, "column": {"type": "integer", "minimum": 1}, "end_line": {"type": "integer", "minimum": 1}, "end_column": {"type": "integer", "minimum": 1}}}},
+    "object": {"type": "object", "required": ["id", "path", "label", "sources"],
+      "properties": {"id": {"type": "string"}, "path": {"type": "array", "minItems": 1, "items": {"type": "string"}}, "label": {"type": "string"}, "sources": {"$ref": "#/$defs/sources"}}}
+  }
+}

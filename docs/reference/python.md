@@ -49,6 +49,19 @@ the shared loaders before comparison so schema and value normalization apply.
     options:
       members: [build_html, export_file]
 
+## Authored architecture
+
+Architecture intent uses D2 and a separate `hx-arch/1` derived document.
+`load_architecture` invokes the optional upstream compiler bridge, then interprets
+ordinary ports/connections and optionally resolves code navigation against one
+saved graph. It does not evaluate conformance. See [architecture](architecture.md).
+
+::: hx.architecture.load_architecture
+
+::: hx.architecture.ArchitectureDocument
+
+::: hx.architecture.ArchitectureError
+
 ## Project lifecycle
 
 These operations read or write project state under `ROOT/.hx`. `track` replaces

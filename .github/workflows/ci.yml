@@ -36,6 +36,15 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.27.3"
+          cache-dependency-path: dev/d2_bridge/go.sum
+      - name: pinned upstream D2 bridge (explicit optional-tool setup)
+        run: |
+          bash dev/scripts/setup_d2_bridge.sh
+          cd dev/d2_bridge
+          go test ./...
       - name: toolchains (verilator, clang, ngspice, rust-analyzer)
         run: |
           sudo apt-get update
@@ -58,7 +67,7 @@ jobs:
           hx migrate --help
           python -c "import hx.project, hx.mcp_server, hx.diff, hx.graphio, hx.values"
           pyright --version
-      - name: installed-wheel smoke test outside the checkout (package data, netlist and Xyce extraction, queries, export)
+      - name: installed-wheel smoke test outside the checkout (netlist, Xyce, Rust and D2 architecture)
         run: PYTHON=python dev/scripts/wheel_smoke.sh "$RUNNER_TEMP/hx-wheel-smoke"
       - name: developer dependencies (+ Playwright and its Chromium for the browser tests)
         run: |

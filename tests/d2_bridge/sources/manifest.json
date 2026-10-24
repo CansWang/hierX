@@ -1,0 +1,155 @@
+{
+  "description": "Pinned source slices for authored D2 presentation examples, not independently buildable applications.",
+  "repositories": {
+    "codex": {
+      "url": "https://github.com/openai/codex",
+      "revision": "221e4e7c05386d06aa7b91da2a9b04f7f2bd921f",
+      "files": [
+        {
+          "file": "codex/utils/absolute-path/src/lib.rs",
+          "upstream_path": "codex-rs/utils/absolute-path/src/lib.rs",
+          "sha256": "8fc65bf5cf5e5c64d3ec946d2a6bbfd9f0d00f20bf2eaad16e286dcacd4528d7",
+          "kind": "source"
+        },
+        {
+          "file": "codex/utils/absolute-path/src/absolutize.rs",
+          "upstream_path": "codex-rs/utils/absolute-path/src/absolutize.rs",
+          "sha256": "7a2c95d410b8503c2a26e37715bc403bd31496fcead7cdc4d95dc8e96ced77a7",
+          "kind": "source"
+        },
+        {
+          "file": "codex/file-search/src/lib.rs",
+          "upstream_path": "codex-rs/file-search/src/lib.rs",
+          "sha256": "f60d465950ae874852cc8ea808dfda6ed5a29e8a59b8f3d0b055d7da46e637a3",
+          "kind": "source"
+        },
+        {
+          "file": "codex/LICENSE",
+          "upstream_path": "LICENSE",
+          "sha256": "d17f227e4df5da1600391338865ce0f3055211760a36688f816941d58232d8dc",
+          "kind": "license"
+        },
+        {
+          "file": "codex/NOTICE",
+          "upstream_path": "NOTICE",
+          "sha256": "9d71575ecfd9a843fc1677b0efb08053c6ba9fd686a0de1a6f5382fd3c220915",
+          "kind": "license"
+        }
+      ]
+    },
+    "ffmpeg": {
+      "url": "https://github.com/FFmpeg/FFmpeg",
+      "revision": "ba987fe24d6713c4d4b3a15cebaeca18c41fbd31",
+      "files": [
+        {
+          "file": "ffmpeg/libavformat/demux.c",
+          "upstream_path": "libavformat/demux.c",
+          "sha256": "00ff386c7c9b24aab2128015e0b3a90c5088e457b2c10ee8a20f9656c7da2b5c",
+          "kind": "source"
+        },
+        {
+          "file": "ffmpeg/libavformat/mux.c",
+          "upstream_path": "libavformat/mux.c",
+          "sha256": "369c43a9996c8d7dd938671e82aa7db45e9f59a1e76fa53f9dfdcdf03810c500",
+          "kind": "source"
+        },
+        {
+          "file": "ffmpeg/libavcodec/decode.c",
+          "upstream_path": "libavcodec/decode.c",
+          "sha256": "a78fc6173e07e38ac8579f32b19f3b6a6bb4dfed8dfacc0432b30179389246cb",
+          "kind": "source"
+        },
+        {
+          "file": "ffmpeg/libavcodec/avcodec.c",
+          "upstream_path": "libavcodec/avcodec.c",
+          "sha256": "5bebe4d4010551e723ba4a95e8995c2d5b1a1c553d91e35dcf43e88696b883f7",
+          "kind": "source"
+        },
+        {
+          "file": "ffmpeg/libavcodec/encode.c",
+          "upstream_path": "libavcodec/encode.c",
+          "sha256": "f721d395c960fbbda2f2dbee67097113556ecbf7361f288b7751db900f86fc14",
+          "kind": "source"
+        },
+        {
+          "file": "ffmpeg/libavfilter/buffersrc.c",
+          "upstream_path": "libavfilter/buffersrc.c",
+          "sha256": "a319b84e49f9f9a87280cb54d92df99ed5ececd09212932dc69b6e5c60bc7aa7",
+          "kind": "source"
+        },
+        {
+          "file": "ffmpeg/libavfilter/buffersink.c",
+          "upstream_path": "libavfilter/buffersink.c",
+          "sha256": "c49edfa0f374b7103e6ffa057ec89a54a3ec9cdfdac51fb1beaab8a3b5bd80c9",
+          "kind": "source"
+        },
+        {
+          "file": "ffmpeg/COPYING.LGPLv2.1",
+          "upstream_path": "COPYING.LGPLv2.1",
+          "sha256": "246041b6ecf9bc32d718a62c57877c78b5eb397b6467e74ed7ae2626ab189c30",
+          "kind": "license"
+        },
+        {
+          "file": "ffmpeg/COPYING.LGPLv3",
+          "upstream_path": "COPYING.LGPLv3",
+          "sha256": "da7eabb7bafdf7d3ae5e9f223aa5bdc1eece45ac569dc21b3b037520b4464768",
+          "kind": "license"
+        },
+        {
+          "file": "ffmpeg/COPYING.GPLv2",
+          "upstream_path": "COPYING.GPLv2",
+          "sha256": "8177f97513213526df2cf6184d8ff986c675afb514d4e68a404010521b880643",
+          "kind": "license"
+        },
+        {
+          "file": "ffmpeg/COPYING.GPLv3",
+          "upstream_path": "COPYING.GPLv3",
+          "sha256": "8ceb4b9ee5adedde47b31e975c1d90c73ad27b6b165a1dcd80c7c545eb65b903",
+          "kind": "license"
+        }
+      ]
+    },
+    "hierx": {
+      "url": "https://github.com/CansWang/hierX",
+      "revision": "2e54a843138830df4afce07474567f1a8bbfff0e",
+      "files": [
+        {
+          "file": "hierx/hx/api.py",
+          "upstream_path": "hx/api.py",
+          "sha256": "e3453b8df9cc48461af3e80e49a463ee29548e90954bbeb98b8db05f1c574068",
+          "kind": "source"
+        },
+        {
+          "file": "hierx/hx/traverse.py",
+          "upstream_path": "hx/traverse.py",
+          "sha256": "c217e588a2cbe1f99df36e7c6f6a5b77e587b644c06b77f43b93de7eebce28df",
+          "kind": "source"
+        },
+        {
+          "file": "hierx/hx/project.py",
+          "upstream_path": "hx/project.py",
+          "sha256": "afd11b2d5ae0a0f4d12ff56787e1b2feae045fbb5edeac92e7878f4577aea78c",
+          "kind": "source"
+        },
+        {
+          "file": "hierx/hx/graphio.py",
+          "upstream_path": "hx/graphio.py",
+          "sha256": "ad94e977a4439c166cbce1f07f1c0e5cec7eb0d8877f49f084c361840d8d541f",
+          "kind": "source"
+        },
+        {
+          "file": "hierx/hx/export.py",
+          "upstream_path": "hx/export.py",
+          "sha256": "8f3edae22959ac3d0d09eb7f0dba5b462332589239db8247b2db933b6088e024",
+          "kind": "source"
+        },
+        {
+          "file": "hierx/LICENSE",
+          "upstream_path": "LICENSE",
+          "sha256": "07e3218efd67f7b71b4d0bcb93016bff3bb824c002d1d18b0672c2669881ded5",
+          "kind": "license"
+        }
+      ]
+    }
+  }
+}

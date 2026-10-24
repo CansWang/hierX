@@ -22,8 +22,9 @@ Phase II roadmap remain ordinary Markdown.
 - **Direction.** Accept D2 syntax for new architecture sketches, interpreted by
   Hx using upstream parsing rather than a D2 compiler fork. Start with blocks,
   individually named input/output ports, explicit connections, nested exposures,
-  and code navigation. Direct ELK rendering remains unverified; the failed stock-D2
-  results remain historical evidence. TOML contract commands/APIs have been
+  and code navigation. The ordinary-port profile now passes controlled direct-ELK
+  presentation/navigation gates and is exposed through `hx arch inspect/serve/export`.
+  The failed stock-D2 results remain historical evidence. TOML contract commands/APIs have been
   withdrawn; their source and acceptance evidence remain in the reference archive.
   [Buses, wide ports, and bundle expansion](#deferred-work-and-continuing-boundaries)
   move to future work. The [interface design](architecture-contract-interface.md)
@@ -36,10 +37,12 @@ Phase II roadmap remain ordinary Markdown.
 
 ## Current status (2026-10-23)
 
-The committed baseline is **`1302535`**, which contains the verified Phase II.0
-readiness foundation. The uncommitted Phase II.1 TOML intent/composition/bindings
-prototype has been removed from the active package after a verified reference
-snapshot; see the [retirement index](retired-toml-contracts.md). The package remains
+The committed baseline is **`2e54a84`**, which retains the verified Phase II.0
+readiness foundation and retires the TOML prototype after a verified reference
+snapshot; see the [retirement index](retired-toml-contracts.md). The uncommitted
+Phase II.1b implements ordinary-port D2 authoring, interpretation, direct ELK
+presentation and dedicated architecture commands after its controlled gate passed.
+The package remains
 **0.5.0**, graph
 schema **hx/4**, and annotation schema **hx-ann/1**. The [README](../../README.md) and
 [tutorials/API references](../../docs/index.md) describe the implemented interface.
@@ -58,7 +61,7 @@ annotation JSON parsing, drive-entry validation, and graph availability handling
 | Annotations | Human-owned notes, tags, parameter overrides, source-hash review marks, shared managed storage, and guarded legacy import. |
 | Viewer and change review | Source/type navigation, browser workflow tests, live reload, standalone export, structural diff, circuit net highlighting, definition/model navigation, and dedicated circuit changes. |
 | Queries and automation | CLI and Python interfaces, HTTP service, MCP queries, tracking, polling watch, hooks, and saved-graph net/uses queries. |
-| Architecture authoring experiment | Private D2 v0.9.0 fixtures, independent boundary-pin/route/label checks, and real code-navigation clicks. None of the four tested engine/profiles qualifies; no migration or production D2 API is implemented. |
+| Architecture authoring and presentation | `hx arch inspect/serve/export`, upstream D2 v0.9.0 helper, ordinary boundary ports/wires/exposures, imported reuse, exact navigation links and offline HTML through direct elkjs 0.12.0; 24 controlled combinations pass. Five pinned Codex/FFmpeg/Hx sketches add 60 measured views and 684 genuine code clicks. Original stock-D2 profiles still fail their historical gate. |
 | Hardening and distribution | Rust identity/token fixes, pinned Codex acceptance runner, independent syn audit, ngspice/Xyce/XDM checks, deterministic fake-simulator failures, migration tests, and isolated installed-wheel smoke in CI. |
 
 The pre-implementation 2026-10-21 review ran:
@@ -120,6 +123,43 @@ Shared graph-reader behavior and the D2 experiment are unchanged. No new coverag
 or production Codex acceptance measurement is claimed. The
 [retirement index](retired-toml-contracts.md) identifies the verified source/report
 archive and separate current verification logs.
+
+**D2 integration verification (2026-10-23):** **488 strict tests passed in
+185.84 s, no skips**, with required tools and Xyce/XDM enabled. The final
+architecture-focused checks passed **37 tests in 14.92 s**, including source
+ranges and protocol validation under optimized Python. All **13 original private
+D2 oracle/browser tests**, **five Node tests**, the Go bridge tests and strict
+MkDocs passed. Controlled presentation acceptance passed **24 combinations and
+288 genuine code clicks**. A clean installed wheel passed outside-checkout
+netlist/Xyce/Rust/D2 smoke with 15 required data files, four vendored JavaScript
+libraries and their attribution files; the retired TOML feature remains absent.
+Reports and tool/source hashes are retained at
+`~/hx-review-artifacts/hierx-0.5/d2-integration-20261024T001707Z/`.
+No new coverage or production Codex acceptance measurement is claimed.
+
+**D2 setup amendment (2026-10-23):** explicit bridge setup now installs verified
+Go 1.27.3 under `~/.local/lib/go1.27.3` when no compatible Go 1.27+ is available.
+The SDK remains installed, with a printed PATH command for interactive use;
+system Go and shell profiles are unchanged. SDK reuse, `--go-dir`, opt-out through
+`--no-bootstrap`, checksum rejection and atomic helper replacement are covered.
+**51 focused checks passed with no skips**, including 18 installer tests, plus
+Go tests and strict MkDocs. Actual missing-Go installation/build and cached-SDK
+reuse passed; the rebuilt helper is byte-identical to the prior verified binary.
+Reports: `~/hx-review-artifacts/hierx-0.5/d2-go-bootstrap-20261024T010316Z/`.
+The full suite, wheel and presentation matrix were not rerun for this setup-only
+amendment.
+
+**Repository example verification (2026-10-23):** **529 strict tests passed in
+197.34 s, no skips**, including 23 new source-snapshot/gallery checks. The five
+Codex/FFmpeg/Hx examples separately passed **60 measured views and 684 genuine
+source clicks**. Strict MkDocs, cached-SDK bridge setup, offline exports and a
+named missing-Chromium failure also passed. The local
+[guide and findings](../../tests/d2_bridge/README.md) distinguish authored intent,
+declaration navigation and optional native extraction. Detailed current reports
+are under `tests/d2_bridge/.generated/reports/`; generated visual assets remain
+ignored. Native port-label spacing was corrected after the fitted-view probe
+exposed a label touching its pin; both fitted and actual-size views are now gated.
+No new coverage, wheel or whole-repository Codex measurement is claimed.
 
 <details>
 <summary>Implemented storage, annotations, and verification workflow</summary>
@@ -202,26 +242,25 @@ concept separate from contractual meaning. **D2 syntax is selected for new
 architecture sketches.** Reuse upstream D2 parsing with an Hx interpretation
 layer rather than maintaining a D2 compiler fork. Begin with ordinary,
 individually named ports and connections; defer buses, wide ports/signals, and
-bundle expansion. The next experiment tests direct ELK layout with native ports
-and hierarchy. Interpretation/parser integration and rendering remain
-unimplemented and unverified, while the authoring syntax decision is accepted.
+bundle expansion. Direct ELK layout with native ports and hierarchy now passes
+the controlled ordinary-port presentation/navigation gate, with dedicated
+preview/export commands.
 This deliberately relaxes the earlier requirement that stock D2 produce all
 geometry.
 
 The separate [interface design note](architecture-contract-interface.md) explains
-the current service-interface model, the new experiment and its acceptance
+the retired service-interface model, the implemented D2 profile and its acceptance
 criteria, future bus/width support, and the retained earlier TOML input/output
 proposal. Arrows between dataflow ports describe data or signal flow. This
-amendment records the syntax decision and scope; parser integration, rendering,
-public APIs, and migration remain unimplemented.
+implementation retains the staged scope; automatic migration remains unimplemented.
 
 The experimental TOML contract model, loader, bindings, projection, and commands
 have been withdrawn from the active package. The
 [reference snapshot](retired-toml-contracts.md) preserves their source, tests,
 schemas, documentation, and original acceptance reports. Projection's useful
 evidence-reconciliation ideas remain coupled to the old model in that snapshot;
-no generic backend has been extracted. D2 bindings and migration are not
-implemented. Conformance evaluation, native-test evidence binding, and generated
+no generic backend has been extracted. D2 navigation bindings are implemented;
+component ownership/projection and migration are not. Conformance evaluation, native-test evidence binding, and generated
 testcases remain deferred.
 This **Phase II** is a new development stage; the historical **Phase 2** below
 is the completed viewer/server milestone.
@@ -235,9 +274,9 @@ Source + build configuration → existing hx graphs and source viewer
 
 The first experiment uses a separate safe Rust fixture and the existing source
 viewer. Native tests keep that example executable; they are not architectural
-test evidence. Its failed stock-D2 results remain unchanged below. The next
-experiment tests ordinary named ports, explicit wires, nested individual-port
-exposures, and code links. Bus/bundle and width-specific handling move to future
+test evidence. Its failed stock-D2 results remain unchanged below. The separate
+Hx/D2 experiment passed ordinary named ports, explicit wires, nested individual-port
+exposures, and code links. Bus/bundle and width-specific handling stay in future
 work. Extend to production examples only after a candidate passes the controlled
 presentation and navigation gates. Continue existing
 frontend and circuit regression coverage. The earlier conformance/test-evidence
@@ -350,15 +389,54 @@ and edit-stability gates. Parameter/return ports currently link to the owning
 function; exact token highlighting and semantic/dataflow claims remain outside
 the experiment.
 
-### II.1b — Hx/D2 interpretation and direct ELK layout (next experiment; unverified)
+### II.1b — Hx/D2 interpretation and direct ELK layout (implemented; controlled gate passed)
 
-D2 syntax is accepted for architecture authoring. First reuse upstream parsing
-and interpret architecture metadata in Hx for blocks, individually named ports,
-explicit connections, nested port exposures, and code bindings. Test direct ELK
-layout and Hx presentation rather than a D2 compiler fork.
+<a id="ii1b-hxd2-interpretation-and-direct-elk-layout-next-experiment-unverified"></a>
+
+D2 syntax is accepted and implemented for ordinary-port architecture authoring.
+A thin optional Go bridge calls unmodified D2 v0.9.0 compilation; Hx interprets
+blocks, individually named ports, explicit connections/exposures and navigation
+bindings, then presents native-port elkjs 0.12.0 layout. No compiler fork is used.
 [ELK Layered](https://eclipse.dev/elk/reference/algorithms/org-eclipse-elk-layered.html)
 documents native ports, port constraints, and compound/cross-hierarchy layout;
-that motivates this candidate and does not establish feasibility for Hx.
+that motivated the candidate; its controlled Hx gate now supplies measured evidence.
+
+**Delivered:** `hx arch inspect` returns a summary or derived `hx-arch/1` JSON;
+`hx arch serve` opens a dedicated preview and optional existing source viewer;
+`hx arch export` embeds diagram/runtime assets in standalone HTML. Saved code
+graphs are explicit inputs. Export code links need an explicit viewer URL and do
+not embed source. Explicit setup uses compatible Go 1.27+ or installs a verified,
+persistent user-local Go 1.27.3 SDK before building the helper; `--no-bootstrap`
+disables SDK installation. Runtime commands perform no downloads. Architecture
+data and layout remain separate from `hx/4`/annotations.
+
+**Controlled result:** flat, nested imported/reused-child, stress/fan-out and
+opposite-flow scalar cases passed all 24 combinations (three layouts and two
+zooms per case), including independent geometry checks and real source/signature
+clicks. Reports and original SVGs are in
+`~/hx-review-artifacts/hierx-0.5/d2-integration-20261024T001707Z/`.
+This is controlled presentation acceptance, not a production Codex measurement.
+
+**Repository examples:** [five runnable sketches](../../tests/d2_bridge/README.md)
+cover Codex path resolution and asynchronous search, FFmpeg transcoding and
+reused audio/video paths, and Hx extraction/persistence/review. Small pinned
+source slices retain licenses and hashes. A locally rebased declaration catalog
+supports every block/port link through one gallery/source server without building
+the upstream applications. It contains no invented call edges and explicitly
+omits relationships; declaration precision does not qualify the authored wires.
+The examples passed **60 measured views and 684 actual source clicks**, with
+three layouts and 100%/150% zoom per case. Their local README documents setup,
+editing, exports, optional native extraction and checks. Generated visual assets
+stay ignored; [compact findings](../../tests/d2_bridge/FINDINGS.md) are retained
+alongside the examples. Wide fitted
+views require zoom/pan for individual labels. These bounded views do not establish
+whole-repository architecture coverage, scale limits, or conformance.
+
+**Extension seams:** keep the D2 adapter, interpreter, authored document,
+navigation resolver, ELK graph adapter and SVG presenter independent. Future bus/
+bundle normalization can precede layout and preserve member identities through
+expanded views. These are internal boundaries, not accepted width/bus syntax,
+placeholder fields or a public plugin framework. Unknown Hx roles fail explicitly.
 
 **Immediate acceptance:** demonstrate multiple named input/output boundary pins,
 explicit connections between those pins, nested exposure of individual child
@@ -373,20 +451,21 @@ This relaxes the stock-D2-only geometry constraint for the new experiment.
 Preserve II.1a and its original artifacts/results; direct ELK gets separate
 evidence. Preserve the retired TOML implementation in its external archive and
 retain the earlier TOML dataflow proposal as a historical reference. D2 syntax is
-selected, but its implementation does not gain a projection backend from this
+implemented, but navigation links do not supply a projection backend from this
 retirement. Move bus/bundle definitions, wide ports/signals, bundle
 expansion, mixed-direction bundles, and child-bundle exposures to the
 [future plan](architecture-contract-interface.md#future-plan-buses-and-wide-ports);
 they are not initial acceptance gates. Type compatibility,
 required-connection obligations, behavioral validation, and
-testcase generation remain deferred. This amendment implements documentation
-only and does not select a production renderer or migrate authored contracts.
+testcase generation remain deferred. The ordinary-port renderer qualifies on the
+controlled cases; broader production acceptance and authored-contract migration
+remain separate work.
 
 <a id="ii2-structural-conformance-and-explanations"></a>
 
 ### II.2 — Structural conformance and explanations (deferred)
 
-Future D2 implementation bindings and component projection are not implemented.
+Future D2 ownership/implementation bindings and component projection are not implemented.
 The retired prototype is a reference for later evidence handling, not an active
 backend on which these checks can run.
 
@@ -500,12 +579,12 @@ The existing strict suite, strict docs build, and installed-wheel smoke stay gre
 6. **Human-owned data lives apart from generated data.** `graph.json` vs `annotations.json`.
 
 ## Risks / mitigations
-- **D2 boundary ports do not qualify** → preserve measured failures and original
-  SVGs; archive the retired TOML prototype and require a new candidate to pass
-  the presentation gate
-  before migration. Test the explicit Hx/D2 interpretation and direct ELK path
-  separately; no hidden repairs of the original D2 output or table-anchor
-  substitutions. Direct ELK support is documented upstream, not yet verified here.
+- **Controlled D2/ELK acceptance is not production-scale acceptance** → preserve
+  original stock-D2 failures and separate passing Hx/ELK evidence. Pinned Codex,
+  FFmpeg and Hx sketches add bounded presentation coverage, not whole-program
+  extraction or architecture validation. Add larger cases before broader claims;
+  keep boundary-pin, label, endpoint, code-click and edit-stability gates for each
+  extension. Wide fit views need zoom/pan. Buses/widths stay deferred.
 - **Cross-compiler flags break libclang** → `--target` + sysroot auto-detect, `--extra-arg` escape hatch, per-TU error list in `meta.tu_errors`.
 - **Macro-heavy register code** → macro spans + spelled args; `kind: macro` edges.
 - **Large repos** → per-TU cache + multiprocessing + depth/max-nodes limits.
@@ -789,5 +868,8 @@ runtime reservation is retained here as history, not a Phase II prerequisite.
 <li><strong>2026-10-23</strong> — Hx/D2 interpretation and direct ELK experiment direction recorded in this SSOT and the <a href="architecture-contract-interface.md#next-experiment-hxd2-interpretation-and-direct-elk-layout">interface design note</a>. First reuse existing D2 syntax/parsing with Hx architecture interpretation rather than maintaining a D2 compiler fork, then test direct ELK layout and Hx presentation. This explicitly relaxes the earlier stock-D2-only geometry constraint. Four required demonstrations are a width-labelled wide signal, expandable bundle, forward data/valid with reverse ready, and nested child-bundle exposure, all with boundary pins and working code links. Retain the two-unit geometry, zoom, edit-stress, and repeat-stability gates. Upstream ELK capabilities motivate the candidate; no direct-ELK feasibility result is claimed. The completed stock-D2 section, original failures/artifacts, and prior dated entries remain unchanged. Implemented TOML contracts/commands remain available, the earlier TOML dataflow examples remain a reference, and type compatibility, behavioral validation, and testcase generation stay deferred. This amendment changes repository documentation only; it adds no parser, renderer, schema migration, or public API. Strict MkDocs and local link/anchor/example checks passed. Small reports and editor-verification evidence are retained at <code>~/hx-review-artifacts/hierx-0.5/d2-elk-direction-20261023-cvg91jmt/</code>.</li>
 <li><strong>2026-10-23</strong> — D2 syntax accepted for new Hx architecture sketches, with upstream parsing and an Hx interpretation layer rather than a compiler fork. Updated this SSOT and the <a href="architecture-contract-interface.md">interface design</a> to distinguish the accepted authoring decision from unimplemented parser integration and unverified direct ELK rendering. Immediate scope is blocks, individually named input/output boundary ports, explicit wires, nested individual-port exposures, and code navigation. Bus/bundle definitions, wide ports/signals, width/vector/lane handling, bundle expansion, mixed-direction bundles, and complete child-bundle exposures move to the <a href="architecture-contract-interface.md#future-plan-buses-and-wide-ports">future plan</a>; the reduced ordinary-port scope supersedes the preceding four-case proposal for immediate acceptance. Independent scalar connections may still run in opposite directions. The earlier bus/width demonstrations remain future acceptance requirements. Implemented TOML contracts/commands, historical examples, stock-D2 results, and prior dated entries remain intact. This decision changes documentation only; it adds no parser, renderer, public API, or automatic migration. Further semantic validation and testcase generation remain deferred. Strict MkDocs passed; documentation and editor checks are recorded at <code>~/hx-review-artifacts/hierx-0.5/d2-syntax-decision-20261023-dkchdgaf/</code>.</li>
 <li><strong>2026-10-23</strong> — Retired the uncommitted Phase II.1 TOML contract feature after verifying a reference archive containing source, schemas, fixtures, tests, integration files, and all original acceptance reports. The <a href="retired-toml-contracts.md">retirement index</a> records its checksum, manifest, baseline commit, and separate-checkout restoration instructions. Removed the loader/projection API, <code>hx contract</code> commands, three schemas, 25 feature files, and associated public docs, example preparation, and positive packaging checks. Preserved projection unchanged in the archive, without extracting a generic backend. Committed extraction/provenance/evidence-limit/viewer foundations and D2 experiment files remain unchanged; shared graph-reader edits are documentation-only, and TOML project configuration remains supported. All 26 prior dated entries and stock-D2 results are retained. Verification: <strong>451 remaining strict tests passed in 170.41 s, no skips</strong>, with required tools and Xyce/XDM; 57 feature-specific tests were archived/removed. All <strong>13 private D2 oracle/browser tests passed in 9.14 s</strong>, and strict MkDocs passed. A clean installed wheel passed outside-checkout netlist/Xyce/Rust smoke, contained ten data files and four vendored libraries, omitted the retired package/schemas, and rejected the old command with usage exit 2. Small current reports are retained beside the archive at <code>~/hx-review-artifacts/hierx-0.5/toml-contracts-retired-20261023T232122Z/</code>. Original acceptance reports remain byte-identical; coverage and production Codex acceptance were not rerun. D2 syntax remains selected, its interpretation/rendering remains unimplemented, and buses/wide ports remain deferred. Changes are uncommitted.</li>
+<li><strong>2026-10-23</strong> — Implemented Phase II.1b D2 architecture authoring after the separate direct-ELK gate passed: 24 case/zoom/repeat combinations and 288 genuine code clicks cover ordinary boundary ports, explicit wires/exposures, nested imported reuse, stress/fan-out and reverse-flow scalar connections. Added the optional pinned upstream compiler bridge, separate <code>hx-arch/1</code> data/schema, dedicated <code>hx arch inspect/serve/export</code>, offline diagram assets and exact navigation links into the existing source viewer. Parser, interpretation, navigation, layout and presentation remain internal extension seams; no bus/width syntax or contractual verdicts are added. All 27 prior dated entries, stock-D2 files/results, extraction/viewer foundations and the retired TOML archive are preserved. Verification: <strong>488 strict tests passed in 185.84 s, no skips</strong>; 37 final architecture checks, 13 original private D2 tests, five Node tests, Go tests, strict MkDocs and clean installed-wheel netlist/Xyce/Rust/D2 smoke passed. Source ranges and optimized-Python protocol checks are covered. Reports, original SVGs, screenshots, input/tool hashes and findings are retained at <code>~/hx-review-artifacts/hierx-0.5/d2-integration-20261024T001707Z/</code>. Buses, bundles, conformance/test evidence and testcase generation remain deferred. Coverage and production Codex acceptance were not rerun. Changes are uncommitted.</li>
+<li><strong>2026-10-23</strong> — Corrected D2 bridge setup to handle its Go prerequisite. Explicit setup now reuses Go 1.27+ or downloads SHA-256-verified Go 1.27.3 into a persistent user-local SDK directory, then atomically installs the version-checked bridge. Added <code>--go-dir</code> and <code>--no-bootstrap</code>; system Go and shell profiles are unchanged, and runtime commands still never fetch tools. Documented why the thin Go adapter calls the upstream compiler while Hx interpretation remains Python and presentation remains JavaScript. Verification: <strong>51 focused tests passed, no skips</strong>, including 18 installer cases; actual missing-Go installation/build, cached-SDK reuse, Go tests, architecture smoke and strict MkDocs passed. The rebuilt helper is byte-identical to the previously verified binary. All 28 prior dated entries and original D2/TOML evidence are retained. Small reports are at <code>~/hx-review-artifacts/hierx-0.5/d2-go-bootstrap-20261024T010316Z/</code>. The full suite, wheel and presentation matrix were not rerun for this setup-only amendment. Changes are uncommitted.</li>
+<li><strong>2026-10-23</strong> — Added five runnable repository-based D2 sketches under <code>tests/d2_bridge/</code>: Codex path resolution and asynchronous search, FFmpeg transcoding and reused audio/video paths, and Hx extraction/persistence/review. Bundled 15 pinned source files and seven license/notice files (635,882 bytes), plus 35 genuine declaration records for a locally rebased navigation-only catalog. Every block and port has an explicit source target; authored arrows do not become extracted call edges. The local wrapper/README cover setup with Go bootstrap, inspection, one-process gallery/individual previews, editing, offline/live-link export, browser checks and cleanup. Generated HTML, screenshots and geometry remain ignored; compact findings are retained beside the examples. Verification: <strong>529 strict tests passed in 197.34 s, no skips</strong>, including the 23 new regression checks; <strong>60 measured views and 684 genuine source clicks passed</strong> across three layouts and 100%/150% zoom, retaining the existing two-unit tolerance. Cached-SDK bridge setup and strict MkDocs also passed. Relocation, negative source/binding/topology checks, local annotation/history placement, foreground server lifecycle, multilingual source text and offline/live exports are covered. Final fitted-view captures caught a label touching its pin under font hinting; the native ELK adapter now requests eight units of horizontal label/port spacing, and both fitted and actual-scale views are measured without relaxing tolerances. Wide fit views require zoom/pan. These bounded authored views do not qualify whole-repository architectures or contractual meaning; buses/bundles remain deferred. Prior dated entries, stock-D2 evidence, earlier Hx/ELK acceptance and the retired TOML archive are preserved. Changes are uncommitted.</li>
 </ul>
 </details>

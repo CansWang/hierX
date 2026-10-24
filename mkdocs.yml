@@ -49,6 +49,7 @@ nav:
   - Reference:
       - CLI: reference/cli.md
       - Python API: reference/python.md
+      - D2 architecture: reference/architecture.md
       - Graph format: reference/graph.md
       - Annotations: reference/annotations.md
       - Project configuration: reference/configuration.md

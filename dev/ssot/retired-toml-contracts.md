@@ -1,9 +1,9 @@
 # Retired TOML contract reference
 
 **Retired: 2026-10-23.** The experimental Phase II.1 TOML contract feature has
-been withdrawn from the active package. D2 syntax is selected for future
-architecture sketches; its Hx interpretation and direct ELK presentation remain
-unimplemented and unverified. See the [interface design](architecture-contract-interface.md)
+been withdrawn from the active package. At retirement, D2 syntax was selected
+while its Hx interpretation and direct ELK presentation were unimplemented.
+For subsequent ordinary-port implementation and acceptance, see the [interface design](architecture-contract-interface.md)
 and [current SSOT](single-source-of-truth.md).
 
 The retired `hx.contracts` API, `hx contract validate/project` commands, three

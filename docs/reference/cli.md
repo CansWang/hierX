@@ -50,6 +50,9 @@ source lookup. See [graph selection](configuration.md#find-a-graph-for-serve-or-
 | `mcp` | stdio protocol, or JSON configuration with `--print-config` | Long-running server; 2 for handled dependency/annotation initialization failures |
 | `netlist check` | Oracle report with `scope` and `dialect` lines; `--json` includes the rendered closure (ngspice) | 0 agree, 1 mismatch, 2 oracle unavailable (simulator missing, rejected the deck, printed no listing, or exceeded `--timeout`) or handled extraction failure |
 | `netlist net` / `netlist uses` | Read-only saved-graph queries; `--json` returns full records | 0 success, 2 missing/ambiguous item, invalid arguments or graph |
+| `arch inspect` | D2 interpretation summary or `hx-arch/1` JSON with `--json` | 0 valid profile, 1 invalid design/profile, 2 tool, graph or I/O failure |
+| `arch serve` | Dedicated architecture preview, default `127.0.0.1:8766/architecture` | Long-running; 1 invalid initial design, 2 handled initialization failure |
+| `arch export` | Standalone architecture HTML at required `-o` | 0 written, 1 invalid design, 2 handled tool, graph, URL or I/O failure |
 
 These are command-specific statuses, not a guarantee that every possible I/O
 exception is converted into a particular code. See
@@ -57,3 +60,7 @@ exception is converted into a particular code. See
 and [troubleshooting](../troubleshooting.md) for incomplete results.
 
 <!-- hx:cli -->
+
+Architecture commands use the D2 file's directory as their import root unless
+`--root` is supplied. Saved code graphs are explicit `--graph` inputs; no graph
+discovery or extraction is performed. See the [architecture guide](architecture.md).

@@ -1,3 +1,4 @@
 cytoscape 3.34.3 MIT
 dagre 0.8.5 MIT
 cytoscape-dagre 2.5.0 MIT
+elkjs 0.12.0 EPL-2.0 OR GPL-3.0-or-later; elk.bundled.js SHA256 1222e44f953ce7746af23801e723708f8e6f436b8b377a6a5fc7552f34a307b3

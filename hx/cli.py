@@ -161,6 +161,8 @@ def _build_parser() -> argparse.ArgumentParser:
     ex.add_argument("graph", nargs="?", help=_GRAPH_HELP)
     ex.add_argument("--annotations", help=_ANNOTATIONS_HELP)
     ex.add_argument("-o", "--output", help="output HTML (default: <graph dir>/view.html)")
+    from .architecture.cli import add_parser
+    add_parser(sub)
     return p
 
 
@@ -480,7 +482,7 @@ def cmd_extract(a: argparse.Namespace) -> int:
 
 def _resolve_project_args(a: argparse.Namespace) -> None:
     """Resolve CLI defaults once; leave programmatic roots and viewer overrides alone."""
-    if a.cmd in {"serve", "export"}:
+    if a.cmd in {"serve", "export", "arch"}:
         return
     entry_command = a.cmd in {"extract", "netlist", "diff"} or (a.cmd == "track" and not a.list)
     entries = a.entries if a.cmd == "update" else ([a.entry] if entry_command and getattr(a, "entry", None) else [])
@@ -527,6 +529,9 @@ def main(argv: list[str] | None = None) -> int:
         return 2
     if a.cmd == "extract":
         return cmd_extract(a)
+    if a.cmd == "arch":
+        from .architecture.cli import run
+        return run(a)
     if a.cmd == "serve":
         return cmd_serve(a)
     if a.cmd == "export":

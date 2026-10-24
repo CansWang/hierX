@@ -1,0 +1,35 @@
+# Authored architecture sketch, not inferred execution or a conformance contract.
+# Every block and port links to an owning declaration in the pinned source snapshot.
+
+demux: "Demux" {
+  link: "hx:c:ffmpeg/libavformat/demux.c::av_read_frame"
+  media: "media: input" {class: hx-input; link: "hx:c:ffmpeg/libavformat/demux.c::av_read_frame"}
+  packets: "packet: AVPacket" {class: hx-output; link: "hx:c:ffmpeg/libavformat/demux.c::av_read_frame"}
+}
+decode: "Decode" {
+  link: "hx:c:ffmpeg/libavcodec/decode.c::avcodec_send_packet"
+  packets: "packet: AVPacket" {class: hx-input; link: "hx:c:ffmpeg/libavcodec/decode.c::avcodec_send_packet"}
+  frames: "frame: AVFrame" {class: hx-output; link: "hx:c:ffmpeg/libavcodec/avcodec.c::avcodec_receive_frame"}
+  status: "status: int" {class: hx-output; link: "hx:c:ffmpeg/libavcodec/avcodec.c::avcodec_receive_frame"}
+}
+filter: "Filter" {
+  link: "hx:c:ffmpeg/libavfilter/buffersrc.c::av_buffersrc_add_frame_flags"
+  frames: "frame: AVFrame" {class: hx-input; link: "hx:c:ffmpeg/libavfilter/buffersrc.c::av_buffersrc_add_frame_flags"}
+  filtered: "frame: AVFrame" {class: hx-output; link: "hx:c:ffmpeg/libavfilter/buffersink.c::av_buffersink_get_frame"}
+}
+encode: "Encode" {
+  link: "hx:c:ffmpeg/libavcodec/encode.c::avcodec_send_frame"
+  frames: "frame: AVFrame" {class: hx-input; link: "hx:c:ffmpeg/libavcodec/encode.c::avcodec_send_frame"}
+  packets: "packet: AVPacket" {class: hx-output; link: "hx:c:ffmpeg/libavcodec/encode.c::avcodec_receive_packet"}
+  status: "status: int" {class: hx-output; link: "hx:c:ffmpeg/libavcodec/encode.c::avcodec_receive_packet"}
+}
+mux: "Mux" {
+  link: "hx:c:ffmpeg/libavformat/mux.c::av_interleaved_write_frame"
+  packets: "packet: AVPacket" {class: hx-input; link: "hx:c:ffmpeg/libavformat/mux.c::av_interleaved_write_frame"}
+  media: "media: output" {class: hx-output; link: "hx:c:ffmpeg/libavformat/mux.c::av_interleaved_write_frame"}
+  status: "status: int" {class: hx-output; link: "hx:c:ffmpeg/libavformat/mux.c::av_interleaved_write_frame"}
+}
+demux.packets -> decode.packets: "packet"
+decode.frames -> filter.frames: "frame"
+filter.filtered -> encode.frames: "filtered frame"
+encode.packets -> mux.packets: "encoded packet"

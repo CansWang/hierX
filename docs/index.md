@@ -13,6 +13,7 @@ Start with [installation](getting-started/install.md) and
 | Explore a circuit without installing a simulator | [Netlist quickstart](tutorials/netlists.md) |
 | Automate extraction and comparisons | [Python scripting tutorial](tutorials/python-api.md) |
 | Give an agent access to your graphs | [Agent integration](tutorials/agents.md) |
+| Sketch blocks, boundary ports and connections | [D2 architecture guide](reference/architecture.md) |
 | Use an HDL or language-server frontend | [SystemVerilog](guides/systemverilog.md), [Rust](guides/rust.md), [Python](guides/python.md) |
 
 ## Understand the workflow

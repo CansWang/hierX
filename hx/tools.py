@@ -1,4 +1,4 @@
-"""Optional external tools (simulators used ONLY as oracles; extraction never needs one). Every tool is listed in the
+"""Optional external tools (simulators are oracles; the D2 bridge compiles authored diagrams). Every tool is listed in the
 README's "Optional installations" table and resolved here, so a command that needs one and cannot find it fails with
 the tool's name, its install hint and the override flag."""
 from __future__ import annotations
@@ -25,6 +25,9 @@ class Tool:
 
 
 TOOLS: dict[str, Tool] = {t.key: t for t in (
+    Tool("d2_bridge", "Hx D2 bridge", "hx-d2-bridge", "D2 architecture interpretation",
+         "run bash dev/scripts/setup_d2_bridge.sh (installs user-local Go when needed)", "https://d2lang.com/tour/api/", "--d2-bridge",
+         ("~/.cache/hx/tools/bin/hx-d2-bridge",), "HX_TOOL_D2_BRIDGE"),
     Tool("ngspice", "ngspice", "ngspice", "the ngspice oracle (`hx netlist check --oracle ngspice`)",
          "sudo apt-get install -y ngspice", "https://ngspice.sourceforge.io/download.html", "--ngspice", (), "HX_TOOL_NGSPICE"),
     Tool("xyce", "Xyce", "Xyce", "the Xyce syntax/topology oracle", "download the installer or build from source",

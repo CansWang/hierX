@@ -1,0 +1,36 @@
+# Authored architecture sketch, not inferred execution or a conformance contract.
+# Every block and port links to an owning declaration in the pinned source snapshot.
+
+resolver: "Resolve path against base" {
+  link: "hx:rs:codex/utils/absolute-path/src/lib.rs::AbsolutePathBuf::resolve_path_against_base"
+  path: "path: Path" {class: hx-input; link: "hx:rs:codex/utils/absolute-path/src/lib.rs::AbsolutePathBuf::resolve_path_against_base"}
+  base: "base: Path" {class: hx-input; link: "hx:rs:codex/utils/absolute-path/src/lib.rs::AbsolutePathBuf::resolve_path_against_base"}
+  resolved: "absolute: PathBuf" {class: hx-output; link: "hx:rs:codex/utils/absolute-path/src/lib.rs::AbsolutePathBuf::resolve_path_against_base"}
+  expand: "Expand home" {
+    link: "hx:rs:codex/utils/absolute-path/src/lib.rs::AbsolutePathBuf::maybe_expand_home_directory"
+    path: "path: Path" {class: hx-input; link: "hx:rs:codex/utils/absolute-path/src/lib.rs::AbsolutePathBuf::maybe_expand_home_directory"}
+    normalized: "path: PathBuf" {class: hx-output; link: "hx:rs:codex/utils/absolute-path/src/lib.rs::AbsolutePathBuf::maybe_expand_home_directory"}
+  }
+  normalize_path: "Normalize path" {
+    link: "hx:rs:codex/utils/absolute-path/src/lib.rs::normalize_path_for_platform"
+    path: "path: Path" {class: hx-input; link: "hx:rs:codex/utils/absolute-path/src/lib.rs::normalize_path_for_platform"}
+    normalized: "path: PathBuf" {class: hx-output; link: "hx:rs:codex/utils/absolute-path/src/lib.rs::normalize_path_for_platform"}
+  }
+  normalize_base: "Normalize base" {
+    link: "hx:rs:codex/utils/absolute-path/src/lib.rs::normalize_path_for_platform"
+    path: "path: Path" {class: hx-input; link: "hx:rs:codex/utils/absolute-path/src/lib.rs::normalize_path_for_platform"}
+    normalized: "path: PathBuf" {class: hx-output; link: "hx:rs:codex/utils/absolute-path/src/lib.rs::normalize_path_for_platform"}
+  }
+  absolute: "Absolutize" {
+    link: "hx:rs:codex/utils/absolute-path/src/absolutize.rs::absolutize_from"
+    path: "path: Path" {class: hx-input; link: "hx:rs:codex/utils/absolute-path/src/absolutize.rs::absolutize_from"}
+    base: "base: Path" {class: hx-input; link: "hx:rs:codex/utils/absolute-path/src/absolutize.rs::absolutize_from"}
+    resolved: "absolute: PathBuf" {class: hx-output; link: "hx:rs:codex/utils/absolute-path/src/absolutize.rs::absolutize_from"}
+  }
+  path -> expand.path: "path" {class: hx-exposure}
+  base -> normalize_base.path: "base" {class: hx-exposure}
+  expand.normalized -> normalize_path.path: "expanded"
+  normalize_path.normalized -> absolute.path: "normalized"
+  normalize_base.normalized -> absolute.base: "base path"
+  absolute.resolved -> resolved: "absolute" {class: hx-exposure}
+}

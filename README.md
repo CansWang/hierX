@@ -64,11 +64,13 @@ commands below are Ubuntu/Debian examples; run `sudo apt-get update` first.
 | Standalone JavaScript tests (`node --test tests/js`) | `sudo apt-get install -y nodejs` |
 | Optional Clang LSP profile | `sudo apt-get install -y clangd` |
 | Experimental Go profile, with Go installed | `go install golang.org/x/tools/gopls@latest` |
+| D2 architecture authoring (optional helper; setup installs user-local Go when needed) | `bash dev/scripts/setup_d2_bridge.sh`; override with `--d2-bridge PATH` / `HX_TOOL_D2_BRIDGE` |
 
 For Rust, install [Rustup](https://rustup.rs/) if needed and load its shell
 environment with `. "$HOME/.cargo/env"` so `cargo`, `rustc` and `rust-analyzer`
 are on PATH. The [rust-analyzer instructions](https://rust-analyzer.github.io/book/installation.html)
-explain the standard-library source requirement. For Go, install the
+explain the standard-library source requirement. For the experimental Go extraction
+profile, install the
 [Go SDK](https://go.dev/doc/install) first and put `$(go env GOPATH)/bin` on
 PATH (or your configured `GOBIN`); see [gopls installation](https://go.dev/gopls/).
 The Go profile has no integration tests yet. A cross-compiled C/C++ project
@@ -82,6 +84,70 @@ navigation, note deletion through the DOM, wide parameter display); install its
 Chromium with `python -m playwright install chromium`. That installation is
 separate from Pyright's Node.js runtime. The JavaScript unit tests need a
 standalone `node` executable on PATH.
+
+### D2 architecture sketches
+
+Write blocks and connections in D2, marking boundary ports with `class: hx-input`
+or `class: hx-output`. Run `hx arch inspect design.d2`,
+`hx arch serve design.d2 --open`, or `hx arch export design.d2 -o design.html`.
+
+The optional bridge is Go because it calls D2's upstream compiler directly,
+preserving its import, class and identifier handling. Hx interpretation remains
+Python, and layout/presentation remains JavaScript through direct ELK. The Go SDK
+is needed to build the bridge; the compiled bridge runs independently of the SDK.
+
+From the checkout, with Python 3.10+ available, run:
+
+```bash
+bash dev/scripts/setup_d2_bridge.sh
+```
+
+Setup handles the Go prerequisite automatically:
+
+- Uses an existing compatible Go 1.27+ from PATH or the local SDK directory.
+- Otherwise downloads pinned Go 1.27.3, verifies its published SHA-256, and retains
+  it under `~/.local/lib/go1.27.3`. Automatic SDK installation supports Linux/macOS
+  on amd64/arm64.
+- Builds and version-checks `hx-d2-bridge`, then installs it at
+  `~/.cache/hx/tools/bin/hx-d2-bridge`. Hx automatically searches this location.
+
+Setup leaves system Go and shell profiles unchanged. To use the installed SDK's
+`go` command in your current terminal, run:
+
+```bash
+export PATH="$HOME/.local/lib/go1.27.3/bin:$PATH"
+go version
+```
+
+Add the export line to `~/.bashrc` for future Bash terminals. The setup script
+prints the appropriate PATH command for the compiler it selected.
+
+Use `--go-dir DIR` to select another fallback SDK directory, or `--no-bootstrap`
+to require an existing compatible compiler. An optional positional argument
+selects the bridge executable's output path:
+
+```bash
+bash dev/scripts/setup_d2_bridge.sh --no-bootstrap
+bash dev/scripts/setup_d2_bridge.sh --go-dir "$HOME/tools/go1.27.3"
+bash dev/scripts/setup_d2_bridge.sh "$HOME/.local/bin/hx-d2-bridge"
+```
+
+The explicit setup step may download the SDK and pinned Go modules; normal Hx
+commands never download tools. See the [architecture guide](docs/reference/architecture.md)
+for nested exposures, code links, exports and extension boundaries.
+
+Buses, widths, bundles and contractual validation remain deferred. These diagrams
+describe authored intent; arrows do not prove runtime dataflow.
+
+Try the [repository-based D2 examples](tests/d2_bridge/README.md) for Codex,
+FFmpeg and Hx, with boundary ports, nested imported blocks and clickable source
+links. From the checkout:
+
+```bash
+cd tests/d2_bridge
+./run.sh setup
+./run.sh gallery --open
+```
 
 ### Netlist integrations
 

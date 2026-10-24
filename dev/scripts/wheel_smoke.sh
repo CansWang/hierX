@@ -30,7 +30,8 @@ if not where.startswith(venv + os.sep):
     sys.exit(f"hx imported from {where}, not from the fresh venv {venv}")
 pkg = r.files("hx")
 need = ["netlist/xyce_devices.json", "schema/hx-1.schema.json", "schema/hx-2.schema.json", "schema/hx-3.schema.json",
-        "schema/hx-4.schema.json", "viewer/app.js", "viewer/circuit.js", "viewer/patch.js", "viewer/index.html", "viewer/style.css"]
+        "schema/hx-4.schema.json", "schema/hx-arch-1.schema.json", "viewer/app.js", "viewer/circuit.js", "viewer/patch.js", "viewer/index.html", "viewer/style.css",
+        "architecture/index.html", "architecture/diagram.js", "viewer/vendor/elk.bundled.js", "viewer/vendor/elk-LICENSE.md"]
 missing = [n for n in need if not pkg.joinpath(n).is_file()]
 vendor = [p.name for p in pkg.joinpath("viewer/vendor").iterdir()] if pkg.joinpath("viewer/vendor").is_dir() else []
 if missing or not vendor:
@@ -39,7 +40,7 @@ retired = ["contracts", "schema/hx-contract-1.schema.json", "schema/hx-bindings-
 leaked = [name for name in retired if pkg.joinpath(name).exists()]
 if leaked or importlib.util.find_spec("hx.contracts") is not None:
     sys.exit(f"retired TOML feature leaked into wheel: {leaked}")
-print("   ok:", len(need), "files +", len(vendor), "vendored viewer libraries, imported from", where)
+print("   ok:", len(need), "data files +", sum(n.endswith(".js") for n in vendor), "vendored libraries (", len(vendor), "vendor files), imported from", where)
 PY
 echo "== retired contract command is unavailable"
 if "$HX" contract --help >"$WORK/retired-command.log" 2>&1; then
@@ -73,4 +74,24 @@ if command -v rust-analyzer >/dev/null 2>&1 || [ -x "$HOME/.cargo/bin/rust-analy
 else
   echo "   (rust-analyzer absent: Rust extraction skipped)"
 fi
+echo "== D2 architecture from an unrelated directory"
+mkdir -p "$WORK/architecture"
+cat >"$WORK/architecture/design.d2" <<'D2'
+producer: {sample: u32 {class: hx-output}}
+consumer: {sample: u32 {class: hx-input}}
+producer.sample -> consumer.sample: sample
+D2
+cd "$WORK/architecture"
+"$HX" arch inspect design.d2 --json >"$WORK/architecture.json"
+"$HX" arch export design.d2 -o "$WORK/architecture.html" >/dev/null
+"$WORK/venv/bin/python" -I - "$WORK/architecture.json" "$WORK/architecture.html" <<'PY'
+import json, sys
+from pathlib import Path
+data = json.loads(Path(sys.argv[1]).read_text())
+assert data["schema"] == "hx-arch/1" and data["valid"]
+assert len(data["blocks"]) == 2 and len(data["ports"]) == 2 and len(data["connections"]) == 1
+html = Path(sys.argv[2]).read_text()
+assert "hx-elk-license" in html and "hxArchitecture" in html and "/static/" not in html
+print("   architecture inspection and offline HTML assets passed")
+PY
 echo "== wheel smoke passed: $WORK"

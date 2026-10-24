@@ -1,0 +1,24 @@
+# Authored architecture sketch, not inferred execution or a conformance contract.
+# Every block and port links to an owning declaration in the pinned source snapshot.
+
+demux: "Demux streams" {
+  link: "hx:c:ffmpeg/libavformat/demux.c::av_read_frame"
+  media: "media: input" {class: hx-input; link: "hx:c:ffmpeg/libavformat/demux.c::av_read_frame"}
+  audio: "audio packet" {class: hx-output; link: "hx:c:ffmpeg/libavformat/demux.c::av_read_frame"}
+  video: "video packet" {class: hx-output; link: "hx:c:ffmpeg/libavformat/demux.c::av_read_frame"}
+}
+audio: @../shared/codec-chain
+audio: "Audio path"
+video: @../shared/codec-chain
+video: "Video path"
+mux: "Mux streams" {
+  link: "hx:c:ffmpeg/libavformat/mux.c::av_interleaved_write_frame"
+  audio: "audio packet" {class: hx-input; link: "hx:c:ffmpeg/libavformat/mux.c::av_interleaved_write_frame"}
+  video: "video packet" {class: hx-input; link: "hx:c:ffmpeg/libavformat/mux.c::av_interleaved_write_frame"}
+  media: "media: output" {class: hx-output; link: "hx:c:ffmpeg/libavformat/mux.c::av_interleaved_write_frame"}
+  status: "status: int" {class: hx-output; link: "hx:c:ffmpeg/libavformat/mux.c::av_interleaved_write_frame"}
+}
+demux.audio -> audio.packet_in: "audio packet"
+demux.video -> video.packet_in: "video packet"
+audio.packet_out -> mux.audio: "audio output"
+video.packet_out -> mux.video: "video output"

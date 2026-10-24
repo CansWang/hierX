@@ -1,0 +1,964 @@
+{
+  "description": "Independent authored expectations for the production D2 interpreter and SVG measurements. Not an architecture input format.",
+  "examples": [
+    {
+      "id": "codex-paths",
+      "title": "Codex: path resolution",
+      "description": "Named inputs, a nested path resolver and two normalization instances bound to the same Rust declaration.",
+      "blocks": [
+        {
+          "id": "resolver",
+          "parent": null,
+          "symbol": "rs:codex/utils/absolute-path/src/lib.rs::AbsolutePathBuf::resolve_path_against_base"
+        },
+        {
+          "id": "resolver.expand",
+          "parent": "resolver",
+          "symbol": "rs:codex/utils/absolute-path/src/lib.rs::AbsolutePathBuf::maybe_expand_home_directory"
+        },
+        {
+          "id": "resolver.normalize_path",
+          "parent": "resolver",
+          "symbol": "rs:codex/utils/absolute-path/src/lib.rs::normalize_path_for_platform"
+        },
+        {
+          "id": "resolver.normalize_base",
+          "parent": "resolver",
+          "symbol": "rs:codex/utils/absolute-path/src/lib.rs::normalize_path_for_platform"
+        },
+        {
+          "id": "resolver.absolute",
+          "parent": "resolver",
+          "symbol": "rs:codex/utils/absolute-path/src/absolutize.rs::absolutize_from"
+        }
+      ],
+      "ports": [
+        {
+          "id": "resolver.path",
+          "block": "resolver",
+          "direction": "in",
+          "symbol": "rs:codex/utils/absolute-path/src/lib.rs::AbsolutePathBuf::resolve_path_against_base"
+        },
+        {
+          "id": "resolver.base",
+          "block": "resolver",
+          "direction": "in",
+          "symbol": "rs:codex/utils/absolute-path/src/lib.rs::AbsolutePathBuf::resolve_path_against_base"
+        },
+        {
+          "id": "resolver.resolved",
+          "block": "resolver",
+          "direction": "out",
+          "symbol": "rs:codex/utils/absolute-path/src/lib.rs::AbsolutePathBuf::resolve_path_against_base"
+        },
+        {
+          "id": "resolver.expand.path",
+          "block": "resolver.expand",
+          "direction": "in",
+          "symbol": "rs:codex/utils/absolute-path/src/lib.rs::AbsolutePathBuf::maybe_expand_home_directory"
+        },
+        {
+          "id": "resolver.expand.normalized",
+          "block": "resolver.expand",
+          "direction": "out",
+          "symbol": "rs:codex/utils/absolute-path/src/lib.rs::AbsolutePathBuf::maybe_expand_home_directory"
+        },
+        {
+          "id": "resolver.normalize_path.path",
+          "block": "resolver.normalize_path",
+          "direction": "in",
+          "symbol": "rs:codex/utils/absolute-path/src/lib.rs::normalize_path_for_platform"
+        },
+        {
+          "id": "resolver.normalize_path.normalized",
+          "block": "resolver.normalize_path",
+          "direction": "out",
+          "symbol": "rs:codex/utils/absolute-path/src/lib.rs::normalize_path_for_platform"
+        },
+        {
+          "id": "resolver.normalize_base.path",
+          "block": "resolver.normalize_base",
+          "direction": "in",
+          "symbol": "rs:codex/utils/absolute-path/src/lib.rs::normalize_path_for_platform"
+        },
+        {
+          "id": "resolver.normalize_base.normalized",
+          "block": "resolver.normalize_base",
+          "direction": "out",
+          "symbol": "rs:codex/utils/absolute-path/src/lib.rs::normalize_path_for_platform"
+        },
+        {
+          "id": "resolver.absolute.path",
+          "block": "resolver.absolute",
+          "direction": "in",
+          "symbol": "rs:codex/utils/absolute-path/src/absolutize.rs::absolutize_from"
+        },
+        {
+          "id": "resolver.absolute.base",
+          "block": "resolver.absolute",
+          "direction": "in",
+          "symbol": "rs:codex/utils/absolute-path/src/absolutize.rs::absolutize_from"
+        },
+        {
+          "id": "resolver.absolute.resolved",
+          "block": "resolver.absolute",
+          "direction": "out",
+          "symbol": "rs:codex/utils/absolute-path/src/absolutize.rs::absolutize_from"
+        }
+      ],
+      "connections": [
+        {
+          "source": "resolver.path",
+          "target": "resolver.expand.path",
+          "label": "path",
+          "kind": "exposure"
+        },
+        {
+          "source": "resolver.base",
+          "target": "resolver.normalize_base.path",
+          "label": "base",
+          "kind": "exposure"
+        },
+        {
+          "source": "resolver.expand.normalized",
+          "target": "resolver.normalize_path.path",
+          "label": "expanded",
+          "kind": "wire"
+        },
+        {
+          "source": "resolver.normalize_path.normalized",
+          "target": "resolver.absolute.path",
+          "label": "normalized",
+          "kind": "wire"
+        },
+        {
+          "source": "resolver.normalize_base.normalized",
+          "target": "resolver.absolute.base",
+          "label": "base path",
+          "kind": "wire"
+        },
+        {
+          "source": "resolver.absolute.resolved",
+          "target": "resolver.resolved",
+          "label": "absolute",
+          "kind": "exposure"
+        }
+      ]
+    },
+    {
+      "id": "codex-search",
+      "title": "Codex: asynchronous file search",
+      "description": "Nested walker/matcher workers, query and root inputs, result callbacks and an opposite-flow result connection.",
+      "blocks": [
+        {
+          "id": "client",
+          "parent": null,
+          "symbol": "rs:codex/file-search/src/lib.rs::run"
+        },
+        {
+          "id": "session",
+          "parent": null,
+          "symbol": "rs:codex/file-search/src/lib.rs::create_session"
+        },
+        {
+          "id": "session.walker",
+          "parent": "session",
+          "symbol": "rs:codex/file-search/src/lib.rs::walker_worker"
+        },
+        {
+          "id": "session.matcher",
+          "parent": "session",
+          "symbol": "rs:codex/file-search/src/lib.rs::matcher_worker"
+        },
+        {
+          "id": "reporter",
+          "parent": null,
+          "symbol": "rs:codex/file-search/src/lib.rs::RunReporter::wait_for_complete"
+        }
+      ],
+      "ports": [
+        {
+          "id": "client.query",
+          "block": "client",
+          "direction": "out",
+          "symbol": "rs:codex/file-search/src/lib.rs::FileSearchSession::update_query"
+        },
+        {
+          "id": "client.roots",
+          "block": "client",
+          "direction": "out",
+          "symbol": "rs:codex/file-search/src/lib.rs::create_session"
+        },
+        {
+          "id": "client.result",
+          "block": "client",
+          "direction": "in",
+          "symbol": "rs:codex/file-search/src/lib.rs::run"
+        },
+        {
+          "id": "session.query",
+          "block": "session",
+          "direction": "in",
+          "symbol": "rs:codex/file-search/src/lib.rs::FileSearchSession::update_query"
+        },
+        {
+          "id": "session.roots",
+          "block": "session",
+          "direction": "in",
+          "symbol": "rs:codex/file-search/src/lib.rs::create_session"
+        },
+        {
+          "id": "session.matches",
+          "block": "session",
+          "direction": "out",
+          "symbol": "rs:codex/file-search/src/lib.rs::matcher_worker"
+        },
+        {
+          "id": "session.done",
+          "block": "session",
+          "direction": "out",
+          "symbol": "rs:codex/file-search/src/lib.rs::SessionReporter::on_complete"
+        },
+        {
+          "id": "session.walker.roots",
+          "block": "session.walker",
+          "direction": "in",
+          "symbol": "rs:codex/file-search/src/lib.rs::walker_worker"
+        },
+        {
+          "id": "session.walker.paths",
+          "block": "session.walker",
+          "direction": "out",
+          "symbol": "rs:codex/file-search/src/lib.rs::walker_worker"
+        },
+        {
+          "id": "session.walker.done",
+          "block": "session.walker",
+          "direction": "out",
+          "symbol": "rs:codex/file-search/src/lib.rs::walker_worker"
+        },
+        {
+          "id": "session.matcher.query",
+          "block": "session.matcher",
+          "direction": "in",
+          "symbol": "rs:codex/file-search/src/lib.rs::matcher_worker"
+        },
+        {
+          "id": "session.matcher.paths",
+          "block": "session.matcher",
+          "direction": "in",
+          "symbol": "rs:codex/file-search/src/lib.rs::matcher_worker"
+        },
+        {
+          "id": "session.matcher.finished",
+          "block": "session.matcher",
+          "direction": "in",
+          "symbol": "rs:codex/file-search/src/lib.rs::matcher_worker"
+        },
+        {
+          "id": "session.matcher.matches",
+          "block": "session.matcher",
+          "direction": "out",
+          "symbol": "rs:codex/file-search/src/lib.rs::matcher_worker"
+        },
+        {
+          "id": "session.matcher.done",
+          "block": "session.matcher",
+          "direction": "out",
+          "symbol": "rs:codex/file-search/src/lib.rs::matcher_worker"
+        },
+        {
+          "id": "reporter.matches",
+          "block": "reporter",
+          "direction": "in",
+          "symbol": "rs:codex/file-search/src/lib.rs::RunReporter::wait_for_complete"
+        },
+        {
+          "id": "reporter.done",
+          "block": "reporter",
+          "direction": "in",
+          "symbol": "rs:codex/file-search/src/lib.rs::SessionReporter::on_complete"
+        },
+        {
+          "id": "reporter.result",
+          "block": "reporter",
+          "direction": "out",
+          "symbol": "rs:codex/file-search/src/lib.rs::RunReporter::wait_for_complete"
+        }
+      ],
+      "connections": [
+        {
+          "source": "session.query",
+          "target": "session.matcher.query",
+          "label": "query",
+          "kind": "exposure"
+        },
+        {
+          "source": "session.roots",
+          "target": "session.walker.roots",
+          "label": "roots",
+          "kind": "exposure"
+        },
+        {
+          "source": "session.walker.paths",
+          "target": "session.matcher.paths",
+          "label": "candidates",
+          "kind": "wire"
+        },
+        {
+          "source": "session.walker.done",
+          "target": "session.matcher.finished",
+          "label": "walk done",
+          "kind": "wire"
+        },
+        {
+          "source": "session.matcher.matches",
+          "target": "session.matches",
+          "label": "results",
+          "kind": "exposure"
+        },
+        {
+          "source": "session.matcher.done",
+          "target": "session.done",
+          "label": "complete",
+          "kind": "exposure"
+        },
+        {
+          "source": "client.query",
+          "target": "session.query",
+          "label": "query update",
+          "kind": "wire"
+        },
+        {
+          "source": "client.roots",
+          "target": "session.roots",
+          "label": "search roots",
+          "kind": "wire"
+        },
+        {
+          "source": "session.matches",
+          "target": "reporter.matches",
+          "label": "match update",
+          "kind": "wire"
+        },
+        {
+          "source": "session.done",
+          "target": "reporter.done",
+          "label": "complete",
+          "kind": "wire"
+        },
+        {
+          "source": "reporter.result",
+          "target": "client.result",
+          "label": "return matches",
+          "kind": "wire"
+        }
+      ]
+    },
+    {
+      "id": "ffmpeg-transcode",
+      "title": "FFmpeg: packet and frame pipeline",
+      "description": "A five-stage media pipeline with packet/frame/status ports linked to the corresponding send and receive API declarations.",
+      "blocks": [
+        {
+          "id": "demux",
+          "parent": null,
+          "symbol": "c:ffmpeg/libavformat/demux.c::av_read_frame"
+        },
+        {
+          "id": "decode",
+          "parent": null,
+          "symbol": "c:ffmpeg/libavcodec/decode.c::avcodec_send_packet"
+        },
+        {
+          "id": "filter",
+          "parent": null,
+          "symbol": "c:ffmpeg/libavfilter/buffersrc.c::av_buffersrc_add_frame_flags"
+        },
+        {
+          "id": "encode",
+          "parent": null,
+          "symbol": "c:ffmpeg/libavcodec/encode.c::avcodec_send_frame"
+        },
+        {
+          "id": "mux",
+          "parent": null,
+          "symbol": "c:ffmpeg/libavformat/mux.c::av_interleaved_write_frame"
+        }
+      ],
+      "ports": [
+        {
+          "id": "demux.media",
+          "block": "demux",
+          "direction": "in",
+          "symbol": "c:ffmpeg/libavformat/demux.c::av_read_frame"
+        },
+        {
+          "id": "demux.packets",
+          "block": "demux",
+          "direction": "out",
+          "symbol": "c:ffmpeg/libavformat/demux.c::av_read_frame"
+        },
+        {
+          "id": "decode.packets",
+          "block": "decode",
+          "direction": "in",
+          "symbol": "c:ffmpeg/libavcodec/decode.c::avcodec_send_packet"
+        },
+        {
+          "id": "decode.frames",
+          "block": "decode",
+          "direction": "out",
+          "symbol": "c:ffmpeg/libavcodec/avcodec.c::avcodec_receive_frame"
+        },
+        {
+          "id": "decode.status",
+          "block": "decode",
+          "direction": "out",
+          "symbol": "c:ffmpeg/libavcodec/avcodec.c::avcodec_receive_frame"
+        },
+        {
+          "id": "filter.frames",
+          "block": "filter",
+          "direction": "in",
+          "symbol": "c:ffmpeg/libavfilter/buffersrc.c::av_buffersrc_add_frame_flags"
+        },
+        {
+          "id": "filter.filtered",
+          "block": "filter",
+          "direction": "out",
+          "symbol": "c:ffmpeg/libavfilter/buffersink.c::av_buffersink_get_frame"
+        },
+        {
+          "id": "encode.frames",
+          "block": "encode",
+          "direction": "in",
+          "symbol": "c:ffmpeg/libavcodec/encode.c::avcodec_send_frame"
+        },
+        {
+          "id": "encode.packets",
+          "block": "encode",
+          "direction": "out",
+          "symbol": "c:ffmpeg/libavcodec/encode.c::avcodec_receive_packet"
+        },
+        {
+          "id": "encode.status",
+          "block": "encode",
+          "direction": "out",
+          "symbol": "c:ffmpeg/libavcodec/encode.c::avcodec_receive_packet"
+        },
+        {
+          "id": "mux.packets",
+          "block": "mux",
+          "direction": "in",
+          "symbol": "c:ffmpeg/libavformat/mux.c::av_interleaved_write_frame"
+        },
+        {
+          "id": "mux.media",
+          "block": "mux",
+          "direction": "out",
+          "symbol": "c:ffmpeg/libavformat/mux.c::av_interleaved_write_frame"
+        },
+        {
+          "id": "mux.status",
+          "block": "mux",
+          "direction": "out",
+          "symbol": "c:ffmpeg/libavformat/mux.c::av_interleaved_write_frame"
+        }
+      ],
+      "connections": [
+        {
+          "source": "demux.packets",
+          "target": "decode.packets",
+          "label": "packet",
+          "kind": "wire"
+        },
+        {
+          "source": "decode.frames",
+          "target": "filter.frames",
+          "label": "frame",
+          "kind": "wire"
+        },
+        {
+          "source": "filter.filtered",
+          "target": "encode.frames",
+          "label": "filtered frame",
+          "kind": "wire"
+        },
+        {
+          "source": "encode.packets",
+          "target": "mux.packets",
+          "label": "encoded packet",
+          "kind": "wire"
+        }
+      ]
+    },
+    {
+      "id": "ffmpeg-av-reuse",
+      "title": "FFmpeg: reused audio/video paths",
+      "description": "Two imported decode/filter/encode blocks expose child ports and share code targets while retaining distinct audio/video identities.",
+      "blocks": [
+        {
+          "id": "demux",
+          "parent": null,
+          "symbol": "c:ffmpeg/libavformat/demux.c::av_read_frame"
+        },
+        {
+          "id": "audio",
+          "parent": null,
+          "symbol": "c:ffmpeg/libavcodec/decode.c::avcodec_send_packet"
+        },
+        {
+          "id": "audio.decode",
+          "parent": "audio",
+          "symbol": "c:ffmpeg/libavcodec/decode.c::avcodec_send_packet"
+        },
+        {
+          "id": "audio.filter",
+          "parent": "audio",
+          "symbol": "c:ffmpeg/libavfilter/buffersrc.c::av_buffersrc_add_frame_flags"
+        },
+        {
+          "id": "audio.encode",
+          "parent": "audio",
+          "symbol": "c:ffmpeg/libavcodec/encode.c::avcodec_send_frame"
+        },
+        {
+          "id": "video",
+          "parent": null,
+          "symbol": "c:ffmpeg/libavcodec/decode.c::avcodec_send_packet"
+        },
+        {
+          "id": "video.decode",
+          "parent": "video",
+          "symbol": "c:ffmpeg/libavcodec/decode.c::avcodec_send_packet"
+        },
+        {
+          "id": "video.filter",
+          "parent": "video",
+          "symbol": "c:ffmpeg/libavfilter/buffersrc.c::av_buffersrc_add_frame_flags"
+        },
+        {
+          "id": "video.encode",
+          "parent": "video",
+          "symbol": "c:ffmpeg/libavcodec/encode.c::avcodec_send_frame"
+        },
+        {
+          "id": "mux",
+          "parent": null,
+          "symbol": "c:ffmpeg/libavformat/mux.c::av_interleaved_write_frame"
+        }
+      ],
+      "ports": [
+        {
+          "id": "demux.media",
+          "block": "demux",
+          "direction": "in",
+          "symbol": "c:ffmpeg/libavformat/demux.c::av_read_frame"
+        },
+        {
+          "id": "demux.audio",
+          "block": "demux",
+          "direction": "out",
+          "symbol": "c:ffmpeg/libavformat/demux.c::av_read_frame"
+        },
+        {
+          "id": "demux.video",
+          "block": "demux",
+          "direction": "out",
+          "symbol": "c:ffmpeg/libavformat/demux.c::av_read_frame"
+        },
+        {
+          "id": "audio.packet_in",
+          "block": "audio",
+          "direction": "in",
+          "symbol": "c:ffmpeg/libavcodec/decode.c::avcodec_send_packet"
+        },
+        {
+          "id": "audio.packet_out",
+          "block": "audio",
+          "direction": "out",
+          "symbol": "c:ffmpeg/libavcodec/encode.c::avcodec_receive_packet"
+        },
+        {
+          "id": "audio.decode.packet",
+          "block": "audio.decode",
+          "direction": "in",
+          "symbol": "c:ffmpeg/libavcodec/decode.c::avcodec_send_packet"
+        },
+        {
+          "id": "audio.decode.frame",
+          "block": "audio.decode",
+          "direction": "out",
+          "symbol": "c:ffmpeg/libavcodec/avcodec.c::avcodec_receive_frame"
+        },
+        {
+          "id": "audio.filter.frame",
+          "block": "audio.filter",
+          "direction": "in",
+          "symbol": "c:ffmpeg/libavfilter/buffersrc.c::av_buffersrc_add_frame_flags"
+        },
+        {
+          "id": "audio.filter.filtered",
+          "block": "audio.filter",
+          "direction": "out",
+          "symbol": "c:ffmpeg/libavfilter/buffersink.c::av_buffersink_get_frame"
+        },
+        {
+          "id": "audio.encode.frame",
+          "block": "audio.encode",
+          "direction": "in",
+          "symbol": "c:ffmpeg/libavcodec/encode.c::avcodec_send_frame"
+        },
+        {
+          "id": "audio.encode.packet",
+          "block": "audio.encode",
+          "direction": "out",
+          "symbol": "c:ffmpeg/libavcodec/encode.c::avcodec_receive_packet"
+        },
+        {
+          "id": "video.packet_in",
+          "block": "video",
+          "direction": "in",
+          "symbol": "c:ffmpeg/libavcodec/decode.c::avcodec_send_packet"
+        },
+        {
+          "id": "video.packet_out",
+          "block": "video",
+          "direction": "out",
+          "symbol": "c:ffmpeg/libavcodec/encode.c::avcodec_receive_packet"
+        },
+        {
+          "id": "video.decode.packet",
+          "block": "video.decode",
+          "direction": "in",
+          "symbol": "c:ffmpeg/libavcodec/decode.c::avcodec_send_packet"
+        },
+        {
+          "id": "video.decode.frame",
+          "block": "video.decode",
+          "direction": "out",
+          "symbol": "c:ffmpeg/libavcodec/avcodec.c::avcodec_receive_frame"
+        },
+        {
+          "id": "video.filter.frame",
+          "block": "video.filter",
+          "direction": "in",
+          "symbol": "c:ffmpeg/libavfilter/buffersrc.c::av_buffersrc_add_frame_flags"
+        },
+        {
+          "id": "video.filter.filtered",
+          "block": "video.filter",
+          "direction": "out",
+          "symbol": "c:ffmpeg/libavfilter/buffersink.c::av_buffersink_get_frame"
+        },
+        {
+          "id": "video.encode.frame",
+          "block": "video.encode",
+          "direction": "in",
+          "symbol": "c:ffmpeg/libavcodec/encode.c::avcodec_send_frame"
+        },
+        {
+          "id": "video.encode.packet",
+          "block": "video.encode",
+          "direction": "out",
+          "symbol": "c:ffmpeg/libavcodec/encode.c::avcodec_receive_packet"
+        },
+        {
+          "id": "mux.audio",
+          "block": "mux",
+          "direction": "in",
+          "symbol": "c:ffmpeg/libavformat/mux.c::av_interleaved_write_frame"
+        },
+        {
+          "id": "mux.video",
+          "block": "mux",
+          "direction": "in",
+          "symbol": "c:ffmpeg/libavformat/mux.c::av_interleaved_write_frame"
+        },
+        {
+          "id": "mux.media",
+          "block": "mux",
+          "direction": "out",
+          "symbol": "c:ffmpeg/libavformat/mux.c::av_interleaved_write_frame"
+        },
+        {
+          "id": "mux.status",
+          "block": "mux",
+          "direction": "out",
+          "symbol": "c:ffmpeg/libavformat/mux.c::av_interleaved_write_frame"
+        }
+      ],
+      "connections": [
+        {
+          "source": "audio.packet_in",
+          "target": "audio.decode.packet",
+          "label": "packet",
+          "kind": "exposure"
+        },
+        {
+          "source": "audio.decode.frame",
+          "target": "audio.filter.frame",
+          "label": "decoded",
+          "kind": "wire"
+        },
+        {
+          "source": "audio.filter.filtered",
+          "target": "audio.encode.frame",
+          "label": "filtered",
+          "kind": "wire"
+        },
+        {
+          "source": "audio.encode.packet",
+          "target": "audio.packet_out",
+          "label": "packet",
+          "kind": "exposure"
+        },
+        {
+          "source": "video.packet_in",
+          "target": "video.decode.packet",
+          "label": "packet",
+          "kind": "exposure"
+        },
+        {
+          "source": "video.decode.frame",
+          "target": "video.filter.frame",
+          "label": "decoded",
+          "kind": "wire"
+        },
+        {
+          "source": "video.filter.filtered",
+          "target": "video.encode.frame",
+          "label": "filtered",
+          "kind": "wire"
+        },
+        {
+          "source": "video.encode.packet",
+          "target": "video.packet_out",
+          "label": "packet",
+          "kind": "exposure"
+        },
+        {
+          "source": "demux.audio",
+          "target": "audio.packet_in",
+          "label": "audio packet",
+          "kind": "wire"
+        },
+        {
+          "source": "demux.video",
+          "target": "video.packet_in",
+          "label": "video packet",
+          "kind": "wire"
+        },
+        {
+          "source": "audio.packet_out",
+          "target": "mux.audio",
+          "label": "audio output",
+          "kind": "wire"
+        },
+        {
+          "source": "video.packet_out",
+          "target": "mux.video",
+          "label": "video output",
+          "kind": "wire"
+        }
+      ]
+    },
+    {
+      "id": "hx-review",
+      "title": "Hx: extraction and review",
+      "description": "Nested frontend/traversal stages, graph persistence, and a saved-path fan-out to source review and HTML export.",
+      "blocks": [
+        {
+          "id": "request",
+          "parent": null,
+          "symbol": "py:hierx/hx/api.py::extract"
+        },
+        {
+          "id": "extractor",
+          "parent": null,
+          "symbol": "py:hierx/hx/api.py::extract"
+        },
+        {
+          "id": "extractor.frontend",
+          "parent": "extractor",
+          "symbol": "py:hierx/hx/api.py::make_frontend"
+        },
+        {
+          "id": "extractor.traverse",
+          "parent": "extractor",
+          "symbol": "py:hierx/hx/traverse.py::extract_graph"
+        },
+        {
+          "id": "persist",
+          "parent": null,
+          "symbol": "py:hierx/hx/project.py::save_extraction"
+        },
+        {
+          "id": "review",
+          "parent": null,
+          "symbol": "py:hierx/hx/graphio.py::load_graph_dict"
+        },
+        {
+          "id": "export",
+          "parent": null,
+          "symbol": "py:hierx/hx/export.py::export_file"
+        }
+      ],
+      "ports": [
+        {
+          "id": "request.source",
+          "block": "request",
+          "direction": "out",
+          "symbol": "py:hierx/hx/api.py::extract"
+        },
+        {
+          "id": "request.options",
+          "block": "request",
+          "direction": "out",
+          "symbol": "py:hierx/hx/api.py::extract"
+        },
+        {
+          "id": "extractor.source",
+          "block": "extractor",
+          "direction": "in",
+          "symbol": "py:hierx/hx/api.py::extract"
+        },
+        {
+          "id": "extractor.options",
+          "block": "extractor",
+          "direction": "in",
+          "symbol": "py:hierx/hx/api.py::extract"
+        },
+        {
+          "id": "extractor.graph",
+          "block": "extractor",
+          "direction": "out",
+          "symbol": "py:hierx/hx/api.py::extract"
+        },
+        {
+          "id": "extractor.frontend.source",
+          "block": "extractor.frontend",
+          "direction": "in",
+          "symbol": "py:hierx/hx/api.py::make_frontend"
+        },
+        {
+          "id": "extractor.frontend.options",
+          "block": "extractor.frontend",
+          "direction": "in",
+          "symbol": "py:hierx/hx/api.py::make_frontend"
+        },
+        {
+          "id": "extractor.frontend.index",
+          "block": "extractor.frontend",
+          "direction": "out",
+          "symbol": "py:hierx/hx/api.py::make_frontend"
+        },
+        {
+          "id": "extractor.traverse.index",
+          "block": "extractor.traverse",
+          "direction": "in",
+          "symbol": "py:hierx/hx/traverse.py::extract_graph"
+        },
+        {
+          "id": "extractor.traverse.graph",
+          "block": "extractor.traverse",
+          "direction": "out",
+          "symbol": "py:hierx/hx/traverse.py::extract_graph"
+        },
+        {
+          "id": "persist.graph",
+          "block": "persist",
+          "direction": "in",
+          "symbol": "py:hierx/hx/project.py::save_extraction"
+        },
+        {
+          "id": "persist.path",
+          "block": "persist",
+          "direction": "out",
+          "symbol": "py:hierx/hx/project.py::save_extraction"
+        },
+        {
+          "id": "review.path",
+          "block": "review",
+          "direction": "in",
+          "symbol": "py:hierx/hx/graphio.py::load_graph_dict"
+        },
+        {
+          "id": "review.graph",
+          "block": "review",
+          "direction": "out",
+          "symbol": "py:hierx/hx/graphio.py::load_graph_dict"
+        },
+        {
+          "id": "export.path",
+          "block": "export",
+          "direction": "in",
+          "symbol": "py:hierx/hx/export.py::export_file"
+        },
+        {
+          "id": "export.html",
+          "block": "export",
+          "direction": "out",
+          "symbol": "py:hierx/hx/export.py::export_file"
+        }
+      ],
+      "connections": [
+        {
+          "source": "extractor.source",
+          "target": "extractor.frontend.source",
+          "label": "source",
+          "kind": "exposure"
+        },
+        {
+          "source": "extractor.options",
+          "target": "extractor.frontend.options",
+          "label": "settings",
+          "kind": "exposure"
+        },
+        {
+          "source": "extractor.frontend.index",
+          "target": "extractor.traverse.index",
+          "label": "indexed declarations",
+          "kind": "wire"
+        },
+        {
+          "source": "extractor.traverse.graph",
+          "target": "extractor.graph",
+          "label": "bounded graph",
+          "kind": "exposure"
+        },
+        {
+          "source": "request.source",
+          "target": "extractor.source",
+          "label": "entry",
+          "kind": "wire"
+        },
+        {
+          "source": "request.options",
+          "target": "extractor.options",
+          "label": "settings",
+          "kind": "wire"
+        },
+        {
+          "source": "extractor.graph",
+          "target": "persist.graph",
+          "label": "graph + provenance",
+          "kind": "wire"
+        },
+        {
+          "source": "persist.path",
+          "target": "review.path",
+          "label": "saved graph",
+          "kind": "wire"
+        },
+        {
+          "source": "persist.path",
+          "target": "export.path",
+          "label": "saved graph",
+          "kind": "wire"
+        }
+      ]
+    }
+  ]
+}

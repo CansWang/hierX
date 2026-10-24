@@ -38,7 +38,7 @@ version = {attr = "hx.__version__"}
 include = ["hx", "hx.*"]
 
 [tool.setuptools.package-data]
-hx = ["viewer/*.html", "viewer/*.js", "viewer/*.css", "viewer/vendor/*", "schema/*.json", "netlist/*.json"]
+hx = ["viewer/*.html", "viewer/*.js", "viewer/*.css", "viewer/vendor/*", "architecture/*.html", "architecture/*.js", "schema/*.json", "netlist/*.json"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

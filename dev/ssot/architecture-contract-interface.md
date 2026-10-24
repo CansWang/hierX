@@ -11,8 +11,11 @@ The immediate scope is ordinary, individually named ports and connections.
 [future plan](#future-plan-buses-and-wide-ports). Separate scalar connections may
 run in opposite directions; this does not require a mixed-direction bundle.
 
-The syntax decision is accepted. Hx metadata conventions, parser integration,
-and direct ELK rendering remain **unimplemented and unverified**. The experimental
+**Implemented ordinary-port profile (2026-10-23).** Upstream D2 v0.9.0 compilation,
+Hx interpretation and direct elkjs 0.12.0 rendering passed the controlled
+presentation/navigation gate. Public `hx arch inspect`, `serve` and `export`
+commands use that profile. This result does not establish production-scale layout
+or contractual meaning. The experimental
 TOML contract implementation and commands are retired from the active package;
 their [reference snapshot](retired-toml-contracts.md) preserves the source and
 acceptance evidence. The earlier TOML input/output proposal below remains a
@@ -23,6 +26,63 @@ retired implementation's [contract reference](retired-toml-contracts.md#archived
 is preserved in the archive.
 The [SSOT roadmap](single-source-of-truth.md#phase-ii-architecture-authoring-and-composition-revised-direction)
 records implementation status and the retained D2 experiment results.
+
+## Implemented D2 profile
+
+```d2
+producer: Producer {
+  seed: u32 {class: hx-input}
+  sample: u32 {class: hx-output}
+}
+consumer: Consumer {
+  sample: u32 {class: hx-input}
+}
+producer.sample -> consumer.sample: sample
+```
+
+Ordinary objects are blocks; `hx-block` is optional. Immediate children marked
+`hx-input` or `hx-output` are individually named boundary ports. Labels/types are
+descriptive. Normal arrows join sibling output/input ports; explicit
+`class: hx-exposure` edges join parent input → child input or child output →
+parent output. Unconnected ports and opposite-flow scalar wires are allowed.
+Upstream imports/classes expand reused definitions into distinct qualified
+instances. Quoted keys retain their segment identities.
+
+An optional `link: "hx:<exact-saved-node-id>"` on each block/port names its own
+code target. One explicit `--graph` resolves navigation; no symbol guessing,
+ownership projection, type compatibility or execution inference is performed.
+Both block and port clicks open the owning declaration/signature/source.
+Exact parameter/return-token highlighting remains deferred. The dedicated preview
+reuses the existing source viewer. Standalone HTML embeds diagram/runtime assets;
+code links need an explicit viewer URL, and source text is not embedded.
+
+The optional Go helper is built explicitly with
+`bash dev/scripts/setup_d2_bridge.sh`; it calls unmodified upstream compilation
+and emits `hx-d2-bridge/1`. Explicit setup uses compatible Go 1.27+ or bootstraps
+SHA-256-verified Go 1.27.3 into a persistent user-local SDK directory. It changes
+no system Go installation or shell configuration; `--no-bootstrap` opts out.
+Python produces separate derived `hx-arch/1` data;
+geometry is not stored in extraction graphs. Runtime commands never fetch/build
+tools. Hx controls geometry/theme; D2 presentation attributes are reported as
+ignored and boards are unsupported. Unknown Hx roles are errors.
+See the [public architecture guide](../../docs/reference/architecture.md).
+
+The [repository-based examples](../../tests/d2_bridge/README.md) provide five
+Codex, FFmpeg and Hx sketches, a local gallery, pinned source slices and exact
+links on every block/port. Their presentation qualification passed 60 measured
+views and 684 genuine code clicks. Navigation catalogs explicitly omit extracted
+relationships; these authored views do not qualify runtime dataflow, contractual
+meaning or whole-repository coverage. Buses and bundles remain deferred.
+
+### Internal extension points
+
+Keep the D2 adapter, interpreter, authored model, navigation resolver, ELK adapter
+and SVG presenter separate. Future bus/bundle normalization can lower grouped
+members into endpoint records before layout, while an expanded presentation can
+retain member identities. These are internal seams, not a public plugin API or
+accepted extension syntax. Do not add inert bus/width fields or claim support
+for their semantics. Future implementation bindings must separately address
+evidence reconciliation; navigation links do not supply a projection backend.
 
 <a id="current-implementation-service-interfaces"></a>
 
@@ -58,18 +118,17 @@ and child-required → parent-required delegation. It checked matching logical
 interface identifiers and connected child requirements. Those rules remain part
 of the historical reference, not the active D2 implementation.
 
-## Next experiment: Hx/D2 interpretation and direct ELK layout
+<a id="next-experiment-hxd2-interpretation-and-direct-elk-layout"></a>
 
-Implement the selected D2 authoring direction through upstream parsing and Hx
-architecture interpretation. The next experiment must determine how to express
-Hx metadata for ordinary ports, nested exposures, and code bindings within
-existing D2 syntax. It tests interpretation and rendering feasibility, not which
-authoring syntax to choose. This note does not finalize the metadata conventions
-or claim that stock D2 already understands Hx ports. The upstream
-[D2 AST-based API](https://d2lang.com/tour/api/) is a starting point for inspecting
-the available integration surface, not proof of a ready-made Hx adapter.
+## Completed experiment: Hx/D2 interpretation and direct ELK layout
 
-The proposed data flow through the tools is:
+The separate [Hx/D2 integration experiment](../d2_integration_experiment/README.md)
+proved the profile above with upstream parsing/import expansion, Hx metadata
+interpretation and direct ELK layout. The thin helper uses D2's unmodified
+compiler; the [upstream AST API](https://d2lang.com/tour/api/) remains an upstream
+integration surface, not a compiler fork or a native D2 port feature.
+
+The implemented data flow through the tools is:
 
 ```text
 D2-authored architecture + Hx interpretation
@@ -84,13 +143,25 @@ Hx presentation with boundary ports and code navigation
 [ELK Layered](https://eclipse.dev/elk/reference/algorithms/org-eclipse-elk-layered.html)
 documents port constraints with orthogonal routing, compound graphs, and
 cross-hierarchy edges. These capabilities motivate the experiment; they do not
-establish that Hx can render the required examples reliably.
+establish feasibility alone. Independent controlled measurements below provide
+the Hx result.
 
 This experiment deliberately relaxes the earlier requirement that **stock D2
-produce all geometry**. Hx would construct a port-aware graph, request layout
-directly from ELK, and present the resulting geometry. Keep the original D2 SVGs,
+produce all geometry**. Hx constructs a port-aware graph, requests layout
+directly from ELK, and presents the resulting geometry. Keep the original D2 SVGs,
 failed checks, and findings as evidence of that earlier experiment. The direct
 ELK candidate needs its own results; it does not turn those failures into passes.
+
+**Controlled result:** 24 case/zoom/repeat combinations passed: flat multiport,
+nested imported/reused children, editing stress/fan-out, and independent
+forward-data/reverse-ready wires. Every case passed three layouts at 100%/150%
+zoom, measured pin/endpoint/label/route checks and genuine code clicks. Original
+inputs, interpreted models, ELK output, SVGs, measurements, screenshots and click
+outcomes are retained separately at
+`~/hx-review-artifacts/hierx-0.5/d2-integration-20261024T001707Z/`.
+This qualifies the ordinary-port implementation on these cases, not bus support
+or arbitrary large production architectures. The required demonstrations and
+gates below remain the acceptance contract for later changes.
 
 ### Required demonstrations
 
@@ -244,7 +315,7 @@ future convenience in that earlier design, not an implemented format. The
 archived parser expected `from`/`to` records rather than strings. These retained
 examples use structured records as their historical baseline; they are not plans
 to restore a TOML frontend. New architecture authoring uses the selected D2
-direction, whose Hx interpretation is still unimplemented.
+direction and the implemented ordinary-port profile above.
 
 ## User-facing presentation requirements
 
@@ -266,8 +337,8 @@ direction, whose Hx interpretation is still unimplemented.
 Authoring and rendering are separate decisions. The
 [D2 experiment](../d2_ports_experiment/README.md) failed the boundary-pin gate in
 all tested profiles. Keep its evidence and presentation acceptance criteria.
-The next Hx/D2 interpretation and direct ELK experiment must demonstrate ordinary
-ports, explicit connections, nested scalar exposures, and code navigation itself.
+The separate Hx/D2 interpretation and direct ELK experiment passed ordinary
+ports, explicit connections, nested scalar exposures, and code navigation.
 Bus/width handling and bundle views belong to the future plan above.
 
 ## Compatibility and implementation boundary
@@ -289,10 +360,9 @@ generation are deferred. Describing a wire is authored intent, not proof that
 parsed code transfers a value along that wire. Archived service-composition
 validation describes the retired prototype only.
 
-This change records the accepted D2 syntax decision and staged implementation
-scope. A later implementation plan must define D2/Hx metadata conventions,
-upstream parser access, ELK integration, ordinary-port exposures, and code-binding
-details before changing parsers or viewer behavior. Direct ELK is the next layout
-candidate to test; it is not a verified production renderer. No new parser,
-public API, or automatic TOML migration is introduced by this documentation
-amendment.
+The ordinary-port profile now defines D2/Hx role markers, upstream parser access,
+ELK integration, explicit exposures and navigation bindings. Its dedicated public
+commands were added after the controlled presentation gate passed. Larger-system
+acceptance, bus/bundle extensions, implementation projection and automatic TOML
+migration are not supplied by this phase. Keep future changes explicit and
+preserve the original stock-D2 negative results.

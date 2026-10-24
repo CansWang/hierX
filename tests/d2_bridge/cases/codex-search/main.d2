@@ -1,0 +1,47 @@
+# Authored architecture sketch, not inferred execution or a conformance contract.
+# Every block and port links to an owning declaration in the pinned source snapshot.
+
+client: "Search caller" {
+  link: "hx:rs:codex/file-search/src/lib.rs::run"
+  query: "query: String" {class: hx-output; link: "hx:rs:codex/file-search/src/lib.rs::FileSearchSession::update_query"}
+  roots: "roots: Paths" {class: hx-output; link: "hx:rs:codex/file-search/src/lib.rs::create_session"}
+  result: "matches: Vec" {class: hx-input; link: "hx:rs:codex/file-search/src/lib.rs::run"}
+}
+session: "File search session" {
+  link: "hx:rs:codex/file-search/src/lib.rs::create_session"
+  query: "query: String" {class: hx-input; link: "hx:rs:codex/file-search/src/lib.rs::FileSearchSession::update_query"}
+  roots: "roots: Paths" {class: hx-input; link: "hx:rs:codex/file-search/src/lib.rs::create_session"}
+  matches: "matches: Vec" {class: hx-output; link: "hx:rs:codex/file-search/src/lib.rs::matcher_worker"}
+  done: "complete: bool" {class: hx-output; link: "hx:rs:codex/file-search/src/lib.rs::SessionReporter::on_complete"}
+  walker: "Filesystem walker" {
+    link: "hx:rs:codex/file-search/src/lib.rs::walker_worker"
+    roots: "roots: Paths" {class: hx-input; link: "hx:rs:codex/file-search/src/lib.rs::walker_worker"}
+    paths: "candidates: Paths" {class: hx-output; link: "hx:rs:codex/file-search/src/lib.rs::walker_worker"}
+    done: "walk done: bool" {class: hx-output; link: "hx:rs:codex/file-search/src/lib.rs::walker_worker"}
+  }
+  matcher: "Incremental matcher" {
+    link: "hx:rs:codex/file-search/src/lib.rs::matcher_worker"
+    query: "query: String" {class: hx-input; link: "hx:rs:codex/file-search/src/lib.rs::matcher_worker"}
+    paths: "candidates: Paths" {class: hx-input; link: "hx:rs:codex/file-search/src/lib.rs::matcher_worker"}
+    finished: "walk done: bool" {class: hx-input; link: "hx:rs:codex/file-search/src/lib.rs::matcher_worker"}
+    matches: "matches: Vec" {class: hx-output; link: "hx:rs:codex/file-search/src/lib.rs::matcher_worker"}
+    done: "complete: bool" {class: hx-output; link: "hx:rs:codex/file-search/src/lib.rs::matcher_worker"}
+  }
+  query -> matcher.query: "query" {class: hx-exposure}
+  roots -> walker.roots: "roots" {class: hx-exposure}
+  walker.paths -> matcher.paths: "candidates"
+  walker.done -> matcher.finished: "walk done"
+  matcher.matches -> matches: "results" {class: hx-exposure}
+  matcher.done -> done: "complete" {class: hx-exposure}
+}
+reporter: "Run reporter" {
+  link: "hx:rs:codex/file-search/src/lib.rs::RunReporter::wait_for_complete"
+  matches: "matches: Vec" {class: hx-input; link: "hx:rs:codex/file-search/src/lib.rs::RunReporter::wait_for_complete"}
+  done: "complete: bool" {class: hx-input; link: "hx:rs:codex/file-search/src/lib.rs::SessionReporter::on_complete"}
+  result: "matches: Vec" {class: hx-output; link: "hx:rs:codex/file-search/src/lib.rs::RunReporter::wait_for_complete"}
+}
+client.query -> session.query: "query update"
+client.roots -> session.roots: "search roots"
+session.matches -> reporter.matches: "match update"
+session.done -> reporter.done: "complete"
+reporter.result -> client.result: "return matches"

@@ -1,0 +1,2339 @@
+{
+  "description": "Selected real declarations for source navigation only. Call/type/global relationships and body hashes intentionally omitted; authored D2 connections are not extracted relations. IDs rebased beneath the shared source snapshot root.",
+  "records": [
+    {
+      "repository": "codex",
+      "original_id": "rs:utils/absolute-path/src/lib.rs::AbsolutePathBuf::resolve_path_against_base",
+      "origin": {
+        "kind": "saved-extraction",
+        "frontend": "rust-analyzer",
+        "report": "hierx-0.5/rust-acceptance/forward/0-d2.json",
+        "graph_sha256": "ae8b03d3bee1103880ccddb62c6a33ad204354f1a2f451fec081b8755d83194a"
+      },
+      "node": {
+        "id": "rs:codex/utils/absolute-path/src/lib.rs::AbsolutePathBuf::resolve_path_against_base",
+        "kind": "function",
+        "name": "resolve_path_against_base",
+        "qualname": "AbsolutePathBuf::resolve_path_against_base",
+        "lang": "rs",
+        "loc": {
+          "file": "codex/utils/absolute-path/src/lib.rs",
+          "line": 46,
+          "end_line": 57,
+          "col": 5
+        },
+        "signature": "pub fn resolve_path_against_base<P, B>(path: P, base_path: B) -> Self where P: AsRef<Path>, B: AsRef<Path>,",
+        "storage": null,
+        "depth": 0,
+        "body_hash": null,
+        "precision": "lsp",
+        "returns": {
+          "type": "Self",
+          "type_ref": null
+        },
+        "params": [
+          {
+            "name": "path",
+            "type": "P",
+            "type_ref": null,
+            "dir": "in",
+            "dir_source": "heuristic"
+          },
+          {
+            "name": "base_path",
+            "type": "B",
+            "type_ref": null,
+            "dir": "in",
+            "dir_source": "heuristic"
+          }
+        ],
+        "globals": {
+          "reads": [],
+          "writes": []
+        },
+        "calls": [],
+        "attrs": {
+          "navigation_only": true,
+          "original_id": "rs:utils/absolute-path/src/lib.rs::AbsolutePathBuf::resolve_path_against_base"
+        },
+        "runtime": null
+      }
+    },
+    {
+      "repository": "codex",
+      "original_id": "rs:utils/absolute-path/src/lib.rs::AbsolutePathBuf::maybe_expand_home_directory",
+      "origin": {
+        "kind": "saved-extraction",
+        "frontend": "rust-analyzer",
+        "report": "hierx-0.5/rust-acceptance/forward/0-d2.json",
+        "graph_sha256": "ae8b03d3bee1103880ccddb62c6a33ad204354f1a2f451fec081b8755d83194a"
+      },
+      "node": {
+        "id": "rs:codex/utils/absolute-path/src/lib.rs::AbsolutePathBuf::maybe_expand_home_directory",
+        "kind": "function",
+        "name": "maybe_expand_home_directory",
+        "qualname": "AbsolutePathBuf::maybe_expand_home_directory",
+        "lang": "rs",
+        "loc": {
+          "file": "codex/utils/absolute-path/src/lib.rs",
+          "line": 28,
+          "end_line": 44,
+          "col": 5
+        },
+        "signature": "fn maybe_expand_home_directory(path: &Path) -> PathBuf",
+        "storage": null,
+        "depth": 0,
+        "body_hash": null,
+        "precision": "lsp",
+        "returns": {
+          "type": "PathBuf",
+          "type_ref": null
+        },
+        "params": [
+          {
+            "name": "path",
+            "type": "&Path",
+            "type_ref": null,
+            "dir": "in",
+            "dir_source": "heuristic"
+          }
+        ],
+        "globals": {
+          "reads": [],
+          "writes": []
+        },
+        "calls": [],
+        "attrs": {
+          "navigation_only": true,
+          "original_id": "rs:utils/absolute-path/src/lib.rs::AbsolutePathBuf::maybe_expand_home_directory"
+        },
+        "runtime": null
+      }
+    },
+    {
+      "repository": "codex",
+      "original_id": "rs:utils/absolute-path/src/lib.rs::normalize_path_for_platform",
+      "origin": {
+        "kind": "saved-extraction",
+        "frontend": "rust-analyzer",
+        "report": "hierx-0.5/rust-acceptance/forward/0-d2.json",
+        "graph_sha256": "ae8b03d3bee1103880ccddb62c6a33ad204354f1a2f451fec081b8755d83194a"
+      },
+      "node": {
+        "id": "rs:codex/utils/absolute-path/src/lib.rs::normalize_path_for_platform",
+        "kind": "function",
+        "name": "normalize_path_for_platform",
+        "qualname": "normalize_path_for_platform",
+        "lang": "rs",
+        "loc": {
+          "file": "codex/utils/absolute-path/src/lib.rs",
+          "line": 147,
+          "end_line": 156,
+          "col": 1
+        },
+        "signature": "fn normalize_path_for_platform(path: &Path) -> Cow<'_, Path>",
+        "storage": null,
+        "depth": 0,
+        "body_hash": null,
+        "precision": "lsp",
+        "returns": {
+          "type": "Cow<'_, Path>",
+          "type_ref": null
+        },
+        "params": [
+          {
+            "name": "path",
+            "type": "&Path",
+            "type_ref": null,
+            "dir": "in",
+            "dir_source": "heuristic"
+          }
+        ],
+        "globals": {
+          "reads": [],
+          "writes": []
+        },
+        "calls": [],
+        "attrs": {
+          "navigation_only": true,
+          "original_id": "rs:utils/absolute-path/src/lib.rs::normalize_path_for_platform"
+        },
+        "runtime": null
+      }
+    },
+    {
+      "repository": "codex",
+      "original_id": "rs:utils/absolute-path/src/absolutize.rs::absolutize_from",
+      "origin": {
+        "kind": "saved-extraction",
+        "frontend": "rust-analyzer",
+        "report": "hierx-0.5/rust-acceptance/forward/0-d2.json",
+        "graph_sha256": "ae8b03d3bee1103880ccddb62c6a33ad204354f1a2f451fec081b8755d83194a"
+      },
+      "node": {
+        "id": "rs:codex/utils/absolute-path/src/absolutize.rs::absolutize_from",
+        "kind": "function",
+        "name": "absolutize_from",
+        "qualname": "absolutize_from",
+        "lang": "rs",
+        "loc": {
+          "file": "codex/utils/absolute-path/src/absolutize.rs",
+          "line": 22,
+          "end_line": 24,
+          "col": 1
+        },
+        "signature": "pub(crate) fn absolutize_from(path: &Path, base_path: &Path) -> PathBuf",
+        "storage": null,
+        "depth": 0,
+        "body_hash": null,
+        "precision": "lsp",
+        "returns": {
+          "type": "PathBuf",
+          "type_ref": null
+        },
+        "params": [
+          {
+            "name": "path",
+            "type": "&Path",
+            "type_ref": null,
+            "dir": "in",
+            "dir_source": "heuristic"
+          },
+          {
+            "name": "base_path",
+            "type": "&Path",
+            "type_ref": null,
+            "dir": "in",
+            "dir_source": "heuristic"
+          }
+        ],
+        "globals": {
+          "reads": [],
+          "writes": []
+        },
+        "calls": [],
+        "attrs": {
+          "navigation_only": true,
+          "original_id": "rs:utils/absolute-path/src/absolutize.rs::absolutize_from"
+        },
+        "runtime": null
+      }
+    },
+    {
+      "repository": "codex",
+      "original_id": "rs:utils/absolute-path/src/lib.rs::AbsolutePathBufGuard::home_directory",
+      "origin": {
+        "kind": "saved-extraction",
+        "frontend": "rust-analyzer",
+        "report": "hierx-0.5/rust-acceptance/forward/0-d2.json",
+        "graph_sha256": "ae8b03d3bee1103880ccddb62c6a33ad204354f1a2f451fec081b8755d83194a"
+      },
+      "node": {
+        "id": "rs:codex/utils/absolute-path/src/lib.rs::AbsolutePathBufGuard::home_directory",
+        "kind": "function",
+        "name": "home_directory",
+        "qualname": "AbsolutePathBufGuard::home_directory",
+        "lang": "rs",
+        "loc": {
+          "file": "codex/utils/absolute-path/src/lib.rs",
+          "line": 354,
+          "end_line": 359,
+          "col": 5
+        },
+        "signature": "pub fn home_directory() -> Option<PathBuf>",
+        "storage": null,
+        "depth": 0,
+        "body_hash": null,
+        "precision": "lsp",
+        "returns": {
+          "type": "Option<PathBuf>",
+          "type_ref": null
+        },
+        "params": [],
+        "globals": {
+          "reads": [],
+          "writes": []
+        },
+        "calls": [],
+        "attrs": {
+          "navigation_only": true,
+          "original_id": "rs:utils/absolute-path/src/lib.rs::AbsolutePathBufGuard::home_directory"
+        },
+        "runtime": null
+      }
+    },
+    {
+      "repository": "codex",
+      "original_id": "rs:utils/absolute-path/src/lib.rs::normalize_windows_device_path",
+      "origin": {
+        "kind": "saved-extraction",
+        "frontend": "rust-analyzer",
+        "report": "hierx-0.5/rust-acceptance/forward/0-d2.json",
+        "graph_sha256": "ae8b03d3bee1103880ccddb62c6a33ad204354f1a2f451fec081b8755d83194a"
+      },
+      "node": {
+        "id": "rs:codex/utils/absolute-path/src/lib.rs::normalize_windows_device_path",
+        "kind": "function",
+        "name": "normalize_windows_device_path",
+        "qualname": "normalize_windows_device_path",
+        "lang": "rs",
+        "loc": {
+          "file": "codex/utils/absolute-path/src/lib.rs",
+          "line": 158,
+          "end_line": 177,
+          "col": 1
+        },
+        "signature": "pub fn normalize_windows_device_path(path: &str) -> Option<String>",
+        "storage": null,
+        "depth": 0,
+        "body_hash": null,
+        "precision": "lsp",
+        "returns": {
+          "type": "Option<String>",
+          "type_ref": null
+        },
+        "params": [
+          {
+            "name": "path",
+            "type": "&str",
+            "type_ref": null,
+            "dir": "in",
+            "dir_source": "heuristic"
+          }
+        ],
+        "globals": {
+          "reads": [],
+          "writes": []
+        },
+        "calls": [],
+        "attrs": {
+          "navigation_only": true,
+          "original_id": "rs:utils/absolute-path/src/lib.rs::normalize_windows_device_path"
+        },
+        "runtime": null
+      }
+    },
+    {
+      "repository": "codex",
+      "original_id": "rs:utils/absolute-path/src/absolutize.rs::normalize_path",
+      "origin": {
+        "kind": "saved-extraction",
+        "frontend": "rust-analyzer",
+        "report": "hierx-0.5/rust-acceptance/forward/0-d2.json",
+        "graph_sha256": "ae8b03d3bee1103880ccddb62c6a33ad204354f1a2f451fec081b8755d83194a"
+      },
+      "node": {
+        "id": "rs:codex/utils/absolute-path/src/absolutize.rs::normalize_path",
+        "kind": "function",
+        "name": "normalize_path",
+        "qualname": "normalize_path",
+        "lang": "rs",
+        "loc": {
+          "file": "codex/utils/absolute-path/src/absolutize.rs",
+          "line": 26,
+          "end_line": 45,
+          "col": 1
+        },
+        "signature": "fn normalize_path(path: &Path) -> PathBuf",
+        "storage": null,
+        "depth": 0,
+        "body_hash": null,
+        "precision": "lsp",
+        "returns": {
+          "type": "PathBuf",
+          "type_ref": null
+        },
+        "params": [
+          {
+            "name": "path",
+            "type": "&Path",
+            "type_ref": null,
+            "dir": "in",
+            "dir_source": "heuristic"
+          }
+        ],
+        "globals": {
+          "reads": [],
+          "writes": []
+        },
+        "calls": [],
+        "attrs": {
+          "navigation_only": true,
+          "original_id": "rs:utils/absolute-path/src/absolutize.rs::normalize_path"
+        },
+        "runtime": null
+      }
+    },
+    {
+      "repository": "codex",
+      "original_id": "rs:utils/absolute-path/src/absolutize.rs::path_with_base",
+      "origin": {
+        "kind": "saved-extraction",
+        "frontend": "rust-analyzer",
+        "report": "hierx-0.5/rust-acceptance/forward/0-d2.json",
+        "graph_sha256": "ae8b03d3bee1103880ccddb62c6a33ad204354f1a2f451fec081b8755d83194a"
+      },
+      "node": {
+        "id": "rs:codex/utils/absolute-path/src/absolutize.rs::path_with_base",
+        "kind": "function",
+        "name": "path_with_base",
+        "qualname": "path_with_base",
+        "lang": "rs",
+        "loc": {
+          "file": "codex/utils/absolute-path/src/absolutize.rs",
+          "line": 47,
+          "end_line": 54,
+          "col": 1
+        },
+        "signature": "fn path_with_base(path: &Path, base_path: &Path) -> PathBuf",
+        "storage": null,
+        "depth": 0,
+        "body_hash": null,
+        "precision": "lsp",
+        "returns": {
+          "type": "PathBuf",
+          "type_ref": null
+        },
+        "params": [
+          {
+            "name": "path",
+            "type": "&Path",
+            "type_ref": null,
+            "dir": "in",
+            "dir_source": "heuristic"
+          },
+          {
+            "name": "base_path",
+            "type": "&Path",
+            "type_ref": null,
+            "dir": "in",
+            "dir_source": "heuristic"
+          }
+        ],
+        "globals": {
+          "reads": [],
+          "writes": []
+        },
+        "calls": [],
+        "attrs": {
+          "navigation_only": true,
+          "original_id": "rs:utils/absolute-path/src/absolutize.rs::path_with_base"
+        },
+        "runtime": null
+      }
+    },
+    {
+      "repository": "codex",
+      "original_id": "rs:file-search/src/lib.rs::run_main",
+      "origin": {
+        "kind": "saved-extraction",
+        "frontend": "rust-analyzer",
+        "report": "hierx-0.5/rust-acceptance/forward/4-d2.json",
+        "graph_sha256": "e95a2714f2dafc7c936dbc76ae98a1cc27206c7c2917d33c4cc8bb638cf41577"
+      },
+      "node": {
+        "id": "rs:codex/file-search/src/lib.rs::run_main",
+        "kind": "function",
+        "name": "run_main",
+        "qualname": "run_main",
+        "lang": "rs",
+        "loc": {
+          "file": "codex/file-search/src/lib.rs",
+          "line": 230,
+          "end_line": 298,
+          "col": 1
+        },
+        "signature": "pub async fn run_main<T>(mut <ra@gennew>7: Cli, reporter: T) -> anyhow::Result<()> where T: Reporter,",
+        "storage": null,
+        "depth": 0,
+        "body_hash": null,
+        "precision": "lsp",
+        "returns": {
+          "type": "anyhow::Result<()>",
+          "type_ref": null
+        },
+        "params": [
+          {
+            "name": "<ra@gennew>7",
+            "type": "Cli",
+            "type_ref": null,
+            "dir": "in",
+            "dir_source": "heuristic"
+          },
+          {
+            "name": "reporter",
+            "type": "T",
+            "type_ref": null,
+            "dir": "in",
+            "dir_source": "heuristic"
+          }
+        ],
+        "globals": {
+          "reads": [],
+          "writes": []
+        },
+        "calls": [],
+        "attrs": {
+          "navigation_only": true,
+          "original_id": "rs:file-search/src/lib.rs::run_main"
+        },
+        "runtime": null
+      }
+    },
+    {
+      "repository": "codex",
+      "original_id": "rs:file-search/src/lib.rs::Reporter::warn_no_search_pattern",
+      "origin": {
+        "kind": "saved-extraction",
+        "frontend": "rust-analyzer",
+        "report": "hierx-0.5/rust-acceptance/forward/4-d2.json",
+        "graph_sha256": "e95a2714f2dafc7c936dbc76ae98a1cc27206c7c2917d33c4cc8bb638cf41577"
+      },
+      "node": {
+        "id": "rs:codex/file-search/src/lib.rs::Reporter::warn_no_search_pattern",
+        "kind": "function",
+        "name": "warn_no_search_pattern",
+        "qualname": "Reporter::warn_no_search_pattern",
+        "lang": "rs",
+        "loc": {
+          "file": "codex/file-search/src/lib.rs",
+          "line": 227,
+          "end_line": 227,
+          "col": 5
+        },
+        "signature": "pub trait Reporter pub fn warn_no_search_pattern(&self, search_directory: &Path)",
+        "storage": null,
+        "depth": 0,
+        "body_hash": null,
+        "precision": "lsp",
+        "returns": null,
+        "params": [
+          {
+            "name": "self",
+            "type": "& Self",
+            "type_ref": null,
+            "dir": "in",
+            "dir_source": "heuristic"
+          },
+          {
+            "name": "search_directory",
+            "type": "&Path",
+            "type_ref": null,
+            "dir": "in",
+            "dir_source": "heuristic"
+          }
+        ],
+        "globals": {
+          "reads": [],
+          "writes": []
+        },
+        "calls": [],
+        "attrs": {
+          "navigation_only": true,
+          "original_id": "rs:file-search/src/lib.rs::Reporter::warn_no_search_pattern"
+        },
+        "runtime": null
+      }
+    },
+    {
+      "repository": "codex",
+      "original_id": "rs:file-search/src/lib.rs::run",
+      "origin": {
+        "kind": "saved-extraction",
+        "frontend": "rust-analyzer",
+        "report": "hierx-0.5/rust-acceptance/forward/4-d2.json",
+        "graph_sha256": "e95a2714f2dafc7c936dbc76ae98a1cc27206c7c2917d33c4cc8bb638cf41577"
+      },
+      "node": {
+        "id": "rs:codex/file-search/src/lib.rs::run",
+        "kind": "function",
+        "name": "run",
+        "qualname": "run",
+        "lang": "rs",
+        "loc": {
+          "file": "codex/file-search/src/lib.rs",
+          "line": 300,
+          "end_line": 318,
+          "col": 1
+        },
+        "signature": "pub fn run(pattern_text: &str, roots: Vec<PathBuf>, options: FileSearchOptions, cancel_flag: Option<Arc<AtomicBool>>) -> anyhow::Result<FileSearchResults>",
+        "storage": null,
+        "depth": 0,
+        "body_hash": null,
+        "precision": "lsp",
+        "returns": {
+          "type": "anyhow::Result<FileSearchResults>",
+          "type_ref": null
+        },
+        "params": [
+          {
+            "name": "pattern_text",
+            "type": "&str",
+            "type_ref": null,
+            "dir": "in",
+            "dir_source": "heuristic"
+          },
+          {
+            "name": "roots",
+            "type": "Vec<PathBuf>",
+            "type_ref": null,
+            "dir": "in",
+            "dir_source": "heuristic"
+          },
+          {
+            "name": "options",
+            "type": "FileSearchOptions",
+            "type_ref": null,
+            "dir": "in",
+            "dir_source": "heuristic"
+          },
+          {
+            "name": "cancel_flag",
+            "type": "Option<Arc<AtomicBool>>",
+            "type_ref": null,
+            "dir": "in",
+            "dir_source": "heuristic"
+          }
+        ],
+        "globals": {
+          "reads": [],
+          "writes": []
+        },
+        "calls": [],
+        "attrs": {
+          "navigation_only": true,
+          "original_id": "rs:file-search/src/lib.rs::run"
+        },
+        "runtime": null
+      }
+    },
+    {
+      "repository": "codex",
+      "original_id": "rs:file-search/src/lib.rs::Reporter::report_match",
+      "origin": {
+        "kind": "saved-extraction",
+        "frontend": "rust-analyzer",
+        "report": "hierx-0.5/rust-acceptance/forward/4-d2.json",
+        "graph_sha256": "e95a2714f2dafc7c936dbc76ae98a1cc27206c7c2917d33c4cc8bb638cf41577"
+      },
+      "node": {
+        "id": "rs:codex/file-search/src/lib.rs::Reporter::report_match",
+        "kind": "function",
+        "name": "report_match",
+        "qualname": "Reporter::report_match",
+        "lang": "rs",
+        "loc": {
+          "file": "codex/file-search/src/lib.rs",
+          "line": 225,
+          "end_line": 225,
+          "col": 5
+        },
+        "signature": "pub trait Reporter pub fn report_match(&self, file_match: &FileMatch)",
+        "storage": null,
+        "depth": 0,
+        "body_hash": null,
+        "precision": "lsp",
+        "returns": null,
+        "params": [
+          {
+            "name": "self",
+            "type": "& Self",
+            "type_ref": null,
+            "dir": "in",
+            "dir_source": "heuristic"
+          },
+          {
+            "name": "file_match",
+            "type": "&FileMatch",
+            "type_ref": null,
+            "dir": "in",
+            "dir_source": "heuristic"
+          }
+        ],
+        "globals": {
+          "reads": [],
+          "writes": []
+        },
+        "calls": [],
+        "attrs": {
+          "navigation_only": true,
+          "original_id": "rs:file-search/src/lib.rs::Reporter::report_match"
+        },
+        "runtime": null
+      }
+    },
+    {
+      "repository": "codex",
+      "original_id": "rs:file-search/src/lib.rs::Reporter::warn_matches_truncated",
+      "origin": {
+        "kind": "saved-extraction",
+        "frontend": "rust-analyzer",
+        "report": "hierx-0.5/rust-acceptance/forward/4-d2.json",
+        "graph_sha256": "e95a2714f2dafc7c936dbc76ae98a1cc27206c7c2917d33c4cc8bb638cf41577"
+      },
+      "node": {
+        "id": "rs:codex/file-search/src/lib.rs::Reporter::warn_matches_truncated",
+        "kind": "function",
+        "name": "warn_matches_truncated",
+        "qualname": "Reporter::warn_matches_truncated",
+        "lang": "rs",
+        "loc": {
+          "file": "codex/file-search/src/lib.rs",
+          "line": 226,
+          "end_line": 226,
+          "col": 5
+        },
+        "signature": "pub trait Reporter pub fn warn_matches_truncated(&self, total_match_count: usize, shown_match_count: usize)",
+        "storage": null,
+        "depth": 0,
+        "body_hash": null,
+        "precision": "lsp",
+        "returns": null,
+        "params": [
+          {
+            "name": "self",
+            "type": "& Self",
+            "type_ref": null,
+            "dir": "in",
+            "dir_source": "heuristic"
+          },
+          {
+            "name": "total_match_count",
+            "type": "usize",
+            "type_ref": null,
+            "dir": "in",
+            "dir_source": "heuristic"
+          },
+          {
+            "name": "shown_match_count",
+            "type": "usize",
+            "type_ref": null,
+            "dir": "in",
+            "dir_source": "heuristic"
+          }
+        ],
+        "globals": {
+          "reads": [],
+          "writes": []
+        },
+        "calls": [],
+        "attrs": {
+          "navigation_only": true,
+          "original_id": "rs:file-search/src/lib.rs::Reporter::warn_matches_truncated"
+        },
+        "runtime": null
+      }
+    },
+    {
+      "repository": "codex",
+      "original_id": "rs:file-search/src/lib.rs::create_session",
+      "origin": {
+        "kind": "saved-extraction",
+        "frontend": "rust-analyzer",
+        "report": "hierx-0.5/rust-acceptance/forward/4-d2.json",
+        "graph_sha256": "e95a2714f2dafc7c936dbc76ae98a1cc27206c7c2917d33c4cc8bb638cf41577"
+      },
+      "node": {
+        "id": "rs:codex/file-search/src/lib.rs::create_session",
+        "kind": "function",
+        "name": "create_session",
+        "qualname": "create_session",
+        "lang": "rs",
+        "loc": {
+          "file": "codex/file-search/src/lib.rs",
+          "line": 169,
+          "end_line": 222,
+          "col": 1
+        },
+        "signature": "pub fn create_session(search_directories: Vec<PathBuf>, options: FileSearchOptions, reporter: Arc<dyn SessionReporter>, cancel_flag: Option<Arc<AtomicBool>>) -> anyhow::Result<FileSearchSession>",
+        "storage": null,
+        "depth": 0,
+        "body_hash": null,
+        "precision": "lsp",
+        "returns": {
+          "type": "anyhow::Result<FileSearchSession>",
+          "type_ref": null
+        },
+        "params": [
+          {
+            "name": "search_directories",
+            "type": "Vec<PathBuf>",
+            "type_ref": null,
+            "dir": "in",
+            "dir_source": "heuristic"
+          },
+          {
+            "name": "options",
+            "type": "FileSearchOptions",
+            "type_ref": null,
+            "dir": "in",
+            "dir_source": "heuristic"
+          },
+          {
+            "name": "reporter",
+            "type": "Arc<dyn SessionReporter>",
+            "type_ref": null,
+            "dir": "in",
+            "dir_source": "heuristic"
+          },
+          {
+            "name": "cancel_flag",
+            "type": "Option<Arc<AtomicBool>>",
+            "type_ref": null,
+            "dir": "in",
+            "dir_source": "heuristic"
+          }
+        ],
+        "globals": {
+          "reads": [],
+          "writes": []
+        },
+        "calls": [],
+        "attrs": {
+          "navigation_only": true,
+          "original_id": "rs:file-search/src/lib.rs::create_session"
+        },
+        "runtime": null
+      }
+    },
+    {
+      "repository": "codex",
+      "original_id": "rs:file-search/src/lib.rs::FileSearchSession::update_query",
+      "origin": {
+        "kind": "saved-extraction",
+        "frontend": "rust-analyzer",
+        "report": "hierx-0.5/rust-acceptance/forward/4-d2.json",
+        "graph_sha256": "e95a2714f2dafc7c936dbc76ae98a1cc27206c7c2917d33c4cc8bb638cf41577"
+      },
+      "node": {
+        "id": "rs:codex/file-search/src/lib.rs::FileSearchSession::update_query",
+        "kind": "function",
+        "name": "update_query",
+        "qualname": "FileSearchSession::update_query",
+        "lang": "rs",
+        "loc": {
+          "file": "codex/file-search/src/lib.rs",
+          "line": 153,
+          "end_line": 159,
+          "col": 5
+        },
+        "signature": "pub fn update_query(&self, pattern_text: &str)",
+        "storage": null,
+        "depth": 0,
+        "body_hash": null,
+        "precision": "lsp",
+        "returns": null,
+        "params": [
+          {
+            "name": "self",
+            "type": "& Self",
+            "type_ref": null,
+            "dir": "in",
+            "dir_source": "heuristic"
+          },
+          {
+            "name": "pattern_text",
+            "type": "&str",
+            "type_ref": null,
+            "dir": "in",
+            "dir_source": "heuristic"
+          }
+        ],
+        "globals": {
+          "reads": [],
+          "writes": []
+        },
+        "calls": [],
+        "attrs": {
+          "navigation_only": true,
+          "original_id": "rs:file-search/src/lib.rs::FileSearchSession::update_query"
+        },
+        "runtime": null
+      }
+    },
+    {
+      "repository": "codex",
+      "original_id": "rs:file-search/src/lib.rs::RunReporter::wait_for_complete",
+      "origin": {
+        "kind": "saved-extraction",
+        "frontend": "rust-analyzer",
+        "report": "hierx-0.5/rust-acceptance/forward/4-d2.json",
+        "graph_sha256": "e95a2714f2dafc7c936dbc76ae98a1cc27206c7c2917d33c4cc8bb638cf41577"
+      },
+      "node": {
+        "id": "rs:codex/file-search/src/lib.rs::RunReporter::wait_for_complete",
+        "kind": "function",
+        "name": "wait_for_complete",
+        "qualname": "RunReporter::wait_for_complete",
+        "lang": "rs",
+        "loc": {
+          "file": "codex/file-search/src/lib.rs",
+          "line": 615,
+          "end_line": 627,
+          "col": 5
+        },
+        "signature": "fn wait_for_complete(&self) -> FileSearchSnapshot",
+        "storage": null,
+        "depth": 0,
+        "body_hash": null,
+        "precision": "lsp",
+        "returns": {
+          "type": "FileSearchSnapshot",
+          "type_ref": null
+        },
+        "params": [
+          {
+            "name": "self",
+            "type": "& Self",
+            "type_ref": null,
+            "dir": "in",
+            "dir_source": "heuristic"
+          }
+        ],
+        "globals": {
+          "reads": [],
+          "writes": []
+        },
+        "calls": [],
+        "attrs": {
+          "navigation_only": true,
+          "original_id": "rs:file-search/src/lib.rs::RunReporter::wait_for_complete"
+        },
+        "runtime": null
+      }
+    },
+    {
+      "repository": "codex",
+      "original_id": "rs:file-search/src/lib.rs::build_override_matcher",
+      "origin": {
+        "kind": "saved-extraction",
+        "frontend": "rust-analyzer",
+        "report": "hierx-0.5/rust-acceptance/forward/5-d2.json",
+        "graph_sha256": "82ea15051f55b72079fab25fb6178c2e53a2e062b4dbc76b5927b724df2d8bc9"
+      },
+      "node": {
+        "id": "rs:codex/file-search/src/lib.rs::build_override_matcher",
+        "kind": "function",
+        "name": "build_override_matcher",
+        "qualname": "build_override_matcher",
+        "lang": "rs",
+        "loc": {
+          "file": "codex/file-search/src/lib.rs",
+          "line": 375,
+          "end_line": 389,
+          "col": 1
+        },
+        "signature": "fn build_override_matcher(search_directory: &Path, exclude: &[String]) -> anyhow::Result<Option<ignore::overrides::Override>>",
+        "storage": null,
+        "depth": 0,
+        "body_hash": null,
+        "precision": "lsp",
+        "returns": {
+          "type": "anyhow::Result<Option<ignore::overrides::Override>>",
+          "type_ref": null
+        },
+        "params": [
+          {
+            "name": "search_directory",
+            "type": "&Path",
+            "type_ref": null,
+            "dir": "in",
+            "dir_source": "heuristic"
+          },
+          {
+            "name": "exclude",
+            "type": "&[String]",
+            "type_ref": null,
+            "dir": "in",
+            "dir_source": "heuristic"
+          }
+        ],
+        "globals": {
+          "reads": [],
+          "writes": []
+        },
+        "calls": [],
+        "attrs": {
+          "navigation_only": true,
+          "original_id": "rs:file-search/src/lib.rs::build_override_matcher"
+        },
+        "runtime": null
+      }
+    },
+    {
+      "repository": "codex",
+      "original_id": "rs:file-search/src/lib.rs::matcher_worker",
+      "origin": {
+        "kind": "saved-extraction",
+        "frontend": "rust-analyzer",
+        "report": "hierx-0.5/rust-acceptance/forward/5-d2.json",
+        "graph_sha256": "82ea15051f55b72079fab25fb6178c2e53a2e062b4dbc76b5927b724df2d8bc9"
+      },
+      "node": {
+        "id": "rs:codex/file-search/src/lib.rs::matcher_worker",
+        "kind": "function",
+        "name": "matcher_worker",
+        "qualname": "matcher_worker",
+        "lang": "rs",
+        "loc": {
+          "file": "codex/file-search/src/lib.rs",
+          "line": 504,
+          "end_line": 590,
+          "col": 1
+        },
+        "signature": "fn matcher_worker(inner: Arc<SessionInner>, work_rx: Receiver<WorkSignal>, mut nucleo: Nucleo<IndexedEntry>) -> anyhow::Result<()>",
+        "storage": null,
+        "depth": 0,
+        "body_hash": null,
+        "precision": "lsp",
+        "returns": {
+          "type": "anyhow::Result<()>",
+          "type_ref": null
+        },
+        "params": [
+          {
+            "name": "inner",
+            "type": "Arc<SessionInner>",
+            "type_ref": null,
+            "dir": "in",
+            "dir_source": "heuristic"
+          },
+          {
+            "name": "work_rx",
+            "type": "Receiver<WorkSignal>",
+            "type_ref": null,
+            "dir": "in",
+            "dir_source": "heuristic"
+          },
+          {
+            "name": "nucleo",
+            "type": "Nucleo<IndexedEntry>",
+            "type_ref": null,
+            "dir": "in",
+            "dir_source": "heuristic"
+          }
+        ],
+        "globals": {
+          "reads": [],
+          "writes": []
+        },
+        "calls": [],
+        "attrs": {
+          "navigation_only": true,
+          "original_id": "rs:file-search/src/lib.rs::matcher_worker"
+        },
+        "runtime": null
+      }
+    },
+    {
+      "repository": "codex",
+      "original_id": "rs:file-search/src/lib.rs::walker_worker",
+      "origin": {
+        "kind": "saved-extraction",
+        "frontend": "rust-analyzer",
+        "report": "hierx-0.5/rust-acceptance/forward/5-d2.json",
+        "graph_sha256": "82ea15051f55b72079fab25fb6178c2e53a2e062b4dbc76b5927b724df2d8bc9"
+      },
+      "node": {
+        "id": "rs:codex/file-search/src/lib.rs::walker_worker",
+        "kind": "function",
+        "name": "walker_worker",
+        "qualname": "walker_worker",
+        "lang": "rs",
+        "loc": {
+          "file": "codex/file-search/src/lib.rs",
+          "line": 410,
+          "end_line": 502,
+          "col": 1
+        },
+        "signature": "fn walker_worker(inner: Arc<SessionInner>, override_matcher: Option<ignore::overrides::Override>, injector: Injector<IndexedEntry>)",
+        "storage": null,
+        "depth": 0,
+        "body_hash": null,
+        "precision": "lsp",
+        "returns": null,
+        "params": [
+          {
+            "name": "inner",
+            "type": "Arc<SessionInner>",
+            "type_ref": null,
+            "dir": "in",
+            "dir_source": "heuristic"
+          },
+          {
+            "name": "override_matcher",
+            "type": "Option<ignore::overrides::Override>",
+            "type_ref": null,
+            "dir": "in",
+            "dir_source": "heuristic"
+          },
+          {
+            "name": "injector",
+            "type": "Injector<IndexedEntry>",
+            "type_ref": null,
+            "dir": "in",
+            "dir_source": "heuristic"
+          }
+        ],
+        "globals": {
+          "reads": [],
+          "writes": []
+        },
+        "calls": [],
+        "attrs": {
+          "navigation_only": true,
+          "original_id": "rs:file-search/src/lib.rs::walker_worker"
+        },
+        "runtime": null
+      }
+    },
+    {
+      "repository": "codex",
+      "original_id": "rs:file-search/src/lib.rs::SessionReporter::on_complete",
+      "origin": {
+        "kind": "saved-extraction",
+        "frontend": "rust-analyzer",
+        "report": "hierx-0.5/rust-acceptance/forward/5-d2.json",
+        "graph_sha256": "82ea15051f55b72079fab25fb6178c2e53a2e062b4dbc76b5927b724df2d8bc9"
+      },
+      "node": {
+        "id": "rs:codex/file-search/src/lib.rs::SessionReporter::on_complete",
+        "kind": "function",
+        "name": "on_complete",
+        "qualname": "SessionReporter::on_complete",
+        "lang": "rs",
+        "loc": {
+          "file": "codex/file-search/src/lib.rs",
+          "line": 144,
+          "end_line": 145,
+          "col": 5
+        },
+        "signature": "pub trait SessionReporter pub fn on_complete(&self) where Self: Send + Sync + 'static,",
+        "storage": null,
+        "depth": 0,
+        "body_hash": null,
+        "precision": "lsp",
+        "returns": null,
+        "params": [
+          {
+            "name": "self",
+            "type": "& Self",
+            "type_ref": null,
+            "dir": "in",
+            "dir_source": "heuristic"
+          }
+        ],
+        "globals": {
+          "reads": [],
+          "writes": []
+        },
+        "calls": [],
+        "attrs": {
+          "navigation_only": true,
+          "original_id": "rs:file-search/src/lib.rs::SessionReporter::on_complete"
+        },
+        "runtime": null
+      }
+    },
+    {
+      "repository": "codex",
+      "original_id": "rs:file-search/src/lib.rs::get_file_path",
+      "origin": {
+        "kind": "saved-extraction",
+        "frontend": "rust-analyzer",
+        "report": "hierx-0.5/rust-acceptance/forward/5-d2.json",
+        "graph_sha256": "82ea15051f55b72079fab25fb6178c2e53a2e062b4dbc76b5927b724df2d8bc9"
+      },
+      "node": {
+        "id": "rs:codex/file-search/src/lib.rs::get_file_path",
+        "kind": "function",
+        "name": "get_file_path",
+        "qualname": "get_file_path",
+        "lang": "rs",
+        "loc": {
+          "file": "codex/file-search/src/lib.rs",
+          "line": 391,
+          "end_line": 408,
+          "col": 1
+        },
+        "signature": "fn get_file_path<'a>(path: &'a Path, search_directories: &[PathBuf]) -> Option<(usize, &'a str)>",
+        "storage": null,
+        "depth": 0,
+        "body_hash": null,
+        "precision": "lsp",
+        "returns": {
+          "type": "Option<(usize, &'a str)>",
+          "type_ref": null
+        },
+        "params": [
+          {
+            "name": "path",
+            "type": "&'a Path",
+            "type_ref": null,
+            "dir": "in",
+            "dir_source": "heuristic"
+          },
+          {
+            "name": "search_directories",
+            "type": "&[PathBuf]",
+            "type_ref": null,
+            "dir": "in",
+            "dir_source": "heuristic"
+          }
+        ],
+        "globals": {
+          "reads": [],
+          "writes": []
+        },
+        "calls": [],
+        "attrs": {
+          "navigation_only": true,
+          "original_id": "rs:file-search/src/lib.rs::get_file_path"
+        },
+        "runtime": null
+      }
+    },
+    {
+      "repository": "ffmpeg",
+      "original_id": "c:libavformat/demux.c::av_read_frame",
+      "origin": {
+        "kind": "frontend-declaration",
+        "frontend": "libclang",
+        "entry": "libavformat/demux.c:av_read_frame",
+        "configured_translation_units": 7
+      },
+      "node": {
+        "id": "c:ffmpeg/libavformat/demux.c::av_read_frame",
+        "kind": "function",
+        "name": "av_read_frame",
+        "qualname": "av_read_frame",
+        "lang": "c",
+        "loc": {
+          "file": "ffmpeg/libavformat/demux.c",
+          "line": 1588,
+          "end_line": 1681,
+          "col": 5
+        },
+        "signature": "int av_read_frame(AVFormatContext * s, AVPacket * pkt)",
+        "storage": "extern",
+        "depth": 0,
+        "body_hash": null,
+        "precision": "exact",
+        "returns": {
+          "type": "int",
+          "type_ref": null
+        },
+        "params": [
+          {
+            "name": "s",
+            "type": "AVFormatContext *",
+            "type_ref": null,
+            "dir": "inout",
+            "dir_source": "heuristic"
+          },
+          {
+            "name": "pkt",
+            "type": "AVPacket *",
+            "type_ref": null,
+            "dir": "inout",
+            "dir_source": "heuristic"
+          }
+        ],
+        "globals": {
+          "reads": [],
+          "writes": []
+        },
+        "calls": [],
+        "attrs": {
+          "navigation_only": true,
+          "original_id": "c:libavformat/demux.c::av_read_frame"
+        },
+        "runtime": null
+      }
+    },
+    {
+      "repository": "ffmpeg",
+      "original_id": "c:libavformat/mux.c::av_interleaved_write_frame",
+      "origin": {
+        "kind": "frontend-declaration",
+        "frontend": "libclang",
+        "entry": "libavformat/mux.c:av_interleaved_write_frame",
+        "configured_translation_units": 7
+      },
+      "node": {
+        "id": "c:ffmpeg/libavformat/mux.c::av_interleaved_write_frame",
+        "kind": "function",
+        "name": "av_interleaved_write_frame",
+        "qualname": "av_interleaved_write_frame",
+        "lang": "c",
+        "loc": {
+          "file": "ffmpeg/libavformat/mux.c",
+          "line": 1223,
+          "end_line": 1236,
+          "col": 5
+        },
+        "signature": "int av_interleaved_write_frame(AVFormatContext * s, AVPacket * pkt)",
+        "storage": "extern",
+        "depth": 0,
+        "body_hash": null,
+        "precision": "exact",
+        "returns": {
+          "type": "int",
+          "type_ref": null
+        },
+        "params": [
+          {
+            "name": "s",
+            "type": "AVFormatContext *",
+            "type_ref": null,
+            "dir": "inout",
+            "dir_source": "heuristic"
+          },
+          {
+            "name": "pkt",
+            "type": "AVPacket *",
+            "type_ref": null,
+            "dir": "inout",
+            "dir_source": "heuristic"
+          }
+        ],
+        "globals": {
+          "reads": [],
+          "writes": []
+        },
+        "calls": [],
+        "attrs": {
+          "navigation_only": true,
+          "original_id": "c:libavformat/mux.c::av_interleaved_write_frame"
+        },
+        "runtime": null
+      }
+    },
+    {
+      "repository": "ffmpeg",
+      "original_id": "c:libavcodec/decode.c::avcodec_send_packet",
+      "origin": {
+        "kind": "frontend-declaration",
+        "frontend": "libclang",
+        "entry": "libavcodec/decode.c:avcodec_send_packet",
+        "configured_translation_units": 7
+      },
+      "node": {
+        "id": "c:ffmpeg/libavcodec/decode.c::avcodec_send_packet",
+        "kind": "function",
+        "name": "avcodec_send_packet",
+        "qualname": "avcodec_send_packet",
+        "lang": "c",
+        "loc": {
+          "file": "ffmpeg/libavcodec/decode.c",
+          "line": 734,
+          "end_line": 765,
+          "col": 25
+        },
+        "signature": "int avcodec_send_packet(AVCodecContext * avctx, const AVPacket * avpkt)",
+        "storage": "extern",
+        "depth": 0,
+        "body_hash": null,
+        "precision": "exact",
+        "returns": {
+          "type": "int",
+          "type_ref": null
+        },
+        "params": [
+          {
+            "name": "avctx",
+            "type": "AVCodecContext *",
+            "type_ref": null,
+            "dir": "inout",
+            "dir_source": "heuristic"
+          },
+          {
+            "name": "avpkt",
+            "type": "const AVPacket *",
+            "type_ref": null,
+            "dir": "in",
+            "dir_source": "heuristic"
+          }
+        ],
+        "globals": {
+          "reads": [],
+          "writes": []
+        },
+        "calls": [],
+        "attrs": {
+          "navigation_only": true,
+          "original_id": "c:libavcodec/decode.c::avcodec_send_packet"
+        },
+        "runtime": null
+      }
+    },
+    {
+      "repository": "ffmpeg",
+      "original_id": "c:libavcodec/avcodec.c::avcodec_receive_frame",
+      "origin": {
+        "kind": "frontend-declaration",
+        "frontend": "libclang",
+        "entry": "libavcodec/avcodec.c:avcodec_receive_frame",
+        "configured_translation_units": 7
+      },
+      "node": {
+        "id": "c:ffmpeg/libavcodec/avcodec.c::avcodec_receive_frame",
+        "kind": "function",
+        "name": "avcodec_receive_frame",
+        "qualname": "avcodec_receive_frame",
+        "lang": "c",
+        "loc": {
+          "file": "ffmpeg/libavcodec/avcodec.c",
+          "line": 720,
+          "end_line": 723,
+          "col": 5
+        },
+        "signature": "int avcodec_receive_frame(AVCodecContext * avctx, AVFrame * frame)",
+        "storage": "extern",
+        "depth": 0,
+        "body_hash": null,
+        "precision": "exact",
+        "returns": {
+          "type": "int",
+          "type_ref": null
+        },
+        "params": [
+          {
+            "name": "avctx",
+            "type": "AVCodecContext *",
+            "type_ref": null,
+            "dir": "inout",
+            "dir_source": "heuristic"
+          },
+          {
+            "name": "frame",
+            "type": "AVFrame *",
+            "type_ref": null,
+            "dir": "inout",
+            "dir_source": "heuristic"
+          }
+        ],
+        "globals": {
+          "reads": [],
+          "writes": []
+        },
+        "calls": [],
+        "attrs": {
+          "navigation_only": true,
+          "original_id": "c:libavcodec/avcodec.c::avcodec_receive_frame"
+        },
+        "runtime": null
+      }
+    },
+    {
+      "repository": "ffmpeg",
+      "original_id": "c:libavcodec/encode.c::avcodec_send_frame",
+      "origin": {
+        "kind": "frontend-declaration",
+        "frontend": "libclang",
+        "entry": "libavcodec/encode.c:avcodec_send_frame",
+        "configured_translation_units": 7
+      },
+      "node": {
+        "id": "c:ffmpeg/libavcodec/encode.c::avcodec_send_frame",
+        "kind": "function",
+        "name": "avcodec_send_frame",
+        "qualname": "avcodec_send_frame",
+        "lang": "c",
+        "loc": {
+          "file": "ffmpeg/libavcodec/encode.c",
+          "line": 545,
+          "end_line": 576,
+          "col": 25
+        },
+        "signature": "int avcodec_send_frame(AVCodecContext * avctx, const AVFrame * frame)",
+        "storage": "extern",
+        "depth": 0,
+        "body_hash": null,
+        "precision": "exact",
+        "returns": {
+          "type": "int",
+          "type_ref": null
+        },
+        "params": [
+          {
+            "name": "avctx",
+            "type": "AVCodecContext *",
+            "type_ref": null,
+            "dir": "inout",
+            "dir_source": "heuristic"
+          },
+          {
+            "name": "frame",
+            "type": "const AVFrame *",
+            "type_ref": null,
+            "dir": "in",
+            "dir_source": "heuristic"
+          }
+        ],
+        "globals": {
+          "reads": [],
+          "writes": []
+        },
+        "calls": [],
+        "attrs": {
+          "navigation_only": true,
+          "original_id": "c:libavcodec/encode.c::avcodec_send_frame"
+        },
+        "runtime": null
+      }
+    },
+    {
+      "repository": "ffmpeg",
+      "original_id": "c:libavcodec/encode.c::avcodec_receive_packet",
+      "origin": {
+        "kind": "frontend-declaration",
+        "frontend": "libclang",
+        "entry": "libavcodec/encode.c:avcodec_receive_packet",
+        "configured_translation_units": 7
+      },
+      "node": {
+        "id": "c:ffmpeg/libavcodec/encode.c::avcodec_receive_packet",
+        "kind": "function",
+        "name": "avcodec_receive_packet",
+        "qualname": "avcodec_receive_packet",
+        "lang": "c",
+        "loc": {
+          "file": "ffmpeg/libavcodec/encode.c",
+          "line": 578,
+          "end_line": 597,
+          "col": 25
+        },
+        "signature": "int avcodec_receive_packet(AVCodecContext * avctx, AVPacket * avpkt)",
+        "storage": "extern",
+        "depth": 0,
+        "body_hash": null,
+        "precision": "exact",
+        "returns": {
+          "type": "int",
+          "type_ref": null
+        },
+        "params": [
+          {
+            "name": "avctx",
+            "type": "AVCodecContext *",
+            "type_ref": null,
+            "dir": "inout",
+            "dir_source": "heuristic"
+          },
+          {
+            "name": "avpkt",
+            "type": "AVPacket *",
+            "type_ref": null,
+            "dir": "inout",
+            "dir_source": "heuristic"
+          }
+        ],
+        "globals": {
+          "reads": [],
+          "writes": []
+        },
+        "calls": [],
+        "attrs": {
+          "navigation_only": true,
+          "original_id": "c:libavcodec/encode.c::avcodec_receive_packet"
+        },
+        "runtime": null
+      }
+    },
+    {
+      "repository": "ffmpeg",
+      "original_id": "c:libavfilter/buffersrc.c::av_buffersrc_add_frame_flags",
+      "origin": {
+        "kind": "frontend-declaration",
+        "frontend": "libclang",
+        "entry": "libavfilter/buffersrc.c:av_buffersrc_add_frame_flags",
+        "configured_translation_units": 7
+      },
+      "node": {
+        "id": "c:ffmpeg/libavfilter/buffersrc.c::av_buffersrc_add_frame_flags",
+        "kind": "function",
+        "name": "av_buffersrc_add_frame_flags",
+        "qualname": "av_buffersrc_add_frame_flags",
+        "lang": "c",
+        "loc": {
+          "file": "ffmpeg/libavfilter/buffersrc.c",
+          "line": 221,
+          "end_line": 310,
+          "col": 25
+        },
+        "signature": "int av_buffersrc_add_frame_flags(AVFilterContext * ctx, AVFrame * frame, int flags)",
+        "storage": "extern",
+        "depth": 0,
+        "body_hash": null,
+        "precision": "exact",
+        "returns": {
+          "type": "int",
+          "type_ref": null
+        },
+        "params": [
+          {
+            "name": "ctx",
+            "type": "AVFilterContext *",
+            "type_ref": null,
+            "dir": "inout",
+            "dir_source": "heuristic"
+          },
+          {
+            "name": "frame",
+            "type": "AVFrame *",
+            "type_ref": null,
+            "dir": "inout",
+            "dir_source": "heuristic"
+          },
+          {
+            "name": "flags",
+            "type": "int",
+            "type_ref": null,
+            "dir": "in",
+            "dir_source": "heuristic"
+          }
+        ],
+        "globals": {
+          "reads": [],
+          "writes": []
+        },
+        "calls": [],
+        "attrs": {
+          "navigation_only": true,
+          "original_id": "c:libavfilter/buffersrc.c::av_buffersrc_add_frame_flags"
+        },
+        "runtime": null
+      }
+    },
+    {
+      "repository": "ffmpeg",
+      "original_id": "c:libavfilter/buffersink.c::av_buffersink_get_frame",
+      "origin": {
+        "kind": "frontend-declaration",
+        "frontend": "libclang",
+        "entry": "libavfilter/buffersink.c:av_buffersink_get_frame",
+        "configured_translation_units": 7
+      },
+      "node": {
+        "id": "c:ffmpeg/libavfilter/buffersink.c::av_buffersink_get_frame",
+        "kind": "function",
+        "name": "av_buffersink_get_frame",
+        "qualname": "av_buffersink_get_frame",
+        "lang": "c",
+        "loc": {
+          "file": "ffmpeg/libavfilter/buffersink.c",
+          "line": 77,
+          "end_line": 80,
+          "col": 25
+        },
+        "signature": "int av_buffersink_get_frame(AVFilterContext * ctx, AVFrame * frame)",
+        "storage": "extern",
+        "depth": 0,
+        "body_hash": null,
+        "precision": "exact",
+        "returns": {
+          "type": "int",
+          "type_ref": null
+        },
+        "params": [
+          {
+            "name": "ctx",
+            "type": "AVFilterContext *",
+            "type_ref": null,
+            "dir": "inout",
+            "dir_source": "heuristic"
+          },
+          {
+            "name": "frame",
+            "type": "AVFrame *",
+            "type_ref": null,
+            "dir": "inout",
+            "dir_source": "heuristic"
+          }
+        ],
+        "globals": {
+          "reads": [],
+          "writes": []
+        },
+        "calls": [],
+        "attrs": {
+          "navigation_only": true,
+          "original_id": "c:libavfilter/buffersink.c::av_buffersink_get_frame"
+        },
+        "runtime": null
+      }
+    },
+    {
+      "repository": "hierx",
+      "original_id": "py:hx/api.py::extract",
+      "origin": {
+        "kind": "frontend-declaration",
+        "frontend": "pyright",
+        "entry": "hx/api.py:extract"
+      },
+      "node": {
+        "id": "py:hierx/hx/api.py::extract",
+        "kind": "function",
+        "name": "extract",
+        "qualname": "extract",
+        "lang": "py",
+        "loc": {
+          "file": "hierx/hx/api.py",
+          "line": 79,
+          "end_line": 181,
+          "col": 1
+        },
+        "signature": "(function) def extract(entry: str, *, root: str = \".\", compile_commands: str | None = None, depth: int | None = 3, type_depth: int = 2, include_callers: bool = False, include_system: bool = False, exclude: Sequence[str] = (), max_nodes: int | None = None, extra_args: Sequence[str] = (), resource_dir: str | None = None, jobs: int | None = None, use_cache: bool = True, verbose: bool = False, lang: str = \"auto\", sv_files: Sequence[str] = (), filelist: str | None = None, top: str | None = None, verilator: str = \"verilator\", lsp_cmd: Sequence[str] | None = None, lsp_timeout: float = 90, dialect: str = \"auto\", deck: str | None = None, search_paths: Sequence[str] = ()) -> Graph",
+        "storage": null,
+        "depth": 0,
+        "body_hash": null,
+        "precision": "lsp",
+        "returns": {
+          "type": "Graph",
+          "type_ref": null
+        },
+        "params": [
+          {
+            "name": "entry",
+            "type": "str",
+            "type_ref": null,
+            "dir": "in",
+            "dir_source": "explicit"
+          },
+          {
+            "name": "root",
+            "type": "str",
+            "type_ref": null,
+            "dir": "in",
+            "dir_source": "explicit"
+          },
+          {
+            "name": "compile_commands",
+            "type": "str | None",
+            "type_ref": null,
+            "dir": "in",
+            "dir_source": "explicit"
+          },
+          {
+            "name": "depth",
+            "type": "int | None",
+            "type_ref": null,
+            "dir": "in",
+            "dir_source": "explicit"
+          },
+          {
+            "name": "type_depth",
+            "type": "int",
+            "type_ref": null,
+            "dir": "in",
+            "dir_source": "explicit"
+          },
+          {
+            "name": "include_callers",
+            "type": "bool",
+            "type_ref": null,
+            "dir": "in",
+            "dir_source": "explicit"
+          },
+          {
+            "name": "include_system",
+            "type": "bool",
+            "type_ref": null,
+            "dir": "in",
+            "dir_source": "explicit"
+          },
+          {
+            "name": "exclude",
+            "type": "Sequence[str]",
+            "type_ref": null,
+            "dir": "in",
+            "dir_source": "explicit"
+          },
+          {
+            "name": "max_nodes",
+            "type": "int | None",
+            "type_ref": null,
+            "dir": "in",
+            "dir_source": "explicit"
+          },
+          {
+            "name": "extra_args",
+            "type": "Sequence[str]",
+            "type_ref": null,
+            "dir": "in",
+            "dir_source": "explicit"
+          },
+          {
+            "name": "resource_dir",
+            "type": "str | None",
+            "type_ref": null,
+            "dir": "in",
+            "dir_source": "explicit"
+          },
+          {
+            "name": "jobs",
+            "type": "int | None",
+            "type_ref": null,
+            "dir": "in",
+            "dir_source": "explicit"
+          },
+          {
+            "name": "use_cache",
+            "type": "bool",
+            "type_ref": null,
+            "dir": "in",
+            "dir_source": "explicit"
+          },
+          {
+            "name": "verbose",
+            "type": "bool",
+            "type_ref": null,
+            "dir": "in",
+            "dir_source": "explicit"
+          },
+          {
+            "name": "lang",
+            "type": "str",
+            "type_ref": null,
+            "dir": "in",
+            "dir_source": "explicit"
+          },
+          {
+            "name": "sv_files",
+            "type": "Sequence[str]",
+            "type_ref": null,
+            "dir": "in",
+            "dir_source": "explicit"
+          },
+          {
+            "name": "filelist",
+            "type": "str | None",
+            "type_ref": null,
+            "dir": "in",
+            "dir_source": "explicit"
+          },
+          {
+            "name": "top",
+            "type": "str | None",
+            "type_ref": null,
+            "dir": "in",
+            "dir_source": "explicit"
+          },
+          {
+            "name": "verilator",
+            "type": "str",
+            "type_ref": null,
+            "dir": "in",
+            "dir_source": "explicit"
+          },
+          {
+            "name": "lsp_cmd",
+            "type": "Sequence[str] | None",
+            "type_ref": null,
+            "dir": "in",
+            "dir_source": "explicit"
+          },
+          {
+            "name": "lsp_timeout",
+            "type": "float",
+            "type_ref": null,
+            "dir": "in",
+            "dir_source": "explicit"
+          },
+          {
+            "name": "dialect",
+            "type": "str",
+            "type_ref": null,
+            "dir": "in",
+            "dir_source": "explicit"
+          },
+          {
+            "name": "deck",
+            "type": "str | None",
+            "type_ref": null,
+            "dir": "in",
+            "dir_source": "explicit"
+          },
+          {
+            "name": "search_paths",
+            "type": "Sequence[str]",
+            "type_ref": null,
+            "dir": "in",
+            "dir_source": "explicit"
+          }
+        ],
+        "globals": {
+          "reads": [],
+          "writes": []
+        },
+        "calls": [],
+        "attrs": {
+          "navigation_only": true,
+          "original_id": "py:hx/api.py::extract"
+        },
+        "runtime": null
+      }
+    },
+    {
+      "repository": "hierx",
+      "original_id": "py:hx/api.py::make_frontend",
+      "origin": {
+        "kind": "frontend-declaration",
+        "frontend": "pyright",
+        "entry": "hx/api.py:make_frontend"
+      },
+      "node": {
+        "id": "py:hierx/hx/api.py::make_frontend",
+        "kind": "function",
+        "name": "make_frontend",
+        "qualname": "make_frontend",
+        "lang": "py",
+        "loc": {
+          "file": "hierx/hx/api.py",
+          "line": 43,
+          "end_line": 76,
+          "col": 1
+        },
+        "signature": "(function) def make_frontend(lang: str, root: str, *, compile_commands: str | None = None, include_system: bool = False, extra_args: Sequence[str] = (), resource_dir: str | None = None, jobs: int | None = None, use_cache: bool = True, verbose: bool = False, sv_files: Sequence[str] = (), filelist: str | None = None, top: str | None = None, verilator: str = \"verilator\", lsp_cmd: Sequence[str] | None = None, lsp_timeout: float = 90, dialect: str = \"auto\", deck: str | None = None, search_paths: Sequence[str] = (), deck_role: str = \"deck\") -> (tuple[ClangFrontend, dict[str, str]] | tuple[VerilatorFrontend, dict[Unknown, Unknown]] | tuple[LspFrontend, dict[str, str]] | tuple[SpiceFrontend, dict[Unknown, Unknown]])",
+        "storage": null,
+        "depth": 0,
+        "body_hash": null,
+        "precision": "lsp",
+        "returns": {
+          "type": "(tuple[ClangFrontend, dict[str, str]] | tuple[VerilatorFrontend, dict[Unknown, Unknown]] | tuple[LspFrontend, dict[str, str]] | tuple[SpiceFrontend, dict[Unknown, Unknown]])",
+          "type_ref": null
+        },
+        "params": [
+          {
+            "name": "lang",
+            "type": "str",
+            "type_ref": null,
+            "dir": "in",
+            "dir_source": "explicit"
+          },
+          {
+            "name": "root",
+            "type": "str",
+            "type_ref": null,
+            "dir": "in",
+            "dir_source": "explicit"
+          },
+          {
+            "name": "compile_commands",
+            "type": "str | None",
+            "type_ref": null,
+            "dir": "in",
+            "dir_source": "explicit"
+          },
+          {
+            "name": "include_system",
+            "type": "bool",
+            "type_ref": null,
+            "dir": "in",
+            "dir_source": "explicit"
+          },
+          {
+            "name": "extra_args",
+            "type": "Sequence[str]",
+            "type_ref": null,
+            "dir": "in",
+            "dir_source": "explicit"
+          },
+          {
+            "name": "resource_dir",
+            "type": "str | None",
+            "type_ref": null,
+            "dir": "in",
+            "dir_source": "explicit"
+          },
+          {
+            "name": "jobs",
+            "type": "int | None",
+            "type_ref": null,
+            "dir": "in",
+            "dir_source": "explicit"
+          },
+          {
+            "name": "use_cache",
+            "type": "bool",
+            "type_ref": null,
+            "dir": "in",
+            "dir_source": "explicit"
+          },
+          {
+            "name": "verbose",
+            "type": "bool",
+            "type_ref": null,
+            "dir": "in",
+            "dir_source": "explicit"
+          },
+          {
+            "name": "sv_files",
+            "type": "Sequence[str]",
+            "type_ref": null,
+            "dir": "in",
+            "dir_source": "explicit"
+          },
+          {
+            "name": "filelist",
+            "type": "str | None",
+            "type_ref": null,
+            "dir": "in",
+            "dir_source": "explicit"
+          },
+          {
+            "name": "top",
+            "type": "str | None",
+            "type_ref": null,
+            "dir": "in",
+            "dir_source": "explicit"
+          },
+          {
+            "name": "verilator",
+            "type": "str",
+            "type_ref": null,
+            "dir": "in",
+            "dir_source": "explicit"
+          },
+          {
+            "name": "lsp_cmd",
+            "type": "Sequence[str] | None",
+            "type_ref": null,
+            "dir": "in",
+            "dir_source": "explicit"
+          },
+          {
+            "name": "lsp_timeout",
+            "type": "float",
+            "type_ref": null,
+            "dir": "in",
+            "dir_source": "explicit"
+          },
+          {
+            "name": "dialect",
+            "type": "str",
+            "type_ref": null,
+            "dir": "in",
+            "dir_source": "explicit"
+          },
+          {
+            "name": "deck",
+            "type": "str | None",
+            "type_ref": null,
+            "dir": "in",
+            "dir_source": "explicit"
+          },
+          {
+            "name": "search_paths",
+            "type": "Sequence[str]",
+            "type_ref": null,
+            "dir": "in",
+            "dir_source": "explicit"
+          },
+          {
+            "name": "deck_role",
+            "type": "str",
+            "type_ref": null,
+            "dir": "in",
+            "dir_source": "explicit"
+          }
+        ],
+        "globals": {
+          "reads": [],
+          "writes": []
+        },
+        "calls": [],
+        "attrs": {
+          "navigation_only": true,
+          "original_id": "py:hx/api.py::make_frontend"
+        },
+        "runtime": null
+      }
+    },
+    {
+      "repository": "hierx",
+      "original_id": "py:hx/traverse.py::extract_graph",
+      "origin": {
+        "kind": "frontend-declaration",
+        "frontend": "pyright",
+        "entry": "hx/traverse.py:extract_graph"
+      },
+      "node": {
+        "id": "py:hierx/hx/traverse.py::extract_graph",
+        "kind": "function",
+        "name": "extract_graph",
+        "qualname": "extract_graph",
+        "lang": "py",
+        "loc": {
+          "file": "hierx/hx/traverse.py",
+          "line": 217,
+          "end_line": 234,
+          "col": 1
+        },
+        "signature": "(function) def extract_graph(fe: Frontend, entry_file: str, entry_symbol: str, opts: TraverseOptions, root: str) -> Graph",
+        "storage": null,
+        "depth": 0,
+        "body_hash": null,
+        "precision": "lsp",
+        "returns": {
+          "type": "Graph",
+          "type_ref": null
+        },
+        "params": [
+          {
+            "name": "fe",
+            "type": "Frontend",
+            "type_ref": null,
+            "dir": "in",
+            "dir_source": "explicit"
+          },
+          {
+            "name": "entry_file",
+            "type": "str",
+            "type_ref": null,
+            "dir": "in",
+            "dir_source": "explicit"
+          },
+          {
+            "name": "entry_symbol",
+            "type": "str",
+            "type_ref": null,
+            "dir": "in",
+            "dir_source": "explicit"
+          },
+          {
+            "name": "opts",
+            "type": "TraverseOptions",
+            "type_ref": null,
+            "dir": "in",
+            "dir_source": "explicit"
+          },
+          {
+            "name": "root",
+            "type": "str",
+            "type_ref": null,
+            "dir": "in",
+            "dir_source": "explicit"
+          }
+        ],
+        "globals": {
+          "reads": [],
+          "writes": []
+        },
+        "calls": [],
+        "attrs": {
+          "navigation_only": true,
+          "original_id": "py:hx/traverse.py::extract_graph"
+        },
+        "runtime": null
+      }
+    },
+    {
+      "repository": "hierx",
+      "original_id": "py:hx/project.py::save_extraction",
+      "origin": {
+        "kind": "frontend-declaration",
+        "frontend": "pyright",
+        "entry": "hx/project.py:save_extraction"
+      },
+      "node": {
+        "id": "py:hierx/hx/project.py::save_extraction",
+        "kind": "function",
+        "name": "save_extraction",
+        "qualname": "save_extraction",
+        "lang": "py",
+        "loc": {
+          "file": "hierx/hx/project.py",
+          "line": 414,
+          "end_line": 486,
+          "col": 1
+        },
+        "signature": "(function) def save_extraction(root: str, entry: str, graph: Unknown, *, output: str | None = None, archive: bool = True, refresh_default: bool = False, keep_history: int | None = None) -> SaveResult",
+        "storage": null,
+        "depth": 0,
+        "body_hash": null,
+        "precision": "lsp",
+        "returns": {
+          "type": "SaveResult",
+          "type_ref": null
+        },
+        "params": [
+          {
+            "name": "root",
+            "type": "str",
+            "type_ref": null,
+            "dir": "in",
+            "dir_source": "explicit"
+          },
+          {
+            "name": "entry",
+            "type": "str",
+            "type_ref": null,
+            "dir": "in",
+            "dir_source": "explicit"
+          },
+          {
+            "name": "graph",
+            "type": "Unknown",
+            "type_ref": null,
+            "dir": "in",
+            "dir_source": "explicit"
+          },
+          {
+            "name": "output",
+            "type": "str | None",
+            "type_ref": null,
+            "dir": "in",
+            "dir_source": "explicit"
+          },
+          {
+            "name": "archive",
+            "type": "bool",
+            "type_ref": null,
+            "dir": "in",
+            "dir_source": "explicit"
+          },
+          {
+            "name": "refresh_default",
+            "type": "bool",
+            "type_ref": null,
+            "dir": "in",
+            "dir_source": "explicit"
+          },
+          {
+            "name": "keep_history",
+            "type": "int | None",
+            "type_ref": null,
+            "dir": "in",
+            "dir_source": "explicit"
+          }
+        ],
+        "globals": {
+          "reads": [],
+          "writes": []
+        },
+        "calls": [],
+        "attrs": {
+          "navigation_only": true,
+          "original_id": "py:hx/project.py::save_extraction"
+        },
+        "runtime": null
+      }
+    },
+    {
+      "repository": "hierx",
+      "original_id": "py:hx/graphio.py::load_graph_dict",
+      "origin": {
+        "kind": "frontend-declaration",
+        "frontend": "pyright",
+        "entry": "hx/graphio.py:load_graph_dict"
+      },
+      "node": {
+        "id": "py:hierx/hx/graphio.py::load_graph_dict",
+        "kind": "function",
+        "name": "load_graph_dict",
+        "qualname": "load_graph_dict",
+        "lang": "py",
+        "loc": {
+          "file": "hierx/hx/graphio.py",
+          "line": 259,
+          "end_line": 275,
+          "col": 1
+        },
+        "signature": "(function) def load_graph_dict(path: str) -> dict[Unknown, Unknown]",
+        "storage": null,
+        "depth": 0,
+        "body_hash": null,
+        "precision": "lsp",
+        "returns": {
+          "type": "dict[Unknown, Unknown]",
+          "type_ref": null
+        },
+        "params": [
+          {
+            "name": "path",
+            "type": "str",
+            "type_ref": null,
+            "dir": "in",
+            "dir_source": "explicit"
+          }
+        ],
+        "globals": {
+          "reads": [],
+          "writes": []
+        },
+        "calls": [],
+        "attrs": {
+          "navigation_only": true,
+          "original_id": "py:hx/graphio.py::load_graph_dict"
+        },
+        "runtime": null
+      }
+    },
+    {
+      "repository": "hierx",
+      "original_id": "py:hx/export.py::export_file",
+      "origin": {
+        "kind": "frontend-declaration",
+        "frontend": "pyright",
+        "entry": "hx/export.py:export_file"
+      },
+      "node": {
+        "id": "py:hierx/hx/export.py::export_file",
+        "kind": "function",
+        "name": "export_file",
+        "qualname": "export_file",
+        "lang": "py",
+        "loc": {
+          "file": "hierx/hx/export.py",
+          "line": 42,
+          "end_line": 68,
+          "col": 1
+        },
+        "signature": "(function) def export_file(graph_path: str, out_path: str, annotations_path: str | None = None) -> str",
+        "storage": null,
+        "depth": 0,
+        "body_hash": null,
+        "precision": "lsp",
+        "returns": {
+          "type": "str",
+          "type_ref": null
+        },
+        "params": [
+          {
+            "name": "graph_path",
+            "type": "str",
+            "type_ref": null,
+            "dir": "in",
+            "dir_source": "explicit"
+          },
+          {
+            "name": "out_path",
+            "type": "str",
+            "type_ref": null,
+            "dir": "in",
+            "dir_source": "explicit"
+          },
+          {
+            "name": "annotations_path",
+            "type": "str | None",
+            "type_ref": null,
+            "dir": "in",
+            "dir_source": "explicit"
+          }
+        ],
+        "globals": {
+          "reads": [],
+          "writes": []
+        },
+        "calls": [],
+        "attrs": {
+          "navigation_only": true,
+          "original_id": "py:hx/export.py::export_file"
+        },
+        "runtime": null
+      }
+    }
+  ]
+}

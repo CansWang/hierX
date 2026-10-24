@@ -1,0 +1,17 @@
+...@pins
+pipeline: Pipeline {
+  class: hx-block
+  link: "hx:rs:src/lib.rs::run"
+  in_sample: "seed: u32" {class: hx-input; link: "hx:rs:src/lib.rs::run"}
+  in_valid: "enabled: bool" {class: hx-input; link: "hx:rs:src/lib.rs::run"}
+  out_sample: "result: u32" {class: hx-output; link: "hx:rs:src/lib.rs::run"}
+  out_valid: "accepted: bool" {class: hx-output; link: "hx:rs:src/lib.rs::run"}
+  first: @worker
+  second: @worker
+  in_sample -> first.in_sample: input data {class: hx-exposure}
+  in_valid -> first.in_valid: input status {class: hx-exposure}
+  first.out_sample -> second.in_sample: data {class: hx-wire}
+  first.out_valid -> second.in_valid: status {class: hx-wire}
+  second.out_sample -> out_sample: output data {class: hx-exposure}
+  second.out_valid -> out_valid: output status {class: hx-exposure}
+}

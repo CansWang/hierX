@@ -1,0 +1,49 @@
+# Authored architecture sketch, not inferred execution or a conformance contract.
+# Every block and port links to an owning declaration in the pinned source snapshot.
+
+request: "Extraction request" {
+  link: "hx:py:hierx/hx/api.py::extract"
+  source: "entry: file + symbol" {class: hx-output; link: "hx:py:hierx/hx/api.py::extract"}
+  options: "options: settings" {class: hx-output; link: "hx:py:hierx/hx/api.py::extract"}
+}
+extractor: "Extract architecture" {
+  link: "hx:py:hierx/hx/api.py::extract"
+  source: "entry: file + symbol" {class: hx-input; link: "hx:py:hierx/hx/api.py::extract"}
+  options: "options: settings" {class: hx-input; link: "hx:py:hierx/hx/api.py::extract"}
+  graph: "graph: Graph" {class: hx-output; link: "hx:py:hierx/hx/api.py::extract"}
+  frontend: "Language frontend" {
+    link: "hx:py:hierx/hx/api.py::make_frontend"
+    source: "entry: source" {class: hx-input; link: "hx:py:hierx/hx/api.py::make_frontend"}
+    options: "options: settings" {class: hx-input; link: "hx:py:hierx/hx/api.py::make_frontend"}
+    index: "index: Frontend" {class: hx-output; link: "hx:py:hierx/hx/api.py::make_frontend"}
+  }
+  traverse: "Traverse entry" {
+    link: "hx:py:hierx/hx/traverse.py::extract_graph"
+    index: "index: Frontend" {class: hx-input; link: "hx:py:hierx/hx/traverse.py::extract_graph"}
+    graph: "graph: Graph" {class: hx-output; link: "hx:py:hierx/hx/traverse.py::extract_graph"}
+  }
+  source -> frontend.source: "source" {class: hx-exposure}
+  options -> frontend.options: "settings" {class: hx-exposure}
+  frontend.index -> traverse.index: "indexed declarations"
+  traverse.graph -> graph: "bounded graph" {class: hx-exposure}
+}
+persist: "Persist graph" {
+  link: "hx:py:hierx/hx/project.py::save_extraction"
+  graph: "graph: Graph" {class: hx-input; link: "hx:py:hierx/hx/project.py::save_extraction"}
+  path: "path: graph.json" {class: hx-output; link: "hx:py:hierx/hx/project.py::save_extraction"}
+}
+review: "Load for review" {
+  link: "hx:py:hierx/hx/graphio.py::load_graph_dict"
+  path: "path: graph.json" {class: hx-input; link: "hx:py:hierx/hx/graphio.py::load_graph_dict"}
+  graph: "graph: dict" {class: hx-output; link: "hx:py:hierx/hx/graphio.py::load_graph_dict"}
+}
+export: "Export viewer" {
+  link: "hx:py:hierx/hx/export.py::export_file"
+  path: "path: graph.json" {class: hx-input; link: "hx:py:hierx/hx/export.py::export_file"}
+  html: "viewer: HTML" {class: hx-output; link: "hx:py:hierx/hx/export.py::export_file"}
+}
+request.source -> extractor.source: "entry"
+request.options -> extractor.options: "settings"
+extractor.graph -> persist.graph: "graph + provenance"
+persist.path -> review.path: "saved graph"
+persist.path -> export.path: "saved graph"

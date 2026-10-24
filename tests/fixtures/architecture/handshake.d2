@@ -1,0 +1,12 @@
+source: Source {
+  link: "hx:rs:src/lib.rs::produce"
+  ready: ready {class: hx-input; link: "hx:rs:src/lib.rs::produce"}
+  data: data {class: hx-output; link: "hx:rs:src/lib.rs::produce"}
+}
+sink: Sink {
+  link: "hx:rs:src/lib.rs::consume"
+  data: data {class: hx-input; link: "hx:rs:src/lib.rs::consume"}
+  ready: ready {class: hx-output; link: "hx:rs:src/lib.rs::consume"}
+}
+source.data -> sink.data: data
+sink.ready -> source.ready: ready

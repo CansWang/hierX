@@ -1,0 +1,30 @@
+...@pins
+source: "Source with a longer descriptive title" {
+  class: hx-block
+  link: "hx:rs:src/lib.rs::produce"
+  out_valid: "validity of the supplied sample: bool" {class: hx-output; link: "hx:rs:src/lib.rs::produce"}
+  out_sample: "sample: u32" {class: hx-output; link: "hx:rs:src/lib.rs::produce"}
+  in_valid: "enabled: bool" {class: hx-input; link: "hx:rs:src/lib.rs::produce"}
+  in_sample: "seed: u32" {class: hx-input; link: "hx:rs:src/lib.rs::produce"}
+  in_extra: "additional input description: u32" {class: hx-input; link: "hx:rs:src/lib.rs::produce"}
+  out_extra: "additional output description: u32" {class: hx-output; link: "hx:rs:src/lib.rs::produce"}
+}
+sink: Sink {
+  class: hx-block
+  link: "hx:rs:src/lib.rs::consume"
+  out_valid: "accepted: bool" {class: hx-output; link: "hx:rs:src/lib.rs::consume"}
+  in_sample: "sample: u32" {class: hx-input; link: "hx:rs:src/lib.rs::consume"}
+  out_sample: "result: u32" {class: hx-output; link: "hx:rs:src/lib.rs::consume"}
+  in_valid: "valid: bool" {class: hx-input; link: "hx:rs:src/lib.rs::consume"}
+}
+observer: Observer {
+  class: hx-block
+  link: "hx:rs:src/lib.rs::consume"
+  in_sample: "sample: u32" {class: hx-input; link: "hx:rs:src/lib.rs::consume"}
+  in_valid: "valid: bool" {class: hx-input; link: "hx:rs:src/lib.rs::consume"}
+  out_sample: "result: u32" {class: hx-output; link: "hx:rs:src/lib.rs::consume"}
+  out_valid: "accepted: bool" {class: hx-output; link: "hx:rs:src/lib.rs::consume"}
+}
+source.out_sample -> sink.in_sample: sample data {class: hx-wire}
+source.out_valid -> sink.in_valid: validity flag {class: hx-wire}
+source.out_sample -> observer.in_sample: sample data copy {class: hx-wire}
